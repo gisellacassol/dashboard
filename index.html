@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central · Grupo Cassol</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #F5F2ED;
@@ -325,6 +323,8 @@ tr:hover td { background: var(--bg); }
   .cal-day { min-height: 48px; }
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -449,6 +449,191 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
 
+
+
+<!-- EDITORA CASSOL -->
+<div class="page" id="page-editora">
+  <div class="page-header">
+    <div class="empresa-stripe" style="background:var(--editora-bg);color:var(--editora);border:1px solid var(--editora-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--editora);display:inline-block;"></span> Editora Cassol</div>
+    <div class="page-title">Coordenação Editorial</div>
+    <div class="page-subtitle">Livros em produção · Projetos em andamento · Grandes projetos</div>
+  </div>
+  <div class="section">
+    <div class="section-title">Calendário editorial</div>
+    <div class="cal-wrap" id="cal-editora"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('editora')">+ novo livro</button>
+    </div>
+    <div id="livros-producao"></div>
+    <div id="secao-publicados" style="display:none;margin-top:1rem;">
+      <div class="section-title">Publicados</div>
+      <div id="livros-publicados"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openNewConteudoEmpresa('editora')">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap">
+      <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
+      <tbody id="conteudo-tbody-editora"></tbody></table>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Projetos em andamento</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openAddProjetoModal('editora')">+ novo projeto</button>
+    </div>
+    <div id="projetos-editora"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Grandes projetos</div>
+    <div class="checklist" id="editora-checklist">
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Novo catálogo institucional 2026</label>
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Estratégia de vendas diretas ao consumidor</label>
+      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Revisão de processos editoriais</label>
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejamento de coleção 2027</label>
+    </div>
+    <button class="add-btn" onclick="addCheckItem('editora-checklist')">+ adicionar projeto</button>
+  </div>
+</div>
+
+<!-- LÉIA CASSOL -->
+<div class="page" id="page-leia">
+  <div class="page-header">
+    <div class="empresa-stripe" style="background:var(--leia-bg);color:var(--leia);border:1px solid var(--leia-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--leia);display:inline-block;"></span> Léia Cassol</div>
+    <div class="page-title">Escritora Infantojuvenil</div>
+    <div class="page-subtitle">Estratégia de marketing · Redes sociais · Projetos de livro</div>
+  </div>
+  <div class="metrics-row">
+    <div class="metric-card"><div class="metric-label">Livros publicados</div><div class="metric-value">100+</div></div>
+    <div class="metric-card"><div class="metric-label">Seguidores Instagram</div><div class="metric-value" contenteditable="true">—</div><div class="metric-sub">clique para atualizar</div></div>
+    <div class="metric-card"><div class="metric-label">Posts este mês</div><div class="metric-value" contenteditable="true">4</div><div class="metric-sub">meta: 12</div></div>
+    <div class="metric-card"><div class="metric-label">Projetos de livro</div><div class="metric-value">2</div></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Calendário de conteúdo</div>
+    <div class="cal-wrap" id="cal-leia"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('leia')">+ novo livro</button>
+    </div>
+    <div id="livros-producao-leia"></div>
+    <div id="secao-publicados-leia" style="display:none;margin-top:1rem;">
+      <div class="section-title">Publicados</div>
+      <div id="livros-publicados-leia"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openNewConteudoEmpresa('leia')">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap">
+      <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
+      <tbody id="conteudo-tbody-leia"></tbody></table>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Projetos em andamento</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openAddProjetoModal('leia')">+ novo projeto</button>
+    </div>
+    <div id="projetos-leia"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Estratégia e grandes projetos</div>
+    <div class="checklist" id="leia-checklist">
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir posicionamento 2026</label>
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Criar lista de email (newsletter)</label>
+      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejar agenda de eventos do 2º semestre</label>
+      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
+    </div>
+    <button class="add-btn" onclick="addCheckItem('leia-checklist')">+ adicionar projeto</button>
+  </div>
+</div>
+
+<!-- GISELLA CASSOL -->
+<div class="page" id="page-gisella">
+  <div class="page-header">
+    <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> GC Estratégias Literárias</div>
+    <div class="page-title">GC Estratégias Literárias</div>
+    <div class="page-subtitle">Mentoria Plano Diretor · Esteira de produtos · Marketing</div>
+  </div>
+  <div class="section">
+    <div class="section-title">Calendário de mentorias</div>
+    <div class="cal-wrap" id="cal-gisella"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('gisella')">+ novo livro</button>
+    </div>
+    <div id="livros-producao-gisella"></div>
+    <div id="secao-publicados-gisella" style="display:none;margin-top:1rem;">
+      <div class="section-title">Publicados</div>
+      <div id="livros-publicados-gisella"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin-top:0;" onclick="openNewConteudoEmpresa('gisella')">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap">
+      <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
+      <tbody id="conteudo-tbody-gisella"></tbody></table>
+    </div>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="section-title">Plano Diretor · mentoradas</div>
+      <div id="mentee-list-rendered"></div>
+      <button class="add-btn" onclick="openAddMenteeModal()" style="margin-top:8px;">+ cadastrar mentorada</button>
+    </div>
+    <div>
+      <div class="section-title">Esteira de produtos</div>
+      <div class="card" style="margin-bottom:12px;" id="steira-list">
+        <div class="steira-item steira-clickable" onclick="openSteiraModal('Curso solo')"><span>Curso solo</span><span class="steira-arrow">›</span></div>
+        <div class="steira-item steira-clickable" onclick="openSteiraModal('Ebook estratégia literária')"><span>Ebook estratégia literária</span><span class="steira-arrow">›</span></div>
+        <div class="steira-item steira-clickable" onclick="openSteiraModal('Plano Diretor 2.0')"><span>Plano Diretor 2.0</span><span class="steira-arrow">›</span></div>
+        <div class="steira-item steira-clickable" onclick="openSteiraModal('Workshop avulso')"><span>Workshop avulso</span><span class="steira-arrow">›</span></div>
+        <div class="steira-item steira-clickable" onclick="openSteiraModal('Parceria editorial')"><span>Parceria editorial</span><span class="steira-arrow">›</span></div>
+      </div>
+      <button class="add-btn" onclick="addSteiraItem()">+ adicionar produto</button>
+      <div style="margin-top:1.5rem;">
+        <div class="section-title">Projetos em andamento</div>
+        <div id="projetos-gisella"></div>
+        <button class="add-btn" onclick="openAddProjetoModal('gisella')" style="margin-top:8px;">+ novo projeto</button>
+      </div>
+      <div style="margin-top:1.5rem;">
+        <div class="section-title">Marketing próprio</div>
+        <div class="checklist" id="gisella-checklist">
+          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir pauta semanal Instagram</label>
+          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Gravar reels do mês</label>
+          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Lançar ebook na esteira</label>
+          <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
+        </div>
+        <button class="add-btn" onclick="addCheckItem('gisella-checklist')">+ adicionar tarefa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAREFAS -->
+<div class="page" id="page-tarefas">
+  <div class="page-header">
+    <div class="page-title">Tarefas pendentes</div>
+    <div class="page-subtitle">Tudo que está aberto nas três empresas, ordenado por prazo</div>
+  </div>
+  <div id="tarefas-container"></div>
+</div>
 
 </div>
 
@@ -2628,8 +2813,11 @@ const firebaseConfig = {
   appId: "1:274995799577:web:083c0c30999d40d273ec88"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch(e) { console.warn('Firebase init failed:', e); db = null; }
 
 let _isSyncing = false;
 
@@ -2693,6 +2881,8 @@ function setupFSListeners() {
       buildTarefas();
     }
   };
+
+  if (!db) return;
 
   let fsEmpty = {};
 
