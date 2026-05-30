@@ -464,7 +464,11 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
       <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('editora')">+ novo livro</button>
     </div>
-    <div id="livros-editora-container"></div>
+    <div id="livros-producao"></div>
+    <div id="secao-publicados" style="display:none;margin-top:1rem;">
+      <div class="section-title" style="margin-top:1rem;">Publicados</div>
+      <div id="livros-publicados"></div>
+    </div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -522,7 +526,11 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
       <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('leia')">+ novo livro</button>
     </div>
-    <div id="livros-leia-container"></div>
+    <div id="livros-producao-leia"></div>
+    <div id="secao-publicados-leia" style="display:none;margin-top:1rem;">
+      <div class="section-title" style="margin-top:1rem;">Publicados</div>
+      <div id="livros-publicados-leia"></div>
+    </div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -587,7 +595,11 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
       <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('gisella')">+ novo livro</button>
     </div>
-    <div id="livros-gisella-container"></div>
+    <div id="livros-producao-gisella"></div>
+    <div id="secao-publicados-gisella" style="display:none;margin-top:1rem;">
+      <div class="section-title" style="margin-top:1rem;">Publicados</div>
+      <div id="livros-publicados-gisella"></div>
+    </div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -602,49 +614,8 @@ tr:hover td { background: var(--bg); }
   <div class="two-col">
     <div>
       <div class="section-title">Plano Diretor · mentoradas</div>
-      <div id="mentee-list-view">
-        <div id="mentee-list-rendered"></div>
-        <button class="add-btn" onclick="openAddMenteeModal()" style="margin-top:8px;">+ cadastrar mentorada</button>
-      </div>
-      <div id="mentee-profile-view" style="display:none;">
-        <button class="back-btn" onclick="closeMenteeProfile()">← voltar para lista</button>
-        <div class="mentee-profile-header">
-          <div class="avatar-lg" id="mp-avatar">GC</div>
-          <div>
-            <div class="mentee-profile-name" id="mp-name">Nome</div>
-            <div class="mentee-profile-meta">Plano Diretor</div>
-          </div>
-          <div style="margin-left:auto;">
-            <select id="mp-status" class="form-select" style="width:auto;" onchange="saveMenteeStatus()">
-              <option value="ok">ok</option>
-              <option value="indiv. pend.">indiv. pend.</option>
-              <option value="sem contato">sem contato</option>
-              <option value="aguardando">aguardando</option>
-            </select>
-          </div>
-        </div>
-        <div class="two-col" style="margin-bottom:1.5rem;">
-          <div>
-            <div class="section-title">Notas gerais</div>
-            <textarea class="notes-area" id="mp-notes" placeholder="Anotações livres sobre a mentorada..." oninput="saveMenteeNotes()"></textarea>
-          </div>
-          <div>
-            <div class="section-title">Registrar sessão</div>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-              <input class="form-input" type="date" id="mp-session-date">
-              <textarea class="notes-area" id="mp-session-notes" placeholder="O que foi discutido nessa sessão..." style="min-height:80px;"></textarea>
-              <button class="btn btn-primary" onclick="addSession()" style="width:100%;">Salvar sessão</button>
-            </div>
-          </div>
-        </div>
-        <div class="section-title">Histórico de sessões</div>
-        <div id="mp-sessions"></div>
-        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
-          <div class="section-title">Tarefas desta mentorada</div>
-          <div id="mp-tasks"></div>
-          <button class="add-btn" onclick="addMenteeTask()" style="margin-top:8px;">+ adicionar tarefa</button>
-        </div>
-      </div>
+      <div id="mentee-list-rendered"></div>
+      <button class="add-btn" onclick="openAddMenteeModal()" style="margin-top:8px;">+ cadastrar mentorada</button>
     </div>
     <div>
       <div class="section-title">Esteira de produtos</div>
@@ -2365,7 +2336,7 @@ function fmtPrazoLivro(val) {
 }
 
 function renderLivros() {
-  ['editora', 'gisella'].forEach(emp => renderLivrosEmpresa(emp));
+  ['editora', 'leia', 'gisella'].forEach(emp => renderLivrosEmpresa(emp));
 }
 
 function renderLivrosEmpresa(emp) {
