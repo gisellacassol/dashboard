@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central · Grupo Cassol</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #F5F2ED;
@@ -323,8 +325,6 @@ tr:hover td { background: var(--bg); }
   .cal-day { min-height: 48px; }
 }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -449,14 +449,37 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
 
-
+  <div class="section">
+    <div class="section-title">Saúde por empresa</div>
+    <div class="health-grid">
+      <div class="health-card">
+        <div class="health-empresa" style="color:var(--editora);">● Editora Cassol</div>
+        <div class="health-row"><div class="health-row-label"><span>Projetos</span><span contenteditable="true">70%</span></div><div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--editora);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Marketing</span><span contenteditable="true">45%</span></div><div class="progress-bar"><div class="progress-fill" style="width:45%;background:var(--editora);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Financeiro</span><span contenteditable="true">60%</span></div><div class="progress-bar"><div class="progress-fill" style="width:60%;background:var(--editora);"></div></div></div>
+      </div>
+      <div class="health-card">
+        <div class="health-empresa" style="color:var(--leia);">● Léia Cassol</div>
+        <div class="health-row"><div class="health-row-label"><span>Projetos</span><span contenteditable="true">80%</span></div><div class="progress-bar"><div class="progress-fill" style="width:80%;background:var(--leia);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Marketing</span><span contenteditable="true">30%</span></div><div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--leia);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Financeiro</span><span contenteditable="true">75%</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:var(--leia);"></div></div></div>
+      </div>
+      <div class="health-card">
+        <div class="health-empresa" style="color:var(--gisella);">● GC - Estratégias Literárias</div>
+        <div class="health-row"><div class="health-row-label"><span>Projetos</span><span contenteditable="true">50%</span></div><div class="progress-bar"><div class="progress-fill" style="width:50%;background:var(--gisella);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Marketing</span><span contenteditable="true">25%</span></div><div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--gisella);"></div></div></div>
+        <div class="health-row"><div class="health-row-label"><span>Financeiro</span><span contenteditable="true">55%</span></div><div class="progress-bar"><div class="progress-fill" style="width:55%;background:var(--gisella);"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- EDITORA CASSOL -->
 <div class="page" id="page-editora">
   <div class="page-header">
     <div class="empresa-stripe" style="background:var(--editora-bg);color:var(--editora);border:1px solid var(--editora-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--editora);display:inline-block;"></span> Editora Cassol</div>
     <div class="page-title">Coordenação Editorial</div>
-    <div class="page-subtitle">Livros em produção · Projetos em andamento · Grandes projetos</div>
+    <div class="page-subtitle">Livros em produção · Editais · Grandes projetos</div>
   </div>
   <div class="section">
     <div class="section-title">Calendário editorial</div>
@@ -465,40 +488,20 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('editora')">+ novo livro</button>
+      <button class="add-btn" style="margin:0;" onclick="addLivro()">+ novo livro</button>
     </div>
     <div id="livros-producao"></div>
-    <div id="secao-publicados" style="display:none;margin-top:1rem;">
-      <div class="section-title">Publicados</div>
-      <div id="livros-publicados"></div>
-    </div>
+  </div>
+  <div class="section" id="secao-publicados" style="display:none;">
+    <div class="section-title">Livros publicados</div>
+    <div id="livros-publicados"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openNewConteudoEmpresa('editora')">+ novo conteúdo</button>
-    </div>
-    <div class="content-table-wrap">
-      <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
-      <tbody id="conteudo-tbody-editora"></tbody></table>
-    </div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos em andamento</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openAddProjetoModal('editora')">+ novo projeto</button>
+      <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="addProjeto('editora')">+ novo projeto</button>
     </div>
     <div id="projetos-editora"></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Grandes projetos</div>
-    <div class="checklist" id="editora-checklist">
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Novo catálogo institucional 2026</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Estratégia de vendas diretas ao consumidor</label>
-      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Revisão de processos editoriais</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejamento de coleção 2027</label>
-    </div>
-    <button class="add-btn" onclick="addCheckItem('editora-checklist')">+ adicionar projeto</button>
   </div>
 </div>
 
@@ -519,68 +522,58 @@ tr:hover td { background: var(--bg); }
     <div class="section-title">Calendário de conteúdo</div>
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('leia')">+ novo livro</button>
+  <div class="two-col" style="margin-bottom:1.5rem;">
+    <div>
+      <div class="section-title">Próximas entregas</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Conteúdo</th><th>Canal</th><th>Prazo</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><div class="row-name" contenteditable="true">Reels livro novo</div></td><td contenteditable="true">Instagram</td><td contenteditable="true">amanhã</td><td><span class="badge b-danger">atrasado</span></td></tr>
+            <tr><td><div class="row-name" contenteditable="true">Post bastidores</div></td><td contenteditable="true">Instagram</td><td contenteditable="true">3 dias</td><td><span class="badge b-warn">atenção</span></td></tr>
+            <tr><td><div class="row-name" contenteditable="true">Newsletter maio</div></td><td contenteditable="true">Email</td><td contenteditable="true">5 dias</td><td><span class="badge b-gray">rascunho</span></td></tr>
+            <tr><td><div class="row-name" contenteditable="true">Entrevista podcast</div></td><td contenteditable="true">—</td><td contenteditable="true">10 dias</td><td><span class="badge b-ok">ok</span></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div id="livros-producao-leia"></div>
-    <div id="secao-publicados-leia" style="display:none;margin-top:1rem;">
-      <div class="section-title">Publicados</div>
-      <div id="livros-publicados-leia"></div>
+    <div>
+      <div class="section-title">360° presença digital</div>
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="health-row"><div class="health-row-label"><span>Instagram</span><span contenteditable="true">30%</span></div><div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--leia);"></div></div></div>
+          <div class="health-row"><div class="health-row-label"><span>Email / newsletter</span><span contenteditable="true">10%</span></div><div class="progress-bar"><div class="progress-fill" style="width:10%;background:var(--leia);"></div></div></div>
+          <div class="health-row"><div class="health-row-label"><span>Eventos / palestras</span><span contenteditable="true">70%</span></div><div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--leia);"></div></div></div>
+          <div class="health-row"><div class="health-row-label"><span>Site / blog</span><span contenteditable="true">15%</span></div><div class="progress-bar"><div class="progress-fill" style="width:15%;background:var(--leia);"></div></div></div>
+        </div>
+      </div>
+      <div class="section-title">Projetos de livro</div>
+      <div class="card">
+        <div class="steira-item"><span contenteditable="true">Novo livro A</span><span class="badge b-info">em execução</span></div>
+        <div class="steira-item"><span contenteditable="true">Novo livro B</span><span class="badge b-gray">planejamento</span></div>
+      </div>
     </div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openNewConteudoEmpresa('leia')">+ novo conteúdo</button>
-    </div>
-    <div class="content-table-wrap">
-      <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
-      <tbody id="conteudo-tbody-leia"></tbody></table>
-    </div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos em andamento</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openAddProjetoModal('leia')">+ novo projeto</button>
+      <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="addProjeto('leia')">+ novo projeto</button>
     </div>
     <div id="projetos-leia"></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Estratégia e grandes projetos</div>
-    <div class="checklist" id="leia-checklist">
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir posicionamento 2026</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Criar lista de email (newsletter)</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejar agenda de eventos do 2º semestre</label>
-      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
-    </div>
-    <button class="add-btn" onclick="addCheckItem('leia-checklist')">+ adicionar projeto</button>
   </div>
 </div>
 
 <!-- GISELLA CASSOL -->
 <div class="page" id="page-gisella">
   <div class="page-header">
-    <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> GC Estratégias Literárias</div>
-    <div class="page-title">GC Estratégias Literárias</div>
+    <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> GC - Estratégias Literárias</div>
+    <div class="page-title">Estratégias Literárias</div>
     <div class="page-subtitle">Mentoria Plano Diretor · Esteira de produtos · Marketing</div>
   </div>
-  <div class="section">
+    <div class="section">
     <div class="section-title">Calendário de mentorias</div>
     <div class="cal-wrap" id="cal-gisella"></div>
   </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin-top:0;" onclick="openAddLivroModal('gisella')">+ novo livro</button>
-    </div>
-    <div id="livros-producao-gisella"></div>
-    <div id="secao-publicados-gisella" style="display:none;margin-top:1rem;">
-      <div class="section-title">Publicados</div>
-      <div id="livros-publicados-gisella"></div>
-    </div>
-  </div>
+
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
@@ -591,6 +584,7 @@ tr:hover td { background: var(--bg); }
       <tbody id="conteudo-tbody-gisella"></tbody></table>
     </div>
   </div>
+
   <div class="two-col">
     <div>
       <div class="section-title">Plano Diretor · mentoradas</div>
@@ -607,22 +601,23 @@ tr:hover td { background: var(--bg); }
         <div class="steira-item steira-clickable" onclick="openSteiraModal('Parceria editorial')"><span>Parceria editorial</span><span class="steira-arrow">›</span></div>
       </div>
       <button class="add-btn" onclick="addSteiraItem()">+ adicionar produto</button>
-      <div style="margin-top:1.5rem;">
-        <div class="section-title">Projetos em andamento</div>
-        <div id="projetos-gisella"></div>
-        <button class="add-btn" onclick="openAddProjetoModal('gisella')" style="margin-top:8px;">+ novo projeto</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="section-title" style="margin-bottom:0;">Projetos</div>
+        <button class="add-btn" style="margin:0;" onclick="addProjeto('gisella')">+ novo projeto</button>
       </div>
-      <div style="margin-top:1.5rem;">
-        <div class="section-title">Marketing próprio</div>
-        <div class="checklist" id="gisella-checklist">
-          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir pauta semanal Instagram</label>
-          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Gravar reels do mês</label>
-          <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Lançar ebook na esteira</label>
-          <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
-        </div>
-        <button class="add-btn" onclick="addCheckItem('gisella-checklist')">+ adicionar tarefa</button>
-      </div>
+      <div id="projetos-gisella"></div>
     </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin:0;" onclick="addLivro('gisella')">+ novo livro</button>
+    </div>
+    <div id="livros-producao-gisella"></div>
+  </div>
+  <div class="section" id="secao-publicados-gisella" style="display:none;">
+    <div class="section-title">Livros publicados</div>
+    <div id="livros-publicados-gisella"></div>
   </div>
 </div>
 
@@ -635,6 +630,14 @@ tr:hover td { background: var(--bg); }
   <div id="tarefas-container"></div>
 </div>
 
+<!-- COLABORADOR -->
+<div class="page" id="page-colaborador">
+  <div class="page-header">
+    <div id="colab-stripe" class="empresa-stripe" style="margin-bottom:12px;"></div>
+    <div class="page-title" id="colab-title">Colaborador</div>
+    <div class="page-subtitle">Tarefas atribuídas</div>
+  </div>
+  <div id="colab-container"></div>
 </div>
 
 </main>
@@ -886,55 +889,16 @@ tr:hover td { background: var(--bg); }
 
 <!-- STEIRA MODAL -->
 <div class="modal-overlay" id="steira-modal">
-  <div class="modal" style="width:540px;">
+  <div class="modal" style="width:480px;">
     <button class="modal-close" onclick="closeSteiraModal()">×</button>
     <div class="modal-title" id="steira-modal-title">Produto</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:1rem;">
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Nome do produto</label>
-        <input class="form-input" id="steira-nome" type="text" placeholder="Ex: Plano Diretor, Curso solo...">
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Fase de Evolução da Jornada</label>
-        <select class="form-select" id="steira-fase">
-          <option value="">— selecione —</option>
-          <option value="Confusão vira direção">Confusão vira direção</option>
-          <option value="Direção vira livro">Direção vira livro</option>
-          <option value="Livro vira movimento">Livro vira movimento</option>
-          <option value="Movimento vira marca">Movimento vira marca</option>
-          <option value="Marca vira receita">Marca vira receita</option>
-          <option value="Estrutura vira patrimônio">Estrutura vira patrimônio</option>
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Dores Centrais que Ativam a Decisão</label>
-        <textarea class="notes-area" id="steira-dores" placeholder="Quais dores esse produto resolve..." style="min-height:70px;"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Preço (R$)</label>
-        <input class="form-input" id="steira-preco" type="text" placeholder="Ex: 497,00">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Modelo</label>
-        <select class="form-select" id="steira-modelo">
-          <option value="">— selecione —</option>
-          <option value="Lançamento">Lançamento</option>
-          <option value="Perpétuo">Perpétuo</option>
-        </select>
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Formato / Como acontece</label>
-        <textarea class="notes-area" id="steira-formato" placeholder="Ex: Encontros semanais ao vivo, curso gravado, ebook..." style="min-height:70px;"></textarea>
-      </div>
-      <div class="form-group" style="grid-column:1/-1;">
-        <label class="form-label">Informações adicionais</label>
-        <textarea class="notes-area" id="steira-modal-notes" placeholder="Notas, estratégia, próximos passos..." style="min-height:80px;" oninput="saveSteiraInfo()"></textarea>
-      </div>
+    <div class="form-group" style="margin-top:1rem;">
+      <label class="form-label">Informações</label>
+      <textarea class="notes-area" id="steira-modal-notes" placeholder="Descreva o produto, estratégia, próximos passos..." style="min-height:200px;" oninput="saveSteiraInfo()"></textarea>
     </div>
     <div style="font-size:11px;color:var(--text-soft);text-align:right;margin-top:4px;" id="steira-saved-indicator"></div>
     <div class="btn-row">
-      <button class="btn" onclick="closeSteiraModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveSteiraModal()">Salvar</button>
+      <button class="btn btn-primary" onclick="closeSteiraModal()">Fechar</button>
     </div>
   </div>
 </div>
@@ -2340,10 +2304,10 @@ function renderLivrosEmpresa(emp) {
       const total = l.etapas.length;
       const pct = Math.round((feitos / total) * 100);
       const proximaEtapa = l.etapas.find(e => !e.feito);
-      const ments = emp === 'gisella' ? (l.mentoradas || []).map(mid => mentees.find(m => m.id === mid)).filter(Boolean) : [];
-      const mentOpts = emp === 'gisella' ? mentees.filter(m => !(l.mentoradas||[]).includes(m.id)).map(m => `<option value="${m.id}">${m.name}</option>`).join('') : '';
+      const ments = (l.mentoradas || []).map(mid => mentees.find(m => m.id === mid)).filter(Boolean);
+      const mentOpts = mentees.filter(m => !(l.mentoradas||[]).includes(m.id)).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
       const mentTags = ments.map(m => `<span class="livro-ment-tag">${m.name}<button onclick="event.stopPropagation();removeLivroMentorada(${l.id},${m.id})" title="Remover">×</button></span>`).join('');
-      const mentAdd = (emp === 'gisella' && mentOpts) ? `<select class="livro-ment-select" onchange="event.stopPropagation();addLivroMentorada(${l.id},+this.value);this.value=''" onclick="event.stopPropagation()"><option value="">+ mentorada</option>${mentOpts}</select>` : '';
+      const mentAdd = mentOpts ? `<select class="livro-ment-select" onchange="event.stopPropagation();addLivroMentorada(${l.id},+this.value);this.value=''" onclick="event.stopPropagation()"><option value="">+ mentorada</option>${mentOpts}</select>` : '';
       return `<div class="livro-card" id="livro-card-${l.id}">
         <div class="livro-card-header" onclick="toggleLivroExpand(${l.id})">
           <button class="livro-titulo-btn" onclick="event.stopPropagation();openLivroInfo(${l.id})" title="Ver ficha técnica">${l.titulo}</button>
@@ -2813,11 +2777,8 @@ const firebaseConfig = {
   appId: "1:274995799577:web:083c0c30999d40d273ec88"
 };
 
-let db = null;
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-} catch(e) { console.warn('Firebase init failed:', e); db = null; }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let _isSyncing = false;
 
@@ -2882,8 +2843,6 @@ function setupFSListeners() {
     }
   };
 
-  if (!db) return;
-
   let fsEmpty = {};
 
   Object.entries(handlers).forEach(([key, handler]) => {
@@ -2936,18 +2895,11 @@ let currentSteiraProduct = null;
 
 function openSteiraModal(nome) {
   currentSteiraProduct = nome;
-  const d = steiraData[nome] || {};
   document.getElementById('steira-modal-title').textContent = nome;
-  document.getElementById('steira-nome').value = d.nome || nome;
-  document.getElementById('steira-fase').value = d.fase || '';
-  document.getElementById('steira-dores').value = d.dores || '';
-  document.getElementById('steira-preco').value = d.preco || '';
-  document.getElementById('steira-modelo').value = d.modelo || '';
-  document.getElementById('steira-formato').value = d.formato || '';
-  document.getElementById('steira-modal-notes').value = d.notes || '';
+  document.getElementById('steira-modal-notes').value = steiraData[nome] || '';
   document.getElementById('steira-saved-indicator').textContent = '';
   document.getElementById('steira-modal').classList.add('open');
-  setTimeout(() => document.getElementById('steira-nome').focus(), 50);
+  setTimeout(() => document.getElementById('steira-modal-notes').focus(), 50);
 }
 
 function closeSteiraModal() {
@@ -2961,41 +2913,11 @@ document.getElementById('steira-modal').addEventListener('click', function(e) {
 
 function saveSteiraInfo() {
   if (!currentSteiraProduct) return;
-  steiraData[currentSteiraProduct] = {
-    nome: document.getElementById('steira-nome').value,
-    fase: document.getElementById('steira-fase').value,
-    dores: document.getElementById('steira-dores').value,
-    preco: document.getElementById('steira-preco').value,
-    modelo: document.getElementById('steira-modelo').value,
-    formato: document.getElementById('steira-formato').value,
-    notes: document.getElementById('steira-modal-notes').value,
-  };
+  steiraData[currentSteiraProduct] = document.getElementById('steira-modal-notes').value;
   localStorage.setItem('gc-steira', JSON.stringify(steiraData));
   const ind = document.getElementById('steira-saved-indicator');
   ind.textContent = 'salvo';
   setTimeout(() => { ind.textContent = ''; }, 1500);
-}
-
-function saveSteiraModal() {
-  saveSteiraInfo();
-  // Update product name in list if changed
-  const novoNome = document.getElementById('steira-nome').value.trim();
-  if (novoNome && novoNome !== currentSteiraProduct) {
-    steiraData[novoNome] = steiraData[currentSteiraProduct];
-    delete steiraData[currentSteiraProduct];
-    localStorage.setItem('gc-steira', JSON.stringify(steiraData));
-    // Update button text in list
-    const btns = document.querySelectorAll('#steira-list .steira-clickable span:first-child');
-    btns.forEach(btn => { if (btn.textContent === currentSteiraProduct) btn.textContent = novoNome; });
-    // Update onclick
-    const items = document.querySelectorAll('#steira-list .steira-clickable');
-    items.forEach(item => {
-      if (item.querySelector('span')?.textContent === novoNome) {
-        item.onclick = () => openSteiraModal(novoNome);
-      }
-    });
-  }
-  closeSteiraModal();
 }
 
 function addSteiraItem() {
@@ -3092,7 +3014,6 @@ function renderConteudos() {
     archCount.textContent = arquivados.length;
     archTbody.innerHTML = arquivados.map(c => `
       <tr onclick="openConteudo(${c.id})" style="opacity:0.6;">
-        <td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;" title="Desmarcar para voltar à lista"></td>
         <td style="font-weight:500;">${c.nome}</td>
         <td><span class="rede-badge rede-${c.rede}">${REDE_LABELS[c.rede]||c.rede}</span></td>
         <td style="color:var(--text-soft);font-size:12px;">${TIPO_LABELS[c.tipo]||c.tipo}</td>
@@ -3163,11 +3084,6 @@ function toggleConteudoDone(id) {
   const c = conteudos.find(x => x.id === id);
   if (!c) return;
   c.done = !c.done;
-  if (c.done) {
-    c.status = 'encerrar';
-  } else {
-    c.status = 'postado'; // volta como postado ao desarquivar
-  }
   saveConteudos();
   renderConteudos();
 }
