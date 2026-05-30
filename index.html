@@ -519,7 +519,7 @@ tr:hover td { background: var(--bg); }
     <button class="chat-close" onclick="toggleChat()">×</button>
   </div>
   <div class="chat-key-bar" id="chat-key-bar">
-    <input type="password" id="claude-api-key" placeholder="Cole sua chave API da Anthropic (sk-ant-…)" autocomplete="off">
+    <input type="password" id="claude-api-key" placeholder="Cole sua chave API do Groq (gsk_…)" autocomplete="off">
     <button onclick="saveApiKey()">Salvar</button>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
@@ -1400,7 +1400,7 @@ function buildTarefas() {
     renderGroup('Próximas', groups.proximas, 'var(--text-soft)');
 }
 
-/* ── CLAUDE CHAT ── */
+/* ── CHAT ── */
 let chatOpen = false;
 let chatHistory = [];
 let claudeApiKey = localStorage.getItem('gc-claude-key') || '';
@@ -1421,7 +1421,7 @@ function updateKeyBar() {
   const label = document.getElementById('chat-status-label');
   if (claudeApiKey) {
     bar.style.display = 'none';
-    label.textContent = 'Conectado · Claude Haiku';
+    label.textContent = 'Conectado · Groq';
     label.style.color = 'var(--gisella)';
   } else {
     bar.style.display = 'flex';
@@ -1432,7 +1432,7 @@ function updateKeyBar() {
 
 function saveApiKey() {
   const val = document.getElementById('claude-api-key').value.trim();
-  if (!val.startsWith('sk-ant-')) { alert('Chave inválida. Deve começar com sk-ant-'); return; }
+  if (!val.startsWith('gsk_')) { alert('Chave inválida. Deve começar com gsk_'); return; }
   claudeApiKey = val;
   localStorage.setItem('gc-claude-key', val);
   updateKeyBar();
@@ -1496,80 +1496,12 @@ Responda SEMPRE em português, de forma concisa e direta. Quando executar açõe
 }
 
 const CLAUDE_TOOLS = [
-  {
-    name: 'navigate',
-    description: 'Navegar para uma página do dashboard',
-    input_schema: {
-      type: 'object',
-      properties: {
-        page: { type: 'string', enum: ['visao', 'editora', 'leia', 'gisella', 'tarefas'], description: 'Qual página abrir' }
-      },
-      required: ['page']
-    }
-  },
-  {
-    name: 'add_event',
-    description: 'Adicionar um evento ao calendário',
-    input_schema: {
-      type: 'object',
-      properties: {
-        empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] },
-        titulo: { type: 'string' },
-        data: { type: 'string', description: 'Data no formato YYYY-MM-DD' }
-      },
-      required: ['empresa', 'titulo', 'data']
-    }
-  },
-  {
-    name: 'add_alert',
-    description: 'Adicionar um alerta ou prioridade na visão geral',
-    input_schema: {
-      type: 'object',
-      properties: {
-        empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] },
-        titulo: { type: 'string' },
-        prazo: { type: 'string', description: 'Ex: hoje, 2 dias, 5 jun' },
-        nivel: { type: 'string', enum: ['urgente', 'atencao', 'normal'] }
-      },
-      required: ['empresa', 'titulo', 'nivel']
-    }
-  },
-  {
-    name: 'add_mentee_task',
-    description: 'Adicionar uma tarefa para uma mentorada específica. A tarefa aparece na aba Tarefas.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        mentee_name: { type: 'string', description: 'Nome (parcial ou completo) da mentorada' },
-        titulo: { type: 'string' },
-        data: { type: 'string', description: 'Prazo no formato YYYY-MM-DD (opcional)' }
-      },
-      required: ['mentee_name', 'titulo']
-    }
-  },
-  {
-    name: 'add_mentee',
-    description: 'Cadastrar uma nova mentorada',
-    input_schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        status: { type: 'string', enum: ['ok', 'indiv. pend.', 'aguardando', 'sem contato'] }
-      },
-      required: ['name']
-    }
-  },
-  {
-    name: 'get_info',
-    description: 'Buscar informações do dashboard para responder perguntas',
-    input_schema: {
-      type: 'object',
-      properties: {
-        topic: { type: 'string', enum: ['mentees', 'events', 'mentees_status', 'tasks'] }
-      },
-      required: ['topic']
-    }
-  }
+  { type: 'function', function: { name: 'navigate', description: 'Navegar para uma página do dashboard', parameters: { type: 'object', properties: { page: { type: 'string', enum: ['visao', 'editora', 'leia', 'gisella', 'tarefas'] } }, required: ['page'] } } },
+  { type: 'function', function: { name: 'add_event', description: 'Adicionar um evento ao calendário', parameters: { type: 'object', properties: { empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] }, titulo: { type: 'string' }, data: { type: 'string', description: 'YYYY-MM-DD' } }, required: ['empresa', 'titulo', 'data'] } } },
+  { type: 'function', function: { name: 'add_alert', description: 'Adicionar um alerta ou prioridade na visão geral', parameters: { type: 'object', properties: { empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] }, titulo: { type: 'string' }, prazo: { type: 'string' }, nivel: { type: 'string', enum: ['urgente', 'atencao', 'normal'] } }, required: ['empresa', 'titulo', 'nivel'] } } },
+  { type: 'function', function: { name: 'add_mentee_task', description: 'Adicionar tarefa para uma mentorada. Aparece na aba Tarefas.', parameters: { type: 'object', properties: { mentee_name: { type: 'string' }, titulo: { type: 'string' }, data: { type: 'string', description: 'YYYY-MM-DD (opcional)' } }, required: ['mentee_name', 'titulo'] } } },
+  { type: 'function', function: { name: 'add_mentee', description: 'Cadastrar nova mentorada', parameters: { type: 'object', properties: { name: { type: 'string' }, status: { type: 'string', enum: ['ok', 'indiv. pend.', 'aguardando', 'sem contato'] } }, required: ['name'] } } },
+  { type: 'function', function: { name: 'get_info', description: 'Buscar informações do dashboard', parameters: { type: 'object', properties: { topic: { type: 'string', enum: ['mentees', 'events', 'mentees_status', 'tasks'] } }, required: ['topic'] } } }
 ];
 
 function executeTool(name, input) {
@@ -1651,26 +1583,27 @@ async function sendChatMessage() {
   showThinking();
 
   try {
-    let messages = [...chatHistory];
+    let messages = [
+      { role: 'system', content: getDashboardContext() },
+      ...chatHistory
+    ];
     let finalText = '';
     let actions = [];
     let iterations = 0;
 
     while (iterations < 5) {
       iterations++;
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true'
+          'Authorization': `Bearer ${claudeApiKey}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model: 'llama-3.3-70b-versatile',
           max_tokens: 1024,
-          system: getDashboardContext(),
           tools: CLAUDE_TOOLS,
+          tool_choice: 'auto',
           messages
         })
       });
@@ -1681,34 +1614,29 @@ async function sendChatMessage() {
       }
 
       const data = await res.json();
+      const msg = data.choices[0].message;
+      const finishReason = data.choices[0].finish_reason;
 
-      // Collect text and tool use from this response
-      const toolUses = [];
-      data.content.forEach(block => {
-        if (block.type === 'text' && block.text) finalText = block.text;
-        if (block.type === 'tool_use') toolUses.push(block);
-      });
+      if (msg.content) finalText = msg.content;
 
-      if (data.stop_reason === 'end_turn' || toolUses.length === 0) {
-        // Done
-        messages.push({ role: 'assistant', content: data.content });
+      if (finishReason !== 'tool_calls' || !msg.tool_calls || msg.tool_calls.length === 0) {
+        messages.push(msg);
         break;
       }
 
-      // Execute tools and collect results
-      messages.push({ role: 'assistant', content: data.content });
-      const toolResults = toolUses.map(tu => {
-        const result = executeTool(tu.name, tu.input);
+      // Execute tools
+      messages.push(msg);
+      for (const tc of msg.tool_calls) {
+        const fnName = tc.function.name;
+        const fnArgs = JSON.parse(tc.function.arguments || '{}');
+        const result = executeTool(fnName, fnArgs);
         if (result.ok) actions.push(result.result);
-        return { type: 'tool_result', tool_use_id: tu.id, content: result.result };
-      });
-      messages.push({ role: 'user', content: toolResults });
+        messages.push({ role: 'tool', tool_call_id: tc.id, content: result.result });
+      }
     }
 
     hideThinking();
-
-    // Update history with final exchange
-    chatHistory = messages;
+    chatHistory = messages.slice(1); // remove system msg from history
 
     if (finalText || actions.length > 0) {
       appendMsg('assistant', finalText || (actions.length > 0 ? 'Feito!' : '…'), actions);
