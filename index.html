@@ -1522,8 +1522,10 @@ const dateEl = document.getElementById('today-date-text');
 if (dateEl) dateEl.textContent = `${DIAS[now.getDay()]}, ${now.getDate()} de ${MESES_PT[now.getMonth()]}`;
 
 // Alert counters
-document.getElementById('cnt-urgentes').textContent = document.querySelectorAll('.alert-item.urgente').length;
-document.getElementById('cnt-atencao').textContent = document.querySelectorAll('.alert-item.atencao').length;
+const cntU = document.getElementById('cnt-urgentes');
+const cntA = document.getElementById('cnt-atencao');
+if (cntU) cntU.textContent = document.querySelectorAll('.alert-item.urgente').length;
+if (cntA) cntA.textContent = document.querySelectorAll('.alert-item.atencao').length;
 
 /* ── AUTOSAVE ── */
 let saveTimer;
