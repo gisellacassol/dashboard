@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central · Grupo Cassol</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #F5F2ED;
@@ -221,6 +223,58 @@ tr:hover td { background: var(--bg); }
 .chat-send-btn { width: 42px; height: 42px; border-radius: 10px; background: var(--editora); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: opacity 0.15s; }
 .chat-send-btn:hover { opacity: 0.85; }
 .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Responsável tags */
+.resp-tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.resp-gisella { background: var(--gisella-bg); color: var(--gisella); }
+.resp-luiggi { background: var(--info-bg); color: var(--info); }
+.resp-milena { background: var(--leia-bg); color: var(--leia); }
+/* Projetos */
+.projeto-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: background 0.1s, box-shadow 0.15s; }
+.projeto-item:hover { background: var(--bg); box-shadow: 0 2px 10px rgba(28,20,16,0.07); }
+.projeto-nome { flex: 1; font-size: 13px; font-weight: 500; }
+.projeto-datas { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+.b-pendente { background: var(--gray-bg); color: var(--gray); }
+.b-execucao { background: var(--info-bg); color: var(--info); }
+.b-finalizado { background: var(--ok-bg); color: var(--ok); }
+.projeto-del { background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; padding: 3px 6px; border-radius: 4px; }
+.projeto-del:hover { color: var(--danger); background: var(--danger-bg); }
+/* Livros cards */
+.livro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: box-shadow 0.15s; }
+.livro-card:hover { box-shadow: 0 2px 12px rgba(28,20,16,0.08); }
+.livro-card-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
+.livro-card-header:hover { background: var(--bg); }
+.livro-titulo-btn { font-size: 13px; font-weight: 500; outline: none; border: none; background: none; font-family: 'DM Sans', sans-serif; color: var(--text); cursor: pointer; text-align: left; padding: 2px 6px; border-radius: 6px; transition: background 0.15s; white-space: nowrap; }
+.livro-titulo-btn:hover { background: var(--editora-bg); color: var(--editora); text-decoration: underline; }
+.livro-mentoradas { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; flex: 1; }
+.livro-ment-tag { display: inline-flex; align-items: center; gap: 3px; background: var(--gisella-bg); color: var(--gisella); border: 1px solid var(--gisella-border); border-radius: 20px; font-size: 11px; font-weight: 500; padding: 2px 7px 2px 8px; white-space: nowrap; }
+.livro-ment-tag button { background: none; border: none; color: var(--gisella); cursor: pointer; font-size: 12px; padding: 0; line-height: 1; opacity: 0.7; }
+.livro-ment-tag button:hover { opacity: 1; }
+.livro-ment-add { background: none; border: 1px dashed var(--border-mid); border-radius: 20px; font-size: 11px; color: var(--text-soft); cursor: pointer; padding: 2px 8px; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
+.livro-ment-add:hover { background: var(--gisella-bg); color: var(--gisella); border-color: var(--gisella-border); }
+.livro-ment-select { font-size: 12px; padding: 3px 6px; border: 1px solid var(--border-mid); border-radius: 6px; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; max-width: 160px; }
+.livro-ment-select:focus { outline: none; border-color: var(--gisella); }
+.livro-progress-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.livro-progress-bar { width: 80px; height: 5px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.livro-progress-fill { height: 100%; border-radius: 4px; background: var(--editora); transition: width 0.3s; }
+.livro-progress-label { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+.livro-expand-btn { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 14px; padding: 4px; transition: transform 0.2s; flex-shrink: 0; }
+.livro-expand-btn.open { transform: rotate(180deg); }
+.livro-del-btn { background: none; border: none; color: var(--text-soft); cursor: pointer; font-size: 15px; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; }
+.livro-del-btn:hover { color: var(--danger); background: var(--danger-bg); }
+.livro-etapas { display: none; border-top: 1px solid var(--border); padding: 8px 0; }
+.livro-etapas.open { display: block; }
+.livro-etapa-row { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 13px; transition: background 0.1s; }
+.livro-etapa-row:hover { background: var(--bg); }
+.livro-etapa-row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--editora); flex-shrink: 0; }
+.livro-etapa-nome { flex: 1; color: var(--text); }
+.livro-etapa-nome.done { color: var(--text-soft); text-decoration: line-through; }
+.livro-etapa-date { font-size: 12px; padding: 3px 7px; border: 1px solid var(--border-mid); border-radius: 6px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-soft); cursor: pointer; }
+.livro-etapa-date:focus { outline: none; border-color: var(--editora); color: var(--text); }
+.livro-etapa-date::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; }
+.livro-publicado-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; font-size: 13px; }
+.livro-publicado-item .pub-icon { font-size: 16px; }
+.livro-publicado-nome { flex: 1; font-weight: 500; }
+.livro-publicado-data { font-size: 11px; color: var(--text-soft); }
 /* Clickable metric cards */
 .metric-card.clickable { cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
 .metric-card.clickable:hover { box-shadow: 0 4px 16px rgba(28,20,16,0.1); transform: translateY(-1px); }
@@ -262,15 +316,27 @@ tr:hover td { background: var(--bg); }
       <span class="nav-dot dot-leia"></span> Léia Cassol
     </button>
     <button class="nav-item" onclick="showPage('gisella', this)">
-      <span class="nav-dot dot-gisella"></span> Gisella Cassol
+      <span class="nav-dot dot-gisella"></span> GC - Estratégias Literárias
     </button>
     <button class="nav-item" onclick="showPage('tarefas', this)">
       <span class="nav-icon" style="font-size:13px;">✓</span> Tarefas
     </button>
   </div>
+  <div class="nav-section">
+    <div class="nav-label">Colaboradores</div>
+    <button class="nav-item" onclick="showColaborador('Gisella', this)">
+      <span class="resp-tag resp-gisella" style="width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;padding:0;">G</span> Gisella
+    </button>
+    <button class="nav-item" onclick="showColaborador('Luiggi', this)">
+      <span class="resp-tag resp-luiggi" style="width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;padding:0;">L</span> Luiggi
+    </button>
+    <button class="nav-item" onclick="showColaborador('Milena', this)">
+      <span class="resp-tag resp-milena" style="width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;padding:0;">M</span> Milena
+    </button>
+  </div>
   <div class="sidebar-footer">
-    Dados salvos localmente<br>
-    <span id="last-saved" style="opacity:0.7;">—</span>
+    <span id="last-saved" style="opacity:0.7;">conectando…</span><br>
+    <button id="btn-sync-up" onclick="forceSyncToFirestore()" style="display:none;margin-top:6px;background:var(--editora);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;width:100%;">⬆ Publicar meus dados</button>
   </div>
 </aside>
 
@@ -297,8 +363,8 @@ tr:hover td { background: var(--bg); }
   <div class="metrics-row">
     <div class="metric-card clickable" onclick="showPage('editora', document.querySelector('[onclick*=\"editora\"]'))" title="Ir para Editora Cassol"><div class="metric-label">Livros em produção</div><div class="metric-value">8</div><div class="metric-sub">Editora Cassol ↗</div></div>
     <div class="metric-card clickable" onclick="showPage('editora', document.querySelector('[onclick*=\"editora\"]'))" title="Ir para Editora Cassol"><div class="metric-label">Projetos em andamento</div><div class="metric-value">3</div><div class="metric-sub">Editora Cassol ↗</div></div>
-    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para Gisella Cassol"><div class="metric-label">Mentoradas</div><div class="metric-value" id="metric-mentoradas">19</div><div class="metric-sub">Plano Diretor ↗</div></div>
-    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para Gisella Cassol"><div class="metric-label">Produtos na esteira</div><div class="metric-value">5</div><div class="metric-sub">Gisella Cassol ↗</div></div>
+    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para GC - Estratégias Literárias"><div class="metric-label">Mentoradas</div><div class="metric-value" id="metric-mentoradas">19</div><div class="metric-sub">Plano Diretor ↗</div></div>
+    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para GC - Estratégias Literárias"><div class="metric-label">Produtos na esteira</div><div class="metric-value">5</div><div class="metric-sub">GC - Estratégias Literárias ↗</div></div>
   </div>
   <div class="section">
     <div class="section-title">Calendário — todas as empresas</div>
@@ -310,7 +376,7 @@ tr:hover td { background: var(--bg); }
       <div class="alert-item urgente"><div class="alert-left"><div class="alert-empresa">Editora Cassol</div><div class="alert-title" contenteditable="true">Livro 07 — confirmar tiragem com gráfica</div></div><span class="alert-prazo" contenteditable="true">2 dias</span><span class="badge b-danger">urgente</span></div>
       <div class="alert-item atencao"><div class="alert-left"><div class="alert-empresa">Léia Cassol</div><div class="alert-title" contenteditable="true">Reels do novo livro — ainda não gravado</div></div><span class="alert-prazo" contenteditable="true">amanhã</span><span class="badge b-warn">atenção</span></div>
       <div class="alert-item atencao"><div class="alert-left"><div class="alert-empresa">Editora Cassol</div><div class="alert-title" contenteditable="true">Edital SP — documentação pendente</div></div><span class="alert-prazo" contenteditable="true">7 dias</span><span class="badge b-warn">atenção</span></div>
-      <div class="alert-item normal"><div class="alert-left"><div class="alert-empresa">Gisella Cassol</div><div class="alert-title" contenteditable="true">Encontro semanal Plano Diretor</div></div><span class="alert-prazo" contenteditable="true">hoje</span><span class="badge b-ok">ok</span></div>
+      <div class="alert-item normal"><div class="alert-left"><div class="alert-empresa">GC - Estratégias Literárias</div><div class="alert-title" contenteditable="true">Encontro semanal Plano Diretor</div></div><span class="alert-prazo" contenteditable="true">hoje</span><span class="badge b-ok">ok</span></div>
     </div>
     <button class="add-btn" onclick="addAlert()">+ adicionar alerta</button>
   </div>
@@ -330,7 +396,7 @@ tr:hover td { background: var(--bg); }
         <div class="health-row"><div class="health-row-label"><span>Financeiro</span><span contenteditable="true">75%</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:var(--leia);"></div></div></div>
       </div>
       <div class="health-card">
-        <div class="health-empresa" style="color:var(--gisella);">● Gisella Cassol</div>
+        <div class="health-empresa" style="color:var(--gisella);">● GC - Estratégias Literárias</div>
         <div class="health-row"><div class="health-row-label"><span>Projetos</span><span contenteditable="true">50%</span></div><div class="progress-bar"><div class="progress-fill" style="width:50%;background:var(--gisella);"></div></div></div>
         <div class="health-row"><div class="health-row-label"><span>Marketing</span><span contenteditable="true">25%</span></div><div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--gisella);"></div></div></div>
         <div class="health-row"><div class="health-row-label"><span>Financeiro</span><span contenteditable="true">55%</span></div><div class="progress-bar"><div class="progress-fill" style="width:55%;background:var(--gisella);"></div></div></div>
@@ -351,44 +417,22 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-editora"></div>
   </div>
   <div class="section">
-    <div class="section-title">8 livros em produção</div>
-    <div class="table-wrap">
-      <table id="livros-table">
-        <thead><tr><th>Livro</th><th>Etapa atual</th><th>Próxima ação</th><th>Prazo</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td><div class="row-name" contenteditable="true">Livro 01</div></td><td contenteditable="true">Diagramação</td><td contenteditable="true">Aprovar layout</td><td contenteditable="true">5 dias</td><td><span class="badge b-ok">no prazo</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 02</div></td><td contenteditable="true">Revisão</td><td contenteditable="true">Devolver ao autor</td><td contenteditable="true">8 dias</td><td><span class="badge b-ok">no prazo</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 03</div></td><td contenteditable="true">Revisão</td><td contenteditable="true">Revisar cap. 4–6</td><td contenteditable="true">3 dias</td><td><span class="badge b-warn">atenção</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 04</div></td><td contenteditable="true">Ilustração</td><td contenteditable="true">Aprovar rascunhos</td><td contenteditable="true">12 dias</td><td><span class="badge b-ok">no prazo</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 05</div></td><td contenteditable="true">Edição</td><td contenteditable="true">Primeira reunião</td><td contenteditable="true">15 dias</td><td><span class="badge b-gray">aguardando</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 06</div></td><td contenteditable="true">Capa</td><td contenteditable="true">Brief ao designer</td><td contenteditable="true">10 dias</td><td><span class="badge b-warn">atenção</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 07</div></td><td contenteditable="true">Impressão</td><td contenteditable="true">Confirmar tiragem</td><td contenteditable="true">2 dias</td><td><span class="badge b-danger">urgente</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Livro 08</div></td><td contenteditable="true">Originais</td><td contenteditable="true">Ler manuscrito</td><td contenteditable="true">20 dias</td><td><span class="badge b-ok">no prazo</span></td></tr>
-        </tbody>
-      </table>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin:0;" onclick="addLivro()">+ novo livro</button>
     </div>
+    <div id="livros-producao"></div>
+  </div>
+  <div class="section" id="secao-publicados" style="display:none;">
+    <div class="section-title">Livros publicados</div>
+    <div id="livros-publicados"></div>
   </div>
   <div class="section">
-    <div class="section-title">Projetos em andamento</div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Edital</th><th>Obras aprovadas</th><th>Fase</th><th>Prazo</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td><div class="row-name" contenteditable="true">Edital SP 2026</div></td><td contenteditable="true">3 obras</td><td contenteditable="true">Documentação</td><td contenteditable="true">7 dias</td><td><span class="badge b-warn">atenção</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">PNLD 2027</div></td><td contenteditable="true">5 obras</td><td contenteditable="true">Habilitação</td><td contenteditable="true">30 dias</td><td><span class="badge b-ok">ok</span></td></tr>
-          <tr><td><div class="row-name" contenteditable="true">Edital RS 2026</div></td><td contenteditable="true">2 obras</td><td contenteditable="true">Negociação</td><td contenteditable="true">—</td><td><span class="badge b-info">em andamento</span></td></tr>
-        </tbody>
-      </table>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="addProjeto('editora')">+ novo projeto</button>
     </div>
-  </div>
-  <div class="section">
-    <div class="section-title">Grandes projetos</div>
-    <div class="checklist" id="editora-checklist">
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Novo catálogo institucional 2026</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Estratégia de vendas diretas ao consumidor</label>
-      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Revisão de processos editoriais</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejamento de coleção 2027</label>
-    </div>
-    <button class="add-btn" onclick="addCheckItem('editora-checklist')">+ adicionar projeto</button>
+    <div id="projetos-editora"></div>
   </div>
 </div>
 
@@ -441,21 +485,18 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
   <div class="section">
-    <div class="section-title">Estratégia e grandes projetos</div>
-    <div class="checklist" id="leia-checklist">
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir posicionamento 2026</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Criar lista de email (newsletter)</label>
-      <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Planejar agenda de eventos do 2º semestre</label>
-      <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="addProjeto('leia')">+ novo projeto</button>
     </div>
-    <button class="add-btn" onclick="addCheckItem('leia-checklist')">+ adicionar projeto</button>
+    <div id="projetos-leia"></div>
   </div>
 </div>
 
 <!-- GISELLA CASSOL -->
 <div class="page" id="page-gisella">
   <div class="page-header">
-    <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> Gisella Cassol</div>
+    <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> GC - Estratégias Literárias</div>
     <div class="page-title">Estratégias Literárias</div>
     <div class="page-subtitle">Mentoria Plano Diretor · Esteira de produtos · Marketing</div>
   </div>
@@ -484,15 +525,23 @@ tr:hover td { background: var(--bg); }
         <div class="steira-item"><span contenteditable="true">Workshop avulso</span><span class="badge b-gray">ideia</span></div>
         <div class="steira-item"><span contenteditable="true">Parceria editorial</span><span class="badge b-gray">ideia</span></div>
       </div>
-      <div class="section-title">Marketing próprio</div>
-      <div class="checklist" id="gisella-checklist">
-        <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Definir pauta semanal Instagram</label>
-        <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Gravar reels do mês</label>
-        <label class="check-item"><input type="checkbox" onchange="toggleCheck(this)"> Lançar ebook na esteira</label>
-        <label class="check-item done"><input type="checkbox" checked onchange="toggleCheck(this)"> Atualizar bio e links</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="section-title" style="margin-bottom:0;">Projetos</div>
+        <button class="add-btn" style="margin:0;" onclick="addProjeto('gisella')">+ novo projeto</button>
       </div>
-      <button class="add-btn" onclick="addCheckItem('gisella-checklist')">+ adicionar tarefa</button>
+      <div id="projetos-gisella"></div>
     </div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin:0;" onclick="addLivro('gisella')">+ novo livro</button>
+    </div>
+    <div id="livros-producao-gisella"></div>
+  </div>
+  <div class="section" id="secao-publicados-gisella" style="display:none;">
+    <div class="section-title">Livros publicados</div>
+    <div id="livros-publicados-gisella"></div>
   </div>
 </div>
 
@@ -505,7 +554,188 @@ tr:hover td { background: var(--bg); }
   <div id="tarefas-container"></div>
 </div>
 
+<!-- COLABORADOR -->
+<div class="page" id="page-colaborador">
+  <div class="page-header">
+    <div id="colab-stripe" class="empresa-stripe" style="margin-bottom:12px;"></div>
+    <div class="page-title" id="colab-title">Colaborador</div>
+    <div class="page-subtitle">Tarefas atribuídas</div>
+  </div>
+  <div id="colab-container"></div>
+</div>
+
 </main>
+</div>
+
+<!-- LIVRO INFO MODAL -->
+<div class="modal-overlay" id="livro-info-modal">
+  <div class="modal" style="width:620px;">
+    <button class="modal-close" onclick="closeLivroInfo()">×</button>
+    <div class="modal-title">Ficha técnica</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-input" id="li-titulo" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Autor</label>
+        <input class="form-input" id="li-autor" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ilustrador</label>
+        <input class="form-input" id="li-ilustrador" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ano</label>
+        <input class="form-input" id="li-ano" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Edição</label>
+        <input class="form-input" id="li-edicao" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ISBN</label>
+        <input class="form-input" id="li-isbn" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <input class="form-input" id="li-tipo" type="text" placeholder="Ex: Álbum ilustrado, Coleção..." oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tamanho</label>
+        <input class="form-input" id="li-tamanho" type="text" placeholder="Ex: 20x20 cm" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Páginas</label>
+        <input class="form-input" id="li-paginas" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Editora</label>
+        <input class="form-input" id="li-editora" type="text" oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">Assuntos</label>
+        <input class="form-input" id="li-assuntos" type="text" placeholder="Ex: Amizade, Natureza, Diversidade..." oninput="saveLivroInfo()">
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">Sinopse</label>
+        <textarea class="notes-area" id="li-sinopse" placeholder="Sinopse do livro..." style="min-height:100px;" oninput="saveLivroInfo()"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span style="font-size:11px;color:var(--text-soft);" id="li-saved"></span>
+      <button class="btn btn-primary" onclick="closeLivroInfo()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD LIVRO MODAL -->
+<div class="modal-overlay" id="add-livro-modal">
+  <div class="modal" style="width:380px;">
+    <button class="modal-close" onclick="closeAddLivroModal()">×</button>
+    <div class="modal-title">Novo livro</div>
+    <form onsubmit="event.preventDefault(); submitAddLivro();">
+      <div class="form-group">
+        <label class="form-label">Título do livro</label>
+        <input class="form-input" id="new-livro-titulo" type="text" placeholder="Ex: A menina das estrelas..." autocomplete="off">
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="closeAddLivroModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD PROJETO MODAL -->
+<div class="modal-overlay" id="add-projeto-modal">
+  <div class="modal" style="width:400px;">
+    <button class="modal-close" onclick="closeAddProjetoModal()">×</button>
+    <div class="modal-title">Novo projeto</div>
+    <form onsubmit="event.preventDefault(); submitAddProjeto();">
+      <div class="form-group">
+        <label class="form-label">Nome do projeto</label>
+        <input class="form-input" id="new-projeto-nome" type="text" placeholder="Ex: Lançamento coleção 2026..." autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status inicial</label>
+        <select class="form-select" id="new-projeto-status">
+          <option value="pendente">Pendente</option>
+          <option value="em execução">Em execução</option>
+          <option value="finalizado">Finalizado</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="closeAddProjetoModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Criar projeto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PROJETO MODAL -->
+<div class="modal-overlay" id="projeto-modal">
+  <div class="modal mentee-modal">
+    <button class="modal-close" onclick="closeProjetoModal()">×</button>
+    <div class="mentee-modal-header">
+      <div style="flex:1;">
+        <div class="mentee-modal-name" id="pm-nome" contenteditable="true" style="outline:none;border-radius:4px;padding:2px 4px;" onblur="saveProjetoNome(this.textContent)"></div>
+        <div class="mentee-modal-meta" id="pm-empresa-label">Grandes projetos</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="date" id="pm-data-inicio" class="form-input" style="width:140px;font-size:12px;" onchange="saveProjetoData()" placeholder="Início">
+          <span style="font-size:12px;color:var(--text-soft);">→</span>
+          <input type="date" id="pm-data-fim" class="form-input" style="width:140px;font-size:12px;" onchange="saveProjetoData()" placeholder="Fim">
+        </div>
+        <select id="pm-status" class="form-select" style="width:auto;" onchange="saveProjetoStatus()">
+          <option value="pendente">pendente</option>
+          <option value="em execução">em execução</option>
+          <option value="finalizado">finalizado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('proj-notas', this)">Notas</button>
+      <button class="modal-tab" onclick="switchTab('proj-tarefas', this)">Tarefas</button>
+    </div>
+    <!-- Notas -->
+    <div class="modal-tab-content active" id="tab-proj-notas">
+      <textarea class="notes-area" id="pm-notas" placeholder="Descrição, contexto, observações do projeto..." style="min-height:220px;" oninput="saveProjetoNotas()"></textarea>
+      <div style="text-align:right;margin-top:6px;"><span style="font-size:11px;color:var(--text-soft);" id="pm-notas-saved"></span></div>
+    </div>
+    <!-- Tarefas -->
+    <div class="modal-tab-content" id="tab-proj-tarefas">
+      <div style="background:var(--editora-bg);border:1px solid var(--editora-border);border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--editora);">
+        Tarefas adicionadas aqui aparecem automaticamente na aba <strong>Tarefas</strong> do dashboard.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;margin-bottom:10px;align-items:end;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Nova tarefa</label>
+          <input class="form-input" id="pm-nova-tarefa" type="text" placeholder="Descreva a tarefa...">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Prazo</label>
+          <input class="form-input" id="pm-tarefa-data" type="date" style="width:130px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Responsável</label>
+          <select class="form-select" id="pm-tarefa-resp" style="width:110px;">
+            <option value="">—</option>
+            <option value="Gisella">Gisella</option>
+            <option value="Luiggi">Luiggi</option>
+            <option value="Milena">Milena</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label" style="opacity:0;">.</label>
+          <button class="btn btn-primary" onclick="addProjetoTarefa()">+ Add</button>
+        </div>
+      </div>
+      <div class="section-title">Tarefas do projeto</div>
+      <div id="pm-tarefas-lista"></div>
+    </div>
+  </div>
 </div>
 
 <!-- CLAUDE CHAT PANEL -->
@@ -546,7 +776,7 @@ tr:hover td { background: var(--bg); }
           <select class="form-select" id="qa-empresa">
             <option value="editora">Editora Cassol</option>
             <option value="leia">Léia Cassol</option>
-            <option value="gisella">Gisella Cassol</option>
+            <option value="gisella">GC - Estratégias Literárias</option>
           </select>
         </div>
         <div class="form-group">
@@ -581,6 +811,15 @@ tr:hover td { background: var(--bg); }
           </select>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Responsável</label>
+        <select class="form-select" id="qa-responsavel">
+          <option value="">— nenhum —</option>
+          <option value="Gisella">Gisella</option>
+          <option value="Luiggi">Luiggi</option>
+          <option value="Milena">Milena</option>
+        </select>
+      </div>
       <div class="form-group" id="qa-field-etapa" style="display:none;">
         <label class="form-label">Etapa atual</label>
         <input class="form-input" id="qa-etapa" type="text" placeholder="Ex: Revisão, Diagramação, Impressão">
@@ -611,15 +850,6 @@ tr:hover td { background: var(--bg); }
         <label class="form-label">Nome completo</label>
         <input class="form-input" id="new-mentee-name" type="text" placeholder="Ex: Ana Carolina Silva" autocomplete="off">
       </div>
-      <div class="form-group">
-        <label class="form-label">Status inicial</label>
-        <select class="form-select" id="new-mentee-status">
-          <option value="ok">Ok</option>
-          <option value="indiv. pend.">Individual pendente</option>
-          <option value="aguardando">Aguardando</option>
-          <option value="sem contato">Sem contato</option>
-        </select>
-      </div>
       <div class="btn-row">
         <button type="button" class="btn" onclick="closeAddMenteeModal()">Cancelar</button>
         <button type="submit" class="btn btn-primary">Cadastrar</button>
@@ -636,15 +866,14 @@ tr:hover td { background: var(--bg); }
       <div class="avatar-lg" id="mp-avatar">GC</div>
       <div style="flex:1;">
         <div class="mentee-modal-name" id="mp-name">Nome</div>
-        <div class="mentee-modal-meta">Plano Diretor · Gisella Cassol</div>
+        <div class="mentee-modal-meta">Plano Diretor · GC - Estratégias Literárias</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+          <span style="font-size:11px;color:var(--text-soft);white-space:nowrap;">Link do docs:</span>
+          <input id="mp-docs-link" type="url" placeholder="https://docs.google.com/..." class="form-input" style="font-size:12px;padding:4px 8px;flex:1;" oninput="saveMenteeDocs()" onblur="saveMenteeDocs()">
+          <a id="mp-docs-open" href="#" target="_blank" style="display:none;font-size:12px;color:var(--editora);white-space:nowrap;text-decoration:none;" title="Abrir documento">↗ abrir</a>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <select id="mp-status" class="form-select" style="width:auto;" onchange="saveMenteeStatus()">
-          <option value="ok">ok</option>
-          <option value="indiv. pend.">indiv. pend.</option>
-          <option value="sem contato">sem contato</option>
-          <option value="aguardando">aguardando</option>
-        </select>
         <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="confirmDeleteCurrentMentee()">Descadastrar</button>
       </div>
     </div>
@@ -690,14 +919,23 @@ tr:hover td { background: var(--bg); }
       <div style="background:var(--gisella-bg);border:1px solid var(--gisella-border);border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--gisella);">
         Tarefas adicionadas aqui aparecem automaticamente na aba <strong>Tarefas</strong> do dashboard.
       </div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:10px;align-items:end;">
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;margin-bottom:10px;align-items:end;">
         <div class="form-group" style="margin:0;">
           <label class="form-label">Nova tarefa</label>
           <input class="form-input" id="new-mentee-task-title" type="text" placeholder="Descreva a tarefa...">
         </div>
         <div class="form-group" style="margin:0;">
           <label class="form-label">Prazo</label>
-          <input class="form-input" id="new-mentee-task-date" type="date" style="width:140px;">
+          <input class="form-input" id="new-mentee-task-date" type="date" style="width:130px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Responsável</label>
+          <select class="form-select" id="new-mentee-task-resp" style="width:110px;">
+            <option value="">—</option>
+            <option value="Gisella">Gisella</option>
+            <option value="Luiggi">Luiggi</option>
+            <option value="Milena">Milena</option>
+          </select>
         </div>
       </div>
       <div style="text-align:right;margin-bottom:1.2rem;">
@@ -735,6 +973,7 @@ if (events.length === 0) {
 
 function saveEvents() {
   localStorage.setItem('gc-events', JSON.stringify(events));
+  syncFS('events', events);
 }
 
 /* ── CALENDAR ── */
@@ -805,7 +1044,7 @@ function buildCalendar(containerId, filter) {
     html += `<div class="cal-legend">
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora Cassol</div>
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--leia);"></div>Léia Cassol</div>
-      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>Gisella Cassol</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>GC - Estratégias Literárias</div>
     </div>`;
   }
 
@@ -853,6 +1092,106 @@ function showPage(id, btn) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if (btn) btn.classList.add('active');
+}
+
+function showColaborador(nome, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-colaborador').classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const colorMap = { Gisella: 'gisella', Luiggi: 'info', Milena: 'leia' };
+  const cor = colorMap[nome] || 'gray';
+
+  document.getElementById('colab-title').textContent = nome;
+const stripe = document.getElementById('colab-stripe');
+  stripe.style.background = `var(--${cor}-bg, var(--gray-bg))`;
+  stripe.style.color = `var(--${cor}, var(--gray))`;
+  stripe.style.border = `1px solid var(--${cor}-border, var(--border))`;
+  stripe.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:var(--${cor}, var(--gray));display:inline-block;"></span> ${nome}`;
+
+  buildColaboradorTasks(nome);
+}
+
+function buildColaboradorTasks(nome) {
+  const container = document.getElementById('colab-container');
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let tasks = [];
+
+  // Eventos com responsável
+  events.forEach(e => {
+    if ((e.responsavel || '') === nome) {
+      tasks.push({ titulo: e.titulo, empresa: e.empresa, data: e.data, origem: 'Calendário' });
+    }
+  });
+
+  // Tarefas de mentoradas
+  mentees.forEach(m => {
+    (m.tasks || []).forEach(t => {
+      if ((t.responsavel || '') === nome) {
+        tasks.push({ titulo: `[${m.name}] ${t.titulo}`, empresa: 'gisella', data: t.data || '', origem: 'Mentoria' });
+      }
+    });
+  });
+
+  if (tasks.length === 0) {
+    container.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-soft);font-size:14px;">Nenhuma tarefa atribuída a ${nome} ainda.<br>Atribua tarefas usando o campo "Responsável" ao adicionar itens.</div>`;
+    return;
+  }
+
+  tasks.sort((a, b) => {
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return a.data.localeCompare(b.data);
+  });
+
+  const grupos = { atrasado: [], hoje: [], semana: [], proximas: [] };
+  tasks.forEach(t => {
+    if (!t.data) { grupos.proximas.push(t); return; }
+    const d = new Date(t.data + 'T00:00:00');
+    const diff = Math.round((d - today) / 86400000);
+    if (diff < 0) grupos.atrasado.push(t);
+    else if (diff === 0) grupos.hoje.push(t);
+    else if (diff <= 7) grupos.semana.push(t);
+    else grupos.proximas.push(t);
+  });
+
+  const empresaLabels = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC - Estratégias Literárias' };
+  const mesesAb = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+  function fmtD(val) {
+    if (!val) return '—';
+    const [y,m,d] = val.split('-').map(Number);
+    const diff = Math.round((new Date(y,m-1,d) - today) / 86400000);
+    if (diff === 0) return 'hoje';
+    if (diff === 1) return 'amanhã';
+    if (diff < 0) return `${d} ${mesesAb[m-1]} (atrasado)`;
+    if (diff <= 7) return `em ${diff} dias`;
+    return `${d} ${mesesAb[m-1]}`;
+  }
+
+  function renderGrupo(label, items, cor) {
+    if (!items.length) return '';
+    return `<div style="margin-bottom:1.5rem;">
+      <div style="font-size:11px;font-weight:500;color:${cor};text-transform:uppercase;letter-spacing:0.09em;margin-bottom:8px;">${label} · ${items.length}</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tarefa</th><th>Empresa</th><th>Origem</th><th>Prazo</th></tr></thead>
+        <tbody>${items.map(t => `<tr>
+          <td><div class="row-name">${t.titulo}</div></td>
+          <td style="font-size:12px;color:var(--text-soft);">${empresaLabels[t.empresa] || t.empresa}</td>
+          <td><span class="badge b-gray">${t.origem}</span></td>
+          <td style="color:${cor};font-size:12px;font-weight:500;">${fmtD(t.data)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div></div>`;
+  }
+
+  container.innerHTML =
+    renderGrupo('Atrasadas', grupos.atrasado, 'var(--danger)') +
+    renderGrupo('Hoje', grupos.hoje, 'var(--gisella)') +
+    renderGrupo('Esta semana', grupos.semana, 'var(--warn)') +
+    renderGrupo('Próximas', grupos.proximas, 'var(--text-soft)');
 }
 
 /* ── CHECKLIST ── */
@@ -936,16 +1275,17 @@ function submitQuickAdd() {
   const prazoRaw = document.getElementById('qa-prazo').value;
   const prazo = prazoRaw ? formatDate(prazoRaw) : '—';
   const status = document.getElementById('qa-status').value;
+  const responsavel = document.getElementById('qa-responsavel').value;
 
   if (!titulo) { document.getElementById('qa-titulo').focus(); return; }
 
   const badgeMap = { ok:'b-ok', atencao:'b-warn', urgente:'b-danger', andamento:'b-info', ideia:'b-gray' };
   const labelMap = { ok:'ok', atencao:'atenção', urgente:'urgente', andamento:'em andamento', ideia:'ideia' };
-  const empresaLabel = { editora:'Editora Cassol', leia:'Léia Cassol', gisella:'Gisella Cassol' };
+  const empresaLabel = { editora:'Editora Cassol', leia:'Léia Cassol', gisella:'GC - Estratégias Literárias' };
 
   if (tipo === 'evento') {
     const newId = Date.now();
-    events.push({ id: newId, empresa, titulo, data: prazoRaw || new Date().toISOString().slice(0,10) });
+    events.push({ id: newId, empresa, titulo, data: prazoRaw || new Date().toISOString().slice(0,10), responsavel });
     saveEvents();
     refreshCalendars();
     buildTarefas();
@@ -1033,6 +1373,7 @@ mentees.forEach(m => { if (!m.tasks) m.tasks = []; });
 function saveMentees() {
   localStorage.setItem('gc-mentees', JSON.stringify(mentees));
   updateMenteeCounters();
+  syncFS('mentees', mentees);
 }
 
 function updateMenteeCounters() {
@@ -1062,7 +1403,6 @@ function renderMenteeList() {
       <div class="mentee-name">${m.name}</div>
       ${m.sessions && m.sessions.length > 0 ? `<span style="font-size:11px;color:var(--text-soft);">${m.sessions.length} sess${m.sessions.length>1?'ões':'ão'}</span>` : ''}
       ${m.tasks && m.tasks.length > 0 ? `<span style="font-size:11px;color:var(--gisella);">✓ ${m.tasks.length}</span>` : ''}
-      <span class="badge ${STATUS_BADGE[m.status]||'b-gray'}">${m.status}</span>
       <button class="mentee-delete-btn" onclick="deleteMenteeById(event,${m.id})" title="Descadastrar">×</button>
     </div>
   `).join('');
@@ -1087,9 +1427,8 @@ document.getElementById('add-mentee-modal').addEventListener('click', function(e
 function submitAddMentee() {
   const name = document.getElementById('new-mentee-name').value.trim();
   if (!name) { document.getElementById('new-mentee-name').focus(); return; }
-  const status = document.getElementById('new-mentee-status').value;
   const newId = Date.now();
-  mentees.push({ id: newId, name, status, notes: '', sessions: [], tasks: [] });
+  mentees.push({ id: newId, name, notes: '', sessions: [], tasks: [] });
   saveMentees();
   renderMenteeList();
   closeAddMenteeModal();
@@ -1105,9 +1444,13 @@ function openMenteeModal(id) {
 
   document.getElementById('mp-avatar').textContent = getInitials(m.name);
   document.getElementById('mp-name').textContent = m.name;
-  document.getElementById('mp-status').value = m.status;
   document.getElementById('mp-notes').value = m.notes || '';
   document.getElementById('notes-saved-indicator').textContent = '';
+  const docsInput = document.getElementById('mp-docs-link');
+  const docsOpen = document.getElementById('mp-docs-open');
+  docsInput.value = m.docsLink || '';
+  docsOpen.style.display = m.docsLink ? 'inline' : 'none';
+  docsOpen.href = m.docsLink || '#';
 
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('mp-session-date').value = today;
@@ -1137,6 +1480,17 @@ function switchTab(tabId, btn) {
   document.querySelectorAll('.modal-tab-content').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
   if (btn) btn.classList.add('active');
+}
+
+function saveMenteeDocs() {
+  const m = mentees.find(x => x.id === currentMenteeId);
+  if (!m) return;
+  const val = document.getElementById('mp-docs-link').value.trim();
+  m.docsLink = val;
+  saveMentees();
+  const docsOpen = document.getElementById('mp-docs-open');
+  docsOpen.style.display = val ? 'inline' : 'none';
+  docsOpen.href = val || '#';
 }
 
 function saveMenteeNotes() {
@@ -1224,6 +1578,7 @@ function renderMenteeTasks(m) {
     }
     return `<div class="mentee-task-item">
       <span>${t.titulo}</span>
+      ${t.responsavel ? `<span class="resp-tag resp-${t.responsavel.toLowerCase()}">${t.responsavel}</span>` : ''}
       <span class="mentee-task-date">${dateLabel}</span>
       <button class="mentee-task-del" onclick="deleteMenteeTask('${t.id}')" title="Remover">×</button>
     </div>`;
@@ -1236,12 +1591,14 @@ function addMenteeTask() {
   const titulo = document.getElementById('new-mentee-task-title').value.trim();
   if (!titulo) { document.getElementById('new-mentee-task-title').focus(); return; }
   const data = document.getElementById('new-mentee-task-date').value || '';
+  const responsavel = document.getElementById('new-mentee-task-resp').value || '';
   if (!m.tasks) m.tasks = [];
   const taskId = Date.now().toString();
-  m.tasks.push({ id: taskId, titulo, data });
+  m.tasks.push({ id: taskId, titulo, data, responsavel });
   saveMentees();
   document.getElementById('new-mentee-task-title').value = '';
   document.getElementById('new-mentee-task-date').value = '';
+  document.getElementById('new-mentee-task-resp').value = '';
   renderMenteeTasks(m);
   buildTarefas();
 }
@@ -1319,8 +1676,23 @@ function buildTarefas() {
     titulo: e.titulo,
     empresa: e.empresa,
     data: e.data,
+    responsavel: e.responsavel || '',
     tipo: 'evento'
   }));
+
+  // Collect livro etapas com prazo
+  livros.filter(l => !l.publicado).forEach(l => {
+    l.etapas.filter(e => !e.feito && e.prazo).forEach(e => {
+      tasks.push({ titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa || 'editora', data: e.prazo, responsavel: '', tipo: 'livro' });
+    });
+  });
+
+  // Collect project tasks
+  projetos.forEach(p => {
+    (p.tarefas || []).filter(t => !t.feito).forEach(t => {
+      tasks.push({ titulo: `[${p.nome}] ${t.titulo}`, empresa: p.empresa, data: t.data || '', responsavel: t.responsavel || '', tipo: 'projeto' });
+    });
+  });
 
   // Collect mentee tasks
   mentees.forEach(m => {
@@ -1329,6 +1701,7 @@ function buildTarefas() {
         titulo: `[${m.name}] ${t.titulo}`,
         empresa: 'gisella',
         data: t.data || '',
+        responsavel: t.responsavel || '',
         tipo: 'mentoria'
       });
     });
@@ -1347,7 +1720,7 @@ function buildTarefas() {
   }
 
   const empresaColors = { editora: 'b-editora', leia: 'b-leia', gisella: 'b-gisella' };
-  const empresaLabels = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol' };
+  const empresaLabels = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC - Estratégias Literárias' };
 
   const groups = { atrasado: [], hoje: [], semana: [], proximas: [] };
 
@@ -1378,14 +1751,16 @@ function buildTarefas() {
     let html = `<div style="margin-bottom:1.5rem;">
       <div style="font-size:11px;font-weight:500;color:${accentColor};text-transform:uppercase;letter-spacing:0.09em;margin-bottom:8px;">${label} · ${items.length}</div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+        <thead><tr><th>Tarefa</th><th>Empresa</th><th>Responsável</th><th>Prazo</th></tr></thead>
         <tbody>`;
     items.forEach(t => {
       const badgeCls = empresaColors[t.empresa] || 'b-gray';
       const badgeLabel = empresaLabels[t.empresa] || t.empresa;
+      const respTag = t.responsavel ? `<span class="resp-tag resp-${t.responsavel.toLowerCase()}">${t.responsavel}</span>` : '<span style="color:var(--text-soft);font-size:12px;">—</span>';
       html += `<tr>
         <td><div class="row-name">${t.titulo}</div></td>
         <td><span class="badge ${badgeCls}" style="${badgeCls==='b-editora'?'background:var(--editora-bg);color:var(--editora);':badgeCls==='b-leia'?'background:var(--leia-bg);color:var(--leia);':badgeCls==='b-gisella'?'background:var(--gisella-bg);color:var(--gisella);':''}">${badgeLabel}</span></td>
+        <td>${respTag}</td>
         <td style="color:${accentColor};font-size:12px;font-weight:500;">${fmtDate(t.data)}</td>
       </tr>`;
     });
@@ -1398,6 +1773,481 @@ function buildTarefas() {
     renderGroup('Hoje', groups.hoje, 'var(--gisella)') +
     renderGroup('Esta semana', groups.semana, 'var(--warn)') +
     renderGroup('Próximas', groups.proximas, 'var(--text-soft)');
+}
+
+/* ── PROJETOS ── */
+let projetos = JSON.parse(localStorage.getItem('gc-projetos') || '[]');
+let currentProjetoId = null;
+
+function saveProjetos() { localStorage.setItem('gc-projetos', JSON.stringify(projetos)); syncFS('projetos', projetos); }
+
+const STATUS_PROJ_BADGE = { 'pendente': 'b-pendente', 'em execução': 'b-execucao', 'finalizado': 'b-finalizado' };
+const EMPRESA_PROJ_LABEL = { editora: 'Projetos · Editora Cassol', leia: 'Projetos · Léia Cassol', gisella: 'Projetos · GC - Estratégias Literárias' };
+
+function fmtDatasProj(inicio, fim) {
+  const fmt = v => { if (!v) return null; const [y,m,d] = v.split('-').map(Number); const mesesAb=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']; return `${d} ${mesesAb[m-1]} ${y}`; };
+  const i = fmt(inicio), f = fmt(fim);
+  if (i && f) return `${i} → ${f}`;
+  if (i) return `a partir de ${i}`;
+  if (f) return `até ${f}`;
+  return '—';
+}
+
+function renderProjetos() {
+  ['editora','leia','gisella'].forEach(empresa => {
+    const el = document.getElementById(`projetos-${empresa}`);
+    if (!el) return;
+    const lista = projetos.filter(p => p.empresa === empresa);
+    if (lista.length === 0) {
+      el.innerHTML = `<div style="font-size:13px;color:var(--text-soft);padding:8px 0;">Nenhum projeto ainda.</div>`;
+      return;
+    }
+    el.innerHTML = lista.map(p => `
+      <div class="projeto-item" onclick="openProjetoModal(${p.id})">
+        <div class="projeto-nome">${p.nome}</div>
+        <span class="projeto-datas">${fmtDatasProj(p.dataInicio, p.dataFim)}</span>
+        ${p.tarefas && p.tarefas.length ? `<span style="font-size:11px;color:var(--text-soft);">✓ ${p.tarefas.filter(t=>t.feito).length}/${p.tarefas.length}</span>` : ''}
+        <span class="badge ${STATUS_PROJ_BADGE[p.status] || 'b-gray'}">${p.status}</span>
+        <button class="projeto-del" onclick="event.stopPropagation();deleteProjeto(${p.id})" title="Remover">×</button>
+      </div>`).join('');
+  });
+}
+
+let addProjetoEmpresa = '';
+
+function addProjeto(empresa) {
+  addProjetoEmpresa = empresa;
+  document.getElementById('new-projeto-nome').value = '';
+  document.getElementById('new-projeto-status').value = 'pendente';
+  document.getElementById('add-projeto-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-projeto-nome').focus(), 50);
+}
+
+function closeAddProjetoModal() {
+  document.getElementById('add-projeto-modal').classList.remove('open');
+}
+
+document.getElementById('add-projeto-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddProjetoModal();
+});
+document.getElementById('add-livro-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddLivroModal();
+});
+
+function submitAddProjeto() {
+  const nome = document.getElementById('new-projeto-nome').value.trim();
+  if (!nome) { document.getElementById('new-projeto-nome').focus(); return; }
+  const status = document.getElementById('new-projeto-status').value;
+  const novo = { id: Date.now(), nome, empresa: addProjetoEmpresa, status, dataInicio: '', dataFim: '', notas: '', tarefas: [] };
+  projetos.push(novo);
+  saveProjetos();
+  renderProjetos();
+  closeAddProjetoModal();
+  openProjetoModal(novo.id);
+}
+
+function deleteProjeto(id) {
+  const p = projetos.find(x => x.id === id);
+  if (!p || !confirm(`Remover "${p.nome}"?`)) return;
+  projetos = projetos.filter(x => x.id !== id);
+  saveProjetos(); renderProjetos(); buildTarefas();
+}
+
+function openProjetoModal(id) {
+  const p = projetos.find(x => x.id === id);
+  if (!p) return;
+  currentProjetoId = id;
+
+  document.getElementById('pm-nome').textContent = p.nome;
+  document.getElementById('pm-empresa-label').textContent = EMPRESA_PROJ_LABEL[p.empresa] || '';
+  document.getElementById('pm-data-inicio').value = p.dataInicio || '';
+  document.getElementById('pm-data-fim').value = p.dataFim || '';
+  document.getElementById('pm-status').value = p.status;
+  document.getElementById('pm-notas').value = p.notas || '';
+  document.getElementById('pm-notas-saved').textContent = '';
+  document.getElementById('pm-nova-tarefa').value = '';
+  document.getElementById('pm-tarefa-data').value = '';
+  document.getElementById('pm-tarefa-resp').value = '';
+
+  renderProjetoTarefas(p);
+  switchTab('proj-notas', document.querySelector('#projeto-modal .modal-tab'));
+  document.getElementById('projeto-modal').classList.add('open');
+}
+
+function closeProjetoModal() {
+  currentProjetoId = null;
+  document.getElementById('projeto-modal').classList.remove('open');
+  renderProjetos();
+  buildTarefas();
+}
+
+document.getElementById('projeto-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeProjetoModal();
+});
+
+function saveProjetoNome(nome) {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p || !nome.trim()) return;
+  p.nome = nome.trim();
+  saveProjetos();
+}
+
+function saveProjetoData() {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  p.dataInicio = document.getElementById('pm-data-inicio').value;
+  p.dataFim = document.getElementById('pm-data-fim').value;
+  saveProjetos();
+}
+
+function saveProjetoStatus() {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  p.status = document.getElementById('pm-status').value;
+  saveProjetos();
+}
+
+function saveProjetoNotas() {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  p.notas = document.getElementById('pm-notas').value;
+  saveProjetos();
+  const ind = document.getElementById('pm-notas-saved');
+  if (ind) { ind.textContent = 'salvo ✓'; setTimeout(() => { ind.textContent = ''; }, 1500); }
+}
+
+function renderProjetoTarefas(p) {
+  const container = document.getElementById('pm-tarefas-lista');
+  if (!p.tarefas || p.tarefas.length === 0) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-soft);padding:4px 0;">Nenhuma tarefa ainda.</div>';
+    return;
+  }
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const mesesAb = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  container.innerHTML = p.tarefas.map(t => {
+    let prazoLabel = '—';
+    if (t.data) {
+      const [y,m,d] = t.data.split('-').map(Number);
+      const diff = Math.round((new Date(y,m-1,d) - hoje) / 86400000);
+      if (diff < 0) prazoLabel = `<span style="color:var(--danger)">${d} ${mesesAb[m-1]} ⚠</span>`;
+      else if (diff === 0) prazoLabel = 'hoje';
+      else if (diff === 1) prazoLabel = 'amanhã';
+      else prazoLabel = `${d} ${mesesAb[m-1]}`;
+    }
+    return `<div class="mentee-task-item" style="${t.feito ? 'opacity:0.6;' : ''}">
+      <input type="checkbox" ${t.feito ? 'checked' : ''} onchange="toggleProjetoTarefa('${t.id}')" style="width:14px;height:14px;accent-color:var(--editora);cursor:pointer;flex-shrink:0;">
+      <span style="flex:1;${t.feito ? 'text-decoration:line-through;' : ''}">${t.titulo}</span>
+      ${t.responsavel ? `<span class="resp-tag resp-${t.responsavel.toLowerCase()}">${t.responsavel}</span>` : ''}
+      <span class="mentee-task-date">${prazoLabel}</span>
+      <button class="mentee-task-del" onclick="deleteProjetoTarefa('${t.id}')">×</button>
+    </div>`;
+  }).join('');
+}
+
+function addProjetoTarefa() {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  const titulo = document.getElementById('pm-nova-tarefa').value.trim();
+  if (!titulo) { document.getElementById('pm-nova-tarefa').focus(); return; }
+  const data = document.getElementById('pm-tarefa-data').value || '';
+  const responsavel = document.getElementById('pm-tarefa-resp').value || '';
+  if (!p.tarefas) p.tarefas = [];
+  p.tarefas.push({ id: Date.now().toString(), titulo, data, responsavel, feito: false });
+  saveProjetos();
+  document.getElementById('pm-nova-tarefa').value = '';
+  document.getElementById('pm-tarefa-data').value = '';
+  document.getElementById('pm-tarefa-resp').value = '';
+  renderProjetoTarefas(p);
+  buildTarefas();
+}
+
+function toggleProjetoTarefa(taskId) {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  const t = p.tarefas.find(x => x.id === taskId);
+  if (!t) return;
+  t.feito = !t.feito;
+  saveProjetos(); renderProjetoTarefas(p); buildTarefas();
+}
+
+function deleteProjetoTarefa(taskId) {
+  const p = projetos.find(x => x.id === currentProjetoId);
+  if (!p) return;
+  p.tarefas = p.tarefas.filter(x => x.id !== taskId);
+  saveProjetos(); renderProjetoTarefas(p); buildTarefas();
+}
+
+/* ── LIVROS ── */
+const ETAPAS_LIVRO = [
+  'Briefing',
+  'Texto em andamento',
+  'Texto finalizado',
+  'Texto aprovado',
+  'Escolha do ilustrador',
+  'R.A. Conceito',
+  'Pré-diagramação',
+  'Esboços',
+  'Estado da arte — coloração',
+  'Finalização das ilustras',
+  'ISBN + Ficha catalográfica + Código de barras',
+  'Diagramação',
+  'Aprovação do autor e ilustrador',
+  'Revisão final',
+  'Boneco',
+  'Ajustes finos',
+  'Envio do final para gráfica',
+  'Aprovação final',
+  'Liberação para impressão',
+  'Recebimento / envio do estoque',
+  'Subir no sistema',
+  'Cadastrar no site',
+  'Lançamento'
+];
+
+function novoLivroData(titulo, empresa) {
+  return {
+    id: Date.now(),
+    titulo: titulo || 'Novo livro',
+    empresa: empresa || 'editora',
+    publicado: false,
+    dataPublicacao: '',
+    expandido: false,
+    mentoradas: [],
+    etapas: ETAPAS_LIVRO.map(nome => ({ nome, feito: false, prazo: '' })),
+    info: { titulo: titulo || '', autor: '', ilustrador: '', ano: '', edicao: '', isbn: '', tipo: '', tamanho: '', paginas: '', editora: empresa === 'gisella' ? 'GC - Estratégias Literárias' : 'Editora Cassol', assuntos: '', sinopse: '' }
+  };
+}
+
+let livros = JSON.parse(localStorage.getItem('gc-livros') || 'null');
+if (!livros) {
+  livros = [novoLivroData('Livro 01'), novoLivroData('Livro 02'), novoLivroData('Livro 03')];
+  saveLivros();
+}
+livros.forEach(l => {
+  if (!l.etapas || l.etapas.length < ETAPAS_LIVRO.length) {
+    l.etapas = ETAPAS_LIVRO.map((nome, i) => ({
+      nome, feito: l.etapas && l.etapas[i] ? l.etapas[i].feito : false,
+      prazo: l.etapas && l.etapas[i] ? (l.etapas[i].prazo || '') : ''
+    }));
+  }
+});
+
+function saveLivros() { localStorage.setItem('gc-livros', JSON.stringify(livros)); syncFS('livros', livros); }
+
+function fmtPrazoLivro(val) {
+  if (!val) return '';
+  const [y,m,d] = val.split('-').map(Number);
+  const mesesAb = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const diff = Math.round((new Date(y,m-1,d) - hoje) / 86400000);
+  if (diff < 0) return `<span style="color:var(--danger);font-size:11px;">${d} ${mesesAb[m-1]} ⚠</span>`;
+  if (diff === 0) return `<span style="color:var(--gisella);font-size:11px;">hoje</span>`;
+  if (diff === 1) return `<span style="color:var(--warn);font-size:11px;">amanhã</span>`;
+  return `<span style="font-size:11px;color:var(--text-soft);">${d} ${mesesAb[m-1]}</span>`;
+}
+
+function renderLivros() {
+  ['editora', 'gisella'].forEach(emp => renderLivrosEmpresa(emp));
+}
+
+function renderLivrosEmpresa(emp) {
+  const suffix = emp === 'editora' ? '' : '-' + emp;
+  const producao = document.getElementById('livros-producao' + suffix);
+  const publicados = document.getElementById('livros-publicados' + suffix);
+  const secaoPublicados = document.getElementById('secao-publicados' + suffix);
+  if (!producao) return;
+
+  const emProducao = livros.filter(l => !l.publicado && (l.empresa || 'editora') === emp);
+  const publicadosList = livros.filter(l => l.publicado && (l.empresa || 'editora') === emp);
+
+  if (emProducao.length === 0) {
+    producao.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção. Use "+ novo livro" para adicionar.</div>';
+  } else {
+    producao.innerHTML = emProducao.map(l => {
+      const feitos = l.etapas.filter(e => e.feito).length;
+      const total = l.etapas.length;
+      const pct = Math.round((feitos / total) * 100);
+      const proximaEtapa = l.etapas.find(e => !e.feito);
+      const ments = (l.mentoradas || []).map(mid => mentees.find(m => m.id === mid)).filter(Boolean);
+      const mentOpts = mentees.filter(m => !(l.mentoradas||[]).includes(m.id)).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+      const mentTags = ments.map(m => `<span class="livro-ment-tag">${m.name}<button onclick="event.stopPropagation();removeLivroMentorada(${l.id},${m.id})" title="Remover">×</button></span>`).join('');
+      const mentAdd = mentOpts ? `<select class="livro-ment-select" onchange="event.stopPropagation();addLivroMentorada(${l.id},+this.value);this.value=''" onclick="event.stopPropagation()"><option value="">+ mentorada</option>${mentOpts}</select>` : '';
+      return `<div class="livro-card" id="livro-card-${l.id}">
+        <div class="livro-card-header" onclick="toggleLivroExpand(${l.id})">
+          <button class="livro-titulo-btn" onclick="event.stopPropagation();openLivroInfo(${l.id})" title="Ver ficha técnica">${l.titulo}</button>
+          <div class="livro-mentoradas" onclick="event.stopPropagation()">${mentTags}${mentAdd}</div>
+          <div class="livro-progress-wrap">
+            ${proximaEtapa ? `<span style="font-size:11px;color:var(--text-soft);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${proximaEtapa.nome}">${proximaEtapa.nome}</span>` : '<span style="font-size:11px;color:var(--gisella);">✓ concluído</span>'}
+            <div class="livro-progress-bar"><div class="livro-progress-fill" style="width:${pct}%"></div></div>
+            <span class="livro-progress-label">${feitos}/${total}</span>
+          </div>
+          <button class="livro-expand-btn ${l.expandido ? 'open' : ''}" onclick="event.stopPropagation();toggleLivroExpand(${l.id})">▾</button>
+          <button class="livro-del-btn" onclick="event.stopPropagation();deleteLivro(${l.id})" title="Remover">×</button>
+        </div>
+        <div class="livro-etapas ${l.expandido ? 'open' : ''}">
+          ${l.etapas.map((e, i) => `
+            <div class="livro-etapa-row">
+              <input type="checkbox" ${e.feito ? 'checked' : ''} onchange="toggleEtapa(${l.id}, ${i})">
+              <span class="livro-etapa-nome ${e.feito ? 'done' : ''}">${e.nome}</span>
+              <input class="livro-etapa-date" type="date" value="${e.prazo || ''}" title="Prazo desta etapa" onchange="setPrazoEtapa(${l.id}, ${i}, this.value)">
+              ${e.prazo ? fmtPrazoLivro(e.prazo) : ''}
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  secaoPublicados.style.display = publicadosList.length > 0 ? 'block' : 'none';
+  if (publicadosList.length > 0) {
+    publicados.innerHTML = publicadosList.map(l => `
+      <div class="livro-publicado-item">
+        <span class="pub-icon">📗</span>
+        <span class="livro-publicado-nome">${l.titulo}</span>
+        ${l.dataPublicacao ? `<span class="livro-publicado-data">publicado em ${fmtDatePt(l.dataPublicacao)}</span>` : ''}
+        <button onclick="despublicarLivro(${l.id})" style="background:none;border:none;font-size:11px;color:var(--text-soft);cursor:pointer;padding:4px 8px;border-radius:4px;">↩ produção</button>
+        <button onclick="deleteLivro(${l.id})" style="background:none;border:none;font-size:14px;color:var(--text-soft);cursor:pointer;padding:4px;">×</button>
+      </div>`).join('');
+  }
+}
+
+function addLivroMentorada(livroId, menteeId) {
+  const l = livros.find(x => x.id === livroId);
+  if (!l || !menteeId) return;
+  if (!l.mentoradas) l.mentoradas = [];
+  if (!l.mentoradas.includes(menteeId)) l.mentoradas.push(menteeId);
+  l.expandido = !!l.expandido;
+  saveLivros(); renderLivros();
+}
+
+function removeLivroMentorada(livroId, menteeId) {
+  const l = livros.find(x => x.id === livroId);
+  if (!l) return;
+  l.mentoradas = (l.mentoradas || []).filter(id => id !== menteeId);
+  l.expandido = !!l.expandido;
+  saveLivros(); renderLivros();
+}
+
+function toggleLivroExpand(id) {
+  const l = livros.find(x => x.id === id);
+  if (!l) return;
+  l.expandido = !l.expandido;
+  saveLivros(); renderLivros();
+}
+
+function toggleEtapa(livroId, idx) {
+  const l = livros.find(x => x.id === livroId);
+  if (!l) return;
+  l.etapas[idx].feito = !l.etapas[idx].feito;
+  if (l.etapas.every(e => e.feito)) {
+    l.publicado = true;
+    l.dataPublicacao = new Date().toISOString().slice(0,10);
+    l.expandido = false;
+  }
+  saveLivros(); renderLivros();
+}
+
+function setPrazoEtapa(livroId, idx, valor) {
+  const l = livros.find(x => x.id === livroId);
+  if (!l) return;
+  l.etapas[idx].prazo = valor;
+  l.expandido = true;
+  saveLivros(); renderLivros();
+}
+
+function renameLivro(id, titulo) {
+  const l = livros.find(x => x.id === id);
+  if (!l || !titulo.trim()) return;
+  l.titulo = titulo.trim();
+  if (!l.info) l.info = {};
+  if (!l.info.titulo) l.info.titulo = l.titulo;
+  saveLivros();
+}
+
+/* FICHA TÉCNICA */
+let currentLivroInfoId = null;
+const LI_CAMPOS = ['titulo','autor','ilustrador','ano','edicao','isbn','tipo','tamanho','paginas','editora','assuntos','sinopse'];
+
+function openLivroInfo(id) {
+  const l = livros.find(x => x.id === id);
+  if (!l) return;
+  currentLivroInfoId = id;
+  if (!l.info) l.info = {};
+
+  LI_CAMPOS.forEach(campo => {
+    const el = document.getElementById('li-' + campo);
+    if (!el) return;
+    if (el.tagName === 'TEXTAREA') el.value = l.info[campo] || '';
+    else el.value = l.info[campo] || (campo === 'titulo' ? l.titulo : campo === 'editora' ? 'Editora Cassol' : '');
+  });
+
+  document.getElementById('li-saved').textContent = '';
+  document.getElementById('livro-info-modal').classList.add('open');
+}
+
+function closeLivroInfo() {
+  currentLivroInfoId = null;
+  document.getElementById('livro-info-modal').classList.remove('open');
+  renderLivros();
+}
+
+document.getElementById('livro-info-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeLivroInfo();
+});
+
+let liSaveTimer;
+function saveLivroInfo() {
+  const l = livros.find(x => x.id === currentLivroInfoId);
+  if (!l) return;
+  if (!l.info) l.info = {};
+  LI_CAMPOS.forEach(campo => {
+    const el = document.getElementById('li-' + campo);
+    if (el) l.info[campo] = el.value;
+  });
+  // Sync title
+  if (l.info.titulo && l.info.titulo.trim()) l.titulo = l.info.titulo.trim();
+  saveLivros();
+  clearTimeout(liSaveTimer);
+  const ind = document.getElementById('li-saved');
+  liSaveTimer = setTimeout(() => { if (ind) ind.textContent = 'salvo ✓'; setTimeout(() => { if (ind) ind.textContent = ''; }, 1500); }, 600);
+}
+
+let addLivroEmpresa = 'editora';
+
+function addLivro(empresa) {
+  addLivroEmpresa = empresa || 'editora';
+  document.getElementById('new-livro-titulo').value = '';
+  document.getElementById('add-livro-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-livro-titulo').focus(), 50);
+}
+
+function closeAddLivroModal() {
+  document.getElementById('add-livro-modal').classList.remove('open');
+}
+
+function submitAddLivro() {
+  const titulo = document.getElementById('new-livro-titulo').value.trim();
+  if (!titulo) { document.getElementById('new-livro-titulo').focus(); return; }
+  const novo = novoLivroData(titulo, addLivroEmpresa);
+  novo.expandido = true;
+  livros.push(novo);
+  saveLivros(); renderLivros();
+  closeAddLivroModal();
+}
+
+function deleteLivro(id) {
+  const l = livros.find(x => x.id === id);
+  if (!l || !confirm(`Remover "${l.titulo}"?`)) return;
+  livros = livros.filter(x => x.id !== id);
+  saveLivros(); renderLivros();
+}
+
+function despublicarLivro(id) {
+  const l = livros.find(x => x.id === id);
+  if (!l) return;
+  l.publicado = false;
+  l.dataPublicacao = '';
+  l.etapas[l.etapas.length - 1].feito = false;
+  saveLivros(); renderLivros();
 }
 
 /* ── CHAT ── */
@@ -1483,10 +2333,10 @@ function getDashboardContext() {
   const today = new Date().toISOString().slice(0, 10);
   const menteeList = mentees.map(m => `${m.name} (status: ${m.status}, sessões: ${m.sessions.length}, tarefas: ${(m.tasks||[]).length})`).join(', ');
   const eventList = events.slice(0, 15).map(e => `${e.titulo} [${e.empresa}] ${e.data}`).join('; ');
-  return `Você é o assistente pessoal de Gisella Cassol dentro do seu dashboard de gestão "Central de Controle".
+  return `Você é o assistente pessoal de GC - Estratégias Literárias dentro do seu dashboard de gestão "Central de Controle".
 Hoje é ${today}.
 
-O dashboard tem 5 abas: visao (visão geral), editora (Editora Cassol), leia (Léia Cassol - escritora), gisella (Gisella Cassol - mentoria Plano Diretor), tarefas.
+O dashboard tem 5 abas: visao (visão geral), editora (Editora Cassol), leia (Léia Cassol - escritora), gisella (GC - Estratégias Literárias - mentoria Plano Diretor), tarefas.
 
 Mentoradas do Plano Diretor (${mentees.length}): ${menteeList}
 
@@ -1505,8 +2355,8 @@ const CLAUDE_TOOLS = [
 ];
 
 function executeTool(name, input) {
-  const empresaLabel = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol' };
-  const navLabel = { visao: 'Visão Geral', editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol', tarefas: 'Tarefas' };
+  const empresaLabel = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC - Estratégias Literárias' };
+  const navLabel = { visao: 'Visão Geral', editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC - Estratégias Literárias', tarefas: 'Tarefas' };
 
   if (name === 'navigate') {
     const navBtns = document.querySelectorAll('.nav-item');
@@ -1651,11 +2501,135 @@ async function sendChatMessage() {
   document.getElementById('chat-messages').scrollTop = 99999;
 }
 
+/* ── FIREBASE ── */
+const firebaseConfig = {
+  apiKey: "AIzaSyAWMu3NhnT2KAPtSfXuNYcvH8KmqAReiuY",
+  authDomain: "grupo-cassol.firebaseapp.com",
+  projectId: "grupo-cassol",
+  storageBucket: "grupo-cassol.firebasestorage.app",
+  messagingSenderId: "274995799577",
+  appId: "1:274995799577:web:083c0c30999d40d273ec88"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let _isSyncing = false;
+
+function syncFS(key, data) {
+  if (!db) return;
+  db.collection('dados').doc(key).set({ data: JSON.stringify(data) })
+    .then(() => setFsStatus('✓ sincronizado', false))
+    .catch(e => setFsStatus('⚠ sem conexão', true));
+}
+
+function setFsStatus(msg, warn) {
+  const el = document.getElementById('last-saved');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = warn ? 'var(--warn)' : '';
+  }
+}
+
+function setupFSListeners() {
+  const localKeys = {
+    events: () => events,
+    mentees: () => mentees,
+    livros: () => livros,
+    projetos: () => projetos
+  };
+
+  const handlers = {
+    events: (data) => {
+      events = data;
+      localStorage.setItem('gc-events', JSON.stringify(events));
+      refreshCalendars();
+      buildTarefas();
+    },
+    mentees: (data) => {
+      mentees = data;
+      mentees.forEach(m => { if (!m.tasks) m.tasks = []; });
+      localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+      renderMenteeList();
+      updateMenteeCounters();
+      buildTarefas();
+    },
+    livros: (data) => {
+      livros = data;
+      livros.forEach(l => {
+        if (!l.etapas || l.etapas.length < ETAPAS_LIVRO.length) {
+          l.etapas = ETAPAS_LIVRO.map((nome, i) => ({
+            nome, feito: l.etapas && l.etapas[i] ? l.etapas[i].feito : false,
+            prazo: l.etapas && l.etapas[i] ? (l.etapas[i].prazo || '') : ''
+          }));
+        }
+        if (!l.mentoradas) l.mentoradas = [];
+      });
+      localStorage.setItem('gc-livros', JSON.stringify(livros));
+      renderLivros();
+      buildTarefas();
+    },
+    projetos: (data) => {
+      projetos = data;
+      localStorage.setItem('gc-projetos', JSON.stringify(projetos));
+      renderProjetos();
+      buildTarefas();
+    }
+  };
+
+  let fsEmpty = {};
+
+  Object.entries(handlers).forEach(([key, handler]) => {
+    db.collection('dados').doc(key).onSnapshot(snap => {
+      if (!snap.exists) {
+        fsEmpty[key] = true;
+        // Verifica se TODOS os documentos estão vazios para mostrar botão de publicar
+        if (Object.keys(fsEmpty).length === Object.keys(handlers).length) {
+          const btn = document.getElementById('btn-sync-up');
+          if (btn) btn.style.display = 'block';
+          setFsStatus('⚠ Firestore vazio', true);
+        }
+        return;
+      }
+      fsEmpty[key] = false;
+      document.getElementById('btn-sync-up').style.display = 'none';
+      try {
+        const remote = JSON.parse(snap.data().data || '[]');
+        handler(remote);
+        setFsStatus('✓ sincronizado', false);
+      } catch(e) { console.warn('FS parse error', key, e); }
+    }, err => {
+      console.warn('FS listener error:', err);
+      setFsStatus('⚠ sem conexão', true);
+    });
+  });
+}
+
+function forceSyncToFirestore() {
+  if (!confirm('Publicar seus dados locais para o servidor? Isso vai substituir os dados do Firestore.')) return;
+  setFsStatus('publicando…', false);
+  Promise.all([
+    db.collection('dados').doc('events').set({ data: JSON.stringify(events) }),
+    db.collection('dados').doc('mentees').set({ data: JSON.stringify(mentees) }),
+    db.collection('dados').doc('livros').set({ data: JSON.stringify(livros) }),
+    db.collection('dados').doc('projetos').set({ data: JSON.stringify(projetos) })
+  ]).then(() => {
+    setFsStatus('✓ publicado!', false);
+    document.getElementById('btn-sync-up').style.display = 'none';
+  }).catch(e => {
+    setFsStatus('⚠ erro ao publicar', true);
+    console.error(e);
+  });
+}
+
 /* ── INIT ── */
 initCalendars();
 buildTarefas();
 renderMenteeList();
 updateMenteeCounters();
+renderLivros();
+renderProjetos();
+setupFSListeners();
 </script>
 </body>
 </html>
