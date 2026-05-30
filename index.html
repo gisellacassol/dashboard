@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central · Gisella Cassol</title>
+<title>Central · Grupo Cassol</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -119,6 +119,8 @@ tr:hover td { background: var(--bg); }
 .btn:hover { background: var(--border); }
 .btn-primary { background: var(--text); color: var(--surface); border-color: var(--text); }
 .btn-primary:hover { opacity: 0.85; }
+.btn-danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+.btn-danger:hover { opacity: 0.85; }
 .add-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-soft); background: none; border: 1px dashed var(--border-mid); border-radius: 8px; padding: 6px 12px; cursor: pointer; margin-top: 8px; transition: all 0.15s; }
 .add-btn:hover { color: var(--text); background: var(--surface); }
 .today-strip { background: var(--text); color: var(--surface); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; }
@@ -155,28 +157,73 @@ tr:hover td { background: var(--bg); }
 /* EVENT TOOLTIP */
 .ev-tooltip { display: none; position: fixed; background: var(--text); color: var(--surface); font-size: 12px; padding: 6px 10px; border-radius: 8px; z-index: 300; max-width: 220px; pointer-events: none; }
 
-
-/* MENTEE PROFILE */
-.mentee-profile { display: none; }
-.mentee-profile.active { display: block; }
-.back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 1.5rem; }
-.back-btn:hover { color: var(--text); }
-.mentee-profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 2rem; }
-.avatar-lg { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; flex-shrink: 0; background: var(--editora-bg); color: var(--editora); }
-.mentee-profile-name { font-family: 'DM Serif Display', serif; font-size: 24px; }
-.mentee-profile-meta { font-size: 13px; color: var(--text-soft); margin-top: 2px; }
-.notes-area { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-mid); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface); color: var(--text); resize: vertical; line-height: 1.6; }
-.notes-area:focus { outline: none; border-color: var(--gisella); }
-.session-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
-.session-date { font-size: 11px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-.session-notes { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
-.session-delete { float: right; background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; margin-top: -2px; }
-.session-delete:hover { color: var(--danger); }
+/* MENTEE LIST */
 .mentee-list-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin-bottom: 6px; cursor: pointer; transition: background 0.1s; }
 .mentee-list-item:hover { background: var(--bg); }
 .mentee-list-item .mentee-name { flex: 1; font-size: 13px; font-weight: 500; }
-.mentee-delete-btn { background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; padding: 4px; border-radius: 4px; }
+.mentee-delete-btn { background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; padding: 4px 6px; border-radius: 4px; }
 .mentee-delete-btn:hover { color: var(--danger); background: var(--danger-bg); }
+
+/* MENTEE MODAL */
+.mentee-modal { width: 680px; max-width: 96vw; }
+.mentee-modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.5rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+.avatar-lg { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; background: var(--editora-bg); color: var(--editora); }
+.mentee-modal-name { font-family: 'DM Serif Display', serif; font-size: 22px; line-height: 1.1; }
+.mentee-modal-meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+.modal-tabs { display: flex; gap: 4px; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+.modal-tab { padding: 7px 14px; font-size: 13px; font-weight: 500; color: var(--text-soft); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active { color: var(--text); border-bottom-color: var(--text); }
+.modal-tab-content { display: none; }
+.modal-tab-content.active { display: block; }
+.notes-area { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--border-mid); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--surface); color: var(--text); resize: vertical; line-height: 1.6; }
+.notes-area:focus { outline: none; border-color: var(--gisella); }
+.session-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+.session-date { font-size: 11px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.session-notes { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+.session-delete { background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; }
+.session-delete:hover { color: var(--danger); }
+.mentee-task-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; font-size: 13px; background: var(--surface); }
+.mentee-task-item span { flex: 1; }
+.mentee-task-date { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+.mentee-task-del { background: none; border: none; font-size: 14px; color: var(--text-soft); cursor: pointer; padding: 0 2px; }
+.mentee-task-del:hover { color: var(--danger); }
+
+/* CLAUDE CHAT PANEL */
+.claude-btn { position: fixed; bottom: 2rem; left: 2rem; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #3D2B8C, #6B4FD8); color: #fff; border: none; font-size: 22px; cursor: pointer; z-index: 150; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(61,43,140,0.35); transition: transform 0.15s; }
+.claude-btn:hover { transform: scale(1.08); }
+.chat-panel { position: fixed; right: -400px; top: 0; width: 380px; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); z-index: 500; display: flex; flex-direction: column; transition: right 0.3s cubic-bezier(.4,0,.2,1); box-shadow: -8px 0 32px rgba(28,20,16,0.12); }
+.chat-panel.open { right: 0; }
+.chat-header { padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.chat-header-icon { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #3D2B8C, #6B4FD8); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.chat-header-title { font-weight: 500; font-size: 14px; flex: 1; }
+.chat-header-sub { font-size: 11px; color: var(--text-soft); }
+.chat-close { background: none; border: none; font-size: 20px; color: var(--text-soft); cursor: pointer; padding: 4px; }
+.chat-close:hover { color: var(--text); }
+.chat-key-bar { padding: 8px 1.2rem; background: var(--editora-bg); border-bottom: 1px solid var(--editora-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.chat-key-bar input { flex: 1; font-size: 12px; padding: 5px 8px; border: 1px solid var(--editora-border); border-radius: 6px; background: var(--surface); color: var(--text); font-family: monospace; }
+.chat-key-bar input:focus { outline: none; }
+.chat-key-bar button { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: none; background: var(--editora); color: #fff; cursor: pointer; white-space: nowrap; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { max-width: 88%; font-size: 13px; line-height: 1.5; }
+.chat-msg.user { align-self: flex-end; background: var(--text); color: var(--surface); padding: 9px 13px; border-radius: 14px 14px 3px 14px; }
+.chat-msg.assistant { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); padding: 9px 13px; border-radius: 14px 14px 14px 3px; color: var(--text); }
+.chat-msg.system-msg { align-self: center; font-size: 11px; color: var(--text-soft); background: none; border: none; padding: 2px 0; }
+.chat-action-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; background: var(--gisella-bg); color: var(--gisella); border: 1px solid var(--gisella-border); border-radius: 6px; padding: 2px 7px; margin-top: 5px; }
+.chat-thinking { align-self: flex-start; padding: 9px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; }
+.chat-thinking span { display: inline-block; width: 6px; height: 6px; background: var(--text-soft); border-radius: 50%; animation: bounce 1.2s infinite; margin: 0 2px; }
+.chat-thinking span:nth-child(2) { animation-delay: 0.2s; }
+.chat-thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+.chat-input-area { padding: 1rem; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; }
+.chat-input-area textarea { flex: 1; padding: 9px 12px; border: 1px solid var(--border-mid); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); resize: none; height: 42px; max-height: 120px; overflow-y: auto; line-height: 1.4; }
+.chat-input-area textarea:focus { outline: none; border-color: var(--editora); }
+.chat-send-btn { width: 42px; height: 42px; border-radius: 10px; background: var(--editora); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: opacity 0.15s; }
+.chat-send-btn:hover { opacity: 0.85; }
+.chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Clickable metric cards */
+.metric-card.clickable { cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
+.metric-card.clickable:hover { box-shadow: 0 4px 16px rgba(28,20,16,0.1); transform: translateY(-1px); }
 
 @media (max-width: 768px) {
   .sidebar { width: 100%; height: auto; position: static; flex-direction: row; padding: 1rem; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; }
@@ -197,7 +244,7 @@ tr:hover td { background: var(--bg); }
 <div class="shell">
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-name">Gisella<br>Cassol</div>
+    <div class="logo-name">Grupo<br>Cassol</div>
     <div class="logo-sub">Central de Controle</div>
   </div>
   <div class="nav-section">
@@ -244,14 +291,14 @@ tr:hover td { background: var(--bg); }
       <div class="today-count"><div class="today-count-num" id="count-urgentes">0</div><div class="today-count-label">urgentes</div></div>
       <div class="today-count"><div class="today-count-num" id="count-atencao">0</div><div class="today-count-label">atenção</div></div>
       <div class="today-count"><div class="today-count-num">8</div><div class="today-count-label">livros ativos</div></div>
-      <div class="today-count"><div class="today-count-num">19</div><div class="today-count-label">mentoradas</div></div>
+      <div class="today-count"><div class="today-count-num" id="hdr-mentoradas">19</div><div class="today-count-label">mentoradas</div></div>
     </div>
   </div>
   <div class="metrics-row">
-    <div class="metric-card"><div class="metric-label">Livros em produção</div><div class="metric-value">8</div><div class="metric-sub">Editora Cassol</div></div>
-    <div class="metric-card"><div class="metric-label">Projetos em andamento</div><div class="metric-value">3</div><div class="metric-sub">a acompanhar</div></div>
-    <div class="metric-card"><div class="metric-label">Mentoradas</div><div class="metric-value">19</div><div class="metric-sub">Plano Diretor</div></div>
-    <div class="metric-card"><div class="metric-label">Produtos na esteira</div><div class="metric-value">5</div><div class="metric-sub">Gisella Cassol</div></div>
+    <div class="metric-card clickable" onclick="showPage('editora', document.querySelector('[onclick*=\"editora\"]'))" title="Ir para Editora Cassol"><div class="metric-label">Livros em produção</div><div class="metric-value">8</div><div class="metric-sub">Editora Cassol ↗</div></div>
+    <div class="metric-card clickable" onclick="showPage('editora', document.querySelector('[onclick*=\"editora\"]'))" title="Ir para Editora Cassol"><div class="metric-label">Projetos em andamento</div><div class="metric-value">3</div><div class="metric-sub">Editora Cassol ↗</div></div>
+    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para Gisella Cassol"><div class="metric-label">Mentoradas</div><div class="metric-value" id="metric-mentoradas">19</div><div class="metric-sub">Plano Diretor ↗</div></div>
+    <div class="metric-card clickable" onclick="showPage('gisella', document.querySelector('[onclick*=\"gisella\"]'))" title="Ir para Gisella Cassol"><div class="metric-label">Produtos na esteira</div><div class="metric-value">5</div><div class="metric-sub">Gisella Cassol ↗</div></div>
   </div>
   <div class="section">
     <div class="section-title">Calendário — todas as empresas</div>
@@ -413,7 +460,7 @@ tr:hover td { background: var(--bg); }
     <div class="page-subtitle">Mentoria Plano Diretor · Esteira de produtos · Marketing</div>
   </div>
   <div class="metrics-row">
-    <div class="metric-card"><div class="metric-label">Mentoradas ativas</div><div class="metric-value">19</div><div class="metric-sub">Plano Diretor</div></div>
+    <div class="metric-card"><div class="metric-label">Mentoradas ativas</div><div class="metric-value" id="metric-mentoradas-2">19</div><div class="metric-sub">Plano Diretor</div></div>
     <div class="metric-card"><div class="metric-label">Próximo encontro</div><div class="metric-value" contenteditable="true" style="font-size:22px;margin-top:4px;">hoje</div></div>
     <div class="metric-card"><div class="metric-label">Individuais pendentes</div><div class="metric-value" contenteditable="true">4</div><div class="metric-sub">a agendar</div></div>
     <div class="metric-card"><div class="metric-label">Na esteira</div><div class="metric-value">5</div><div class="metric-sub">produtos</div></div>
@@ -425,58 +472,8 @@ tr:hover td { background: var(--bg); }
   <div class="two-col">
     <div>
       <div class="section-title">Plano Diretor · mentoradas</div>
-
-      <!-- MENTEE LIST VIEW -->
-      <div id="mentee-list-view">
-        <div id="mentee-list-rendered"></div>
-        <button class="add-btn" onclick="openAddMentee()" style="margin-top:8px;">+ cadastrar mentorada</button>
-      </div>
-
-      <!-- MENTEE PROFILE VIEW -->
-      <div id="mentee-profile-view" class="mentee-profile">
-        <button class="back-btn" onclick="closeMenteeProfile()">← voltar para lista</button>
-        <div class="mentee-profile-header">
-          <div class="avatar-lg" id="mp-avatar">GC</div>
-          <div>
-            <div class="mentee-profile-name" id="mp-name">Nome</div>
-            <div class="mentee-profile-meta" id="mp-meta">Plano Diretor</div>
-          </div>
-          <div style="margin-left:auto;">
-            <select id="mp-status" class="form-select" style="width:auto;" onchange="saveMenteeStatus()">
-              <option value="ok">ok</option>
-              <option value="indiv. pend.">indiv. pend.</option>
-              <option value="sem contato">sem contato</option>
-              <option value="aguardando">aguardando</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="two-col" style="margin-bottom:1.5rem;">
-          <div>
-            <div class="section-title">Notas gerais</div>
-            <textarea class="notes-area" id="mp-notes" placeholder="Anotações livres sobre a mentorada, objetivos, observações..." oninput="saveMenteeNotes()"></textarea>
-          </div>
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div class="section-title" style="margin-bottom:0;">Registrar sessão</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
-              <input class="form-input" type="date" id="mp-session-date">
-              <textarea class="notes-area" id="mp-session-notes" placeholder="O que foi discutido nessa sessão..." style="min-height:80px;"></textarea>
-              <button class="btn btn-primary" onclick="addSession()" style="width:100%;">Salvar sessão</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-title">Histórico de sessões</div>
-        <div id="mp-sessions"></div>
-
-        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
-          <div class="section-title">Tarefas desta mentorada</div>
-          <div id="mp-tasks"></div>
-          <button class="add-btn" onclick="addMenteeTask()" style="margin-top:8px;">+ adicionar tarefa</button>
-        </div>
-      </div>
+      <div id="mentee-list-rendered"></div>
+      <button class="add-btn" onclick="openAddMenteeModal()" style="margin-top:8px;">+ cadastrar mentorada</button>
     </div>
     <div>
       <div class="section-title">Esteira de produtos</div>
@@ -499,7 +496,6 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-
 <!-- TAREFAS -->
 <div class="page" id="page-tarefas">
   <div class="page-header">
@@ -512,7 +508,30 @@ tr:hover td { background: var(--bg); }
 </main>
 </div>
 
+<!-- CLAUDE CHAT PANEL -->
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-header">
+    <div class="chat-header-icon">✦</div>
+    <div style="flex:1;">
+      <div class="chat-header-title">Claude</div>
+      <div class="chat-header-sub" id="chat-status-label">Assistente do dashboard</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">×</button>
+  </div>
+  <div class="chat-key-bar" id="chat-key-bar">
+    <input type="password" id="claude-api-key" placeholder="Cole sua chave API da Anthropic (sk-ant-…)" autocomplete="off">
+    <button onclick="saveApiKey()">Salvar</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-area">
+    <textarea id="chat-input" placeholder="Ex: adiciona tarefa reunião com gráfica para 10 de junho na Editora…" rows="1" onkeydown="chatKeydown(event)" oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()" title="Enviar">↑</button>
+  </div>
+</div>
+
 <!-- FLOATING BUTTON -->
+<button class="claude-btn" onclick="toggleChat()" title="Assistente Claude">✦</button>
+
 <button onclick="openQuickAdd()" title="Adicionar item" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(28,20,16,0.25);transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">+</button>
 
 <!-- QUICK ADD MODAL -->
@@ -582,13 +601,120 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
+<!-- ADD MENTEE MODAL -->
+<div class="modal-overlay" id="add-mentee-modal">
+  <div class="modal" style="width:380px;">
+    <button class="modal-close" onclick="closeAddMenteeModal()">×</button>
+    <div class="modal-title">Cadastrar mentorada</div>
+    <form onsubmit="event.preventDefault(); submitAddMentee();">
+      <div class="form-group">
+        <label class="form-label">Nome completo</label>
+        <input class="form-input" id="new-mentee-name" type="text" placeholder="Ex: Ana Carolina Silva" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status inicial</label>
+        <select class="form-select" id="new-mentee-status">
+          <option value="ok">Ok</option>
+          <option value="indiv. pend.">Individual pendente</option>
+          <option value="aguardando">Aguardando</option>
+          <option value="sem contato">Sem contato</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="closeAddMenteeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MENTEE PROFILE MODAL -->
+<div class="modal-overlay" id="mentee-modal">
+  <div class="modal mentee-modal">
+    <button class="modal-close" onclick="closeMenteeModal()">×</button>
+    <div class="mentee-modal-header">
+      <div class="avatar-lg" id="mp-avatar">GC</div>
+      <div style="flex:1;">
+        <div class="mentee-modal-name" id="mp-name">Nome</div>
+        <div class="mentee-modal-meta">Plano Diretor · Gisella Cassol</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <select id="mp-status" class="form-select" style="width:auto;" onchange="saveMenteeStatus()">
+          <option value="ok">ok</option>
+          <option value="indiv. pend.">indiv. pend.</option>
+          <option value="sem contato">sem contato</option>
+          <option value="aguardando">aguardando</option>
+        </select>
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:12px;" onclick="confirmDeleteCurrentMentee()">Descadastrar</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('notas', this)">Anotações</button>
+      <button class="modal-tab" onclick="switchTab('sessoes', this)">Sessões</button>
+      <button class="modal-tab" onclick="switchTab('tarefas', this)">Tarefas</button>
+    </div>
+
+    <!-- Tab: Notas -->
+    <div class="modal-tab-content active" id="tab-notas">
+      <div class="form-label" style="margin-bottom:6px;">Notas livres</div>
+      <textarea class="notes-area" id="mp-notes" placeholder="Objetivos, observações, pontos de atenção sobre essa mentorada..." oninput="saveMenteeNotes()" style="min-height:200px;"></textarea>
+      <div style="text-align:right;margin-top:6px;">
+        <span style="font-size:11px;color:var(--text-soft);" id="notes-saved-indicator"></span>
+      </div>
+    </div>
+
+    <!-- Tab: Sessões -->
+    <div class="modal-tab-content" id="tab-sessoes">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Data da sessão</label>
+          <input class="form-input" type="date" id="mp-session-date">
+        </div>
+        <div></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">O que foi discutido</label>
+        <textarea class="notes-area" id="mp-session-notes" placeholder="Resumo da sessão, pontos discutidos, próximos passos..." style="min-height:90px;"></textarea>
+      </div>
+      <div style="text-align:right;margin-bottom:1rem;">
+        <button class="btn btn-primary" onclick="addSession()" style="padding:7px 16px;">Salvar sessão</button>
+      </div>
+      <div class="section-title">Histórico</div>
+      <div id="mp-sessions"></div>
+    </div>
+
+    <!-- Tab: Tarefas -->
+    <div class="modal-tab-content" id="tab-tarefas">
+      <div style="background:var(--gisella-bg);border:1px solid var(--gisella-border);border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--gisella);">
+        Tarefas adicionadas aqui aparecem automaticamente na aba <strong>Tarefas</strong> do dashboard.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-bottom:10px;align-items:end;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Nova tarefa</label>
+          <input class="form-input" id="new-mentee-task-title" type="text" placeholder="Descreva a tarefa...">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Prazo</label>
+          <input class="form-input" id="new-mentee-task-date" type="date" style="width:140px;">
+        </div>
+      </div>
+      <div style="text-align:right;margin-bottom:1.2rem;">
+        <button class="btn btn-primary" onclick="addMenteeTask()">+ Adicionar tarefa</button>
+      </div>
+      <div class="section-title">Tarefas desta mentorada</div>
+      <div id="mp-tasks"></div>
+    </div>
+  </div>
+</div>
+
 <!-- EVENT TOOLTIP -->
 <div class="ev-tooltip" id="ev-tooltip"></div>
 
 <script>
 /* ── EVENTS STORE ── */
 let events = JSON.parse(localStorage.getItem('gc-events') || '[]');
-// seed events if empty
 if (events.length === 0) {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
@@ -642,12 +768,10 @@ function buildCalendar(containerId, filter) {
 
   DOWS.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
 
-  // prev month days
   for (let i = firstDay - 1; i >= 0; i--) {
     html += `<div class="cal-day other-month"><div class="cal-num">${daysInPrev - i}</div></div>`;
   }
 
-  // current month days
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const cellDate = new Date(year, month, d);
@@ -669,7 +793,6 @@ function buildCalendar(containerId, filter) {
       <div class="cal-num">${d}</div>${evHtml}</div>`;
   }
 
-  // next month filler
   const total = firstDay + daysInMonth;
   const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let i = 1; i <= remaining; i++) {
@@ -678,7 +801,6 @@ function buildCalendar(containerId, filter) {
 
   html += `</div>`;
 
-  // legend for visao
   if (filter === 'all') {
     html += `<div class="cal-legend">
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora Cassol</div>
@@ -826,7 +948,7 @@ function submitQuickAdd() {
     events.push({ id: newId, empresa, titulo, data: prazoRaw || new Date().toISOString().slice(0,10) });
     saveEvents();
     refreshCalendars();
-buildTarefas();
+    buildTarefas();
   }
 
   if (tipo === 'alerta') {
@@ -882,31 +1004,43 @@ buildTarefas();
 let mentees = JSON.parse(localStorage.getItem('gc-mentees') || 'null');
 if (!mentees) {
   mentees = [
-    {id:1,name:'Ana C.',status:'ok',notes:'',sessions:[]},
-    {id:2,name:'Bianca M.',status:'indiv. pend.',notes:'',sessions:[]},
-    {id:3,name:'Carla F.',status:'ok',notes:'',sessions:[]},
-    {id:4,name:'Diana S.',status:'sem contato',notes:'',sessions:[]},
-    {id:5,name:'Elisa L.',status:'ok',notes:'',sessions:[]},
-    {id:6,name:'Fernanda M.',status:'ok',notes:'',sessions:[]},
-    {id:7,name:'Gabriela R.',status:'indiv. pend.',notes:'',sessions:[]},
-    {id:8,name:'Helena S.',status:'ok',notes:'',sessions:[]},
-    {id:9,name:'Isabela S.',status:'ok',notes:'',sessions:[]},
-    {id:10,name:'Julia L.',status:'aguardando',notes:'',sessions:[]},
-    {id:11,name:'Karen A.',status:'ok',notes:'',sessions:[]},
-    {id:12,name:'Larissa B.',status:'indiv. pend.',notes:'',sessions:[]},
-    {id:13,name:'Mariana C.',status:'ok',notes:'',sessions:[]},
-    {id:14,name:'Natalia F.',status:'ok',notes:'',sessions:[]},
-    {id:15,name:'Olivia F.',status:'aguardando',notes:'',sessions:[]},
-    {id:16,name:'Patricia G.',status:'ok',notes:'',sessions:[]},
-    {id:17,name:'Quintessa H.',status:'ok',notes:'',sessions:[]},
-    {id:18,name:'Renata S.',status:'sem contato',notes:'',sessions:[]},
-    {id:19,name:'Sofia T.',status:'ok',notes:'',sessions:[]}
+    {id:1,name:'Ana C.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:2,name:'Bianca M.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
+    {id:3,name:'Carla F.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:4,name:'Diana S.',status:'sem contato',notes:'',sessions:[],tasks:[]},
+    {id:5,name:'Elisa L.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:6,name:'Fernanda M.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:7,name:'Gabriela R.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
+    {id:8,name:'Helena S.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:9,name:'Isabela S.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:10,name:'Julia L.',status:'aguardando',notes:'',sessions:[],tasks:[]},
+    {id:11,name:'Karen A.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:12,name:'Larissa B.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
+    {id:13,name:'Mariana C.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:14,name:'Natalia F.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:15,name:'Olivia F.',status:'aguardando',notes:'',sessions:[],tasks:[]},
+    {id:16,name:'Patricia G.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:17,name:'Quintessa H.',status:'ok',notes:'',sessions:[],tasks:[]},
+    {id:18,name:'Renata S.',status:'sem contato',notes:'',sessions:[],tasks:[]},
+    {id:19,name:'Sofia T.',status:'ok',notes:'',sessions:[],tasks:[]}
   ];
   saveMentees();
 }
 
+// Ensure all mentees have tasks array (migration)
+mentees.forEach(m => { if (!m.tasks) m.tasks = []; });
+
 function saveMentees() {
   localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+  updateMenteeCounters();
+}
+
+function updateMenteeCounters() {
+  const count = mentees.length;
+  ['metric-mentoradas','metric-mentoradas-2','hdr-mentoradas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = count;
+  });
 }
 
 const STATUS_BADGE = {'ok':'b-ok','indiv. pend.':'b-warn','sem contato':'b-danger','aguardando':'b-gray'};
@@ -923,19 +1057,48 @@ function renderMenteeList() {
     return;
   }
   container.innerHTML = mentees.map(m => `
-    <div class="mentee-list-item" onclick="openMenteeProfile(${m.id})">
+    <div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
       <div class="avatar">${getInitials(m.name)}</div>
       <div class="mentee-name">${m.name}</div>
-      ${m.sessions.length > 0 ? `<span style="font-size:11px;color:var(--text-soft);">${m.sessions.length} sessão${m.sessions.length>1?'ões':''}</span>` : ''}
+      ${m.sessions && m.sessions.length > 0 ? `<span style="font-size:11px;color:var(--text-soft);">${m.sessions.length} sess${m.sessions.length>1?'ões':'ão'}</span>` : ''}
+      ${m.tasks && m.tasks.length > 0 ? `<span style="font-size:11px;color:var(--gisella);">✓ ${m.tasks.length}</span>` : ''}
       <span class="badge ${STATUS_BADGE[m.status]||'b-gray'}">${m.status}</span>
-      <button class="mentee-delete-btn" onclick="deleteMentee(event,${m.id})" title="Descadastrar">×</button>
+      <button class="mentee-delete-btn" onclick="deleteMenteeById(event,${m.id})" title="Descadastrar">×</button>
     </div>
   `).join('');
 }
 
+/* ── ADD MENTEE MODAL ── */
+function openAddMenteeModal() {
+  document.getElementById('new-mentee-name').value = '';
+  document.getElementById('new-mentee-status').value = 'ok';
+  document.getElementById('add-mentee-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-mentee-name').focus(), 50);
+}
+
+function closeAddMenteeModal() {
+  document.getElementById('add-mentee-modal').classList.remove('open');
+}
+
+document.getElementById('add-mentee-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddMenteeModal();
+});
+
+function submitAddMentee() {
+  const name = document.getElementById('new-mentee-name').value.trim();
+  if (!name) { document.getElementById('new-mentee-name').focus(); return; }
+  const status = document.getElementById('new-mentee-status').value;
+  const newId = Date.now();
+  mentees.push({ id: newId, name, status, notes: '', sessions: [], tasks: [] });
+  saveMentees();
+  renderMenteeList();
+  closeAddMenteeModal();
+}
+
+/* ── MENTEE PROFILE MODAL ── */
 let currentMenteeId = null;
 
-function openMenteeProfile(id) {
+function openMenteeModal(id) {
   const m = mentees.find(x => x.id === id);
   if (!m) return;
   currentMenteeId = id;
@@ -944,8 +1107,8 @@ function openMenteeProfile(id) {
   document.getElementById('mp-name').textContent = m.name;
   document.getElementById('mp-status').value = m.status;
   document.getElementById('mp-notes').value = m.notes || '';
+  document.getElementById('notes-saved-indicator').textContent = '';
 
-  // set today as default session date
   const today = new Date().toISOString().slice(0,10);
   document.getElementById('mp-session-date').value = today;
   document.getElementById('mp-session-notes').value = '';
@@ -953,16 +1116,27 @@ function openMenteeProfile(id) {
   renderSessions(m);
   renderMenteeTasks(m);
 
-  document.getElementById('mentee-list-view').style.display = 'none';
-  const pv = document.getElementById('mentee-profile-view');
-  pv.classList.add('active');
+  // Reset to first tab
+  switchTab('notas', document.querySelector('.modal-tab'));
+
+  document.getElementById('mentee-modal').classList.add('open');
 }
 
-function closeMenteeProfile() {
+function closeMenteeModal() {
   currentMenteeId = null;
-  document.getElementById('mentee-list-view').style.display = 'block';
-  document.getElementById('mentee-profile-view').classList.remove('active');
+  document.getElementById('mentee-modal').classList.remove('open');
   renderMenteeList();
+}
+
+document.getElementById('mentee-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeMenteeModal();
+});
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.modal-tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
 function saveMenteeNotes() {
@@ -970,6 +1144,9 @@ function saveMenteeNotes() {
   if (!m) return;
   m.notes = document.getElementById('mp-notes').value;
   saveMentees();
+  const ind = document.getElementById('notes-saved-indicator');
+  if (ind) ind.textContent = 'salvo ✓';
+  setTimeout(() => { if (ind) ind.textContent = ''; }, 1500);
 }
 
 function saveMenteeStatus() {
@@ -996,8 +1173,8 @@ function renderSessions(m) {
   container.innerHTML = sorted.map(s => `
     <div class="session-item">
       <div class="session-date">
-        ${fmtDatePt(s.date)}
-        <button class="session-delete" onclick="deleteSession('${s.id}')" title="Excluir sessão">×</button>
+        <span>${fmtDatePt(s.date)}</span>
+        <button class="session-delete" onclick="deleteSession('${s.id}')" title="Excluir">×</button>
       </div>
       <div class="session-notes">${s.notes}</div>
     </div>
@@ -1015,6 +1192,7 @@ function addSession() {
   saveMentees();
   document.getElementById('mp-session-notes').value = '';
   renderSessions(m);
+  renderMenteeList();
 }
 
 function deleteSession(sid) {
@@ -1025,60 +1203,59 @@ function deleteSession(sid) {
   renderSessions(m);
 }
 
+/* ── MENTEE TASKS ── */
 function renderMenteeTasks(m) {
   const container = document.getElementById('mp-tasks');
-  const myTasks = events.filter(e => e.menteeId === m.id);
-  if (myTasks.length === 0) {
-    container.innerHTML = '<div style="font-size:13px;color:var(--text-soft);">Nenhuma tarefa vinculada.</div>';
+  if (!m.tasks || m.tasks.length === 0) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-soft);padding:4px 0;">Nenhuma tarefa ainda.</div>';
     return;
   }
-  container.innerHTML = myTasks.map(t => `
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:13px;">
-      <span style="flex:1;">${t.titulo}</span>
-      <span style="font-size:11px;color:var(--text-soft);">${t.data ? fmtDatePt(t.data) : '—'}</span>
-      <button onclick="deleteMenteeTask(${t.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;" title="Remover">×</button>
-    </div>
-  `).join('');
+  const today = new Date(); today.setHours(0,0,0,0);
+  container.innerHTML = m.tasks.map(t => {
+    let dateLabel = '—';
+    if (t.data) {
+      const [y,mo,d] = t.data.split('-').map(Number);
+      const diff = Math.round((new Date(y,mo-1,d) - today) / 86400000);
+      if (diff === 0) dateLabel = 'hoje';
+      else if (diff === 1) dateLabel = 'amanhã';
+      else if (diff < 0) dateLabel = `${fmtDatePt(t.data)} (atrasado)`;
+      else if (diff <= 7) dateLabel = `em ${diff} dias`;
+      else dateLabel = fmtDatePt(t.data);
+    }
+    return `<div class="mentee-task-item">
+      <span>${t.titulo}</span>
+      <span class="mentee-task-date">${dateLabel}</span>
+      <button class="mentee-task-del" onclick="deleteMenteeTask('${t.id}')" title="Remover">×</button>
+    </div>`;
+  }).join('');
 }
 
 function addMenteeTask() {
   const m = mentees.find(x => x.id === currentMenteeId);
   if (!m) return;
-  const titulo = prompt(`Tarefa para ${m.name}:`);
-  if (!titulo || !titulo.trim()) return;
-  const data = prompt('Data (AAAA-MM-DD) ou deixe vazio:') || '';
-  const newTask = {
-    id: Date.now(),
-    empresa: 'gisella',
-    titulo: `[${m.name}] ${titulo.trim()}`,
-    data: data.trim(),
-    menteeId: m.id
-  };
-  events.push(newTask);
-  saveEvents();
+  const titulo = document.getElementById('new-mentee-task-title').value.trim();
+  if (!titulo) { document.getElementById('new-mentee-task-title').focus(); return; }
+  const data = document.getElementById('new-mentee-task-date').value || '';
+  if (!m.tasks) m.tasks = [];
+  const taskId = Date.now().toString();
+  m.tasks.push({ id: taskId, titulo, data });
+  saveMentees();
+  document.getElementById('new-mentee-task-title').value = '';
+  document.getElementById('new-mentee-task-date').value = '';
   renderMenteeTasks(m);
   buildTarefas();
-  refreshCalendars();
 }
 
 function deleteMenteeTask(taskId) {
-  events = events.filter(e => e.id !== taskId);
-  saveEvents();
   const m = mentees.find(x => x.id === currentMenteeId);
-  if (m) renderMenteeTasks(m);
+  if (!m) return;
+  m.tasks = m.tasks.filter(t => t.id !== taskId);
+  saveMentees();
+  renderMenteeTasks(m);
   buildTarefas();
 }
 
-function openAddMentee() {
-  const name = prompt('Nome da mentorada:');
-  if (!name || !name.trim()) return;
-  const newId = Date.now();
-  mentees.push({ id: newId, name: name.trim(), status: 'ok', notes: '', sessions: [] });
-  saveMentees();
-  renderMenteeList();
-}
-
-function deleteMentee(e, id) {
+function deleteMenteeById(e, id) {
   e.stopPropagation();
   const m = mentees.find(x => x.id === id);
   if (!m) return;
@@ -1086,6 +1263,19 @@ function deleteMentee(e, id) {
   mentees = mentees.filter(x => x.id !== id);
   saveMentees();
   renderMenteeList();
+  buildTarefas();
+}
+
+function confirmDeleteCurrentMentee() {
+  if (!currentMenteeId) return;
+  const m = mentees.find(x => x.id === currentMenteeId);
+  if (!m) return;
+  if (!confirm(`Descadastrar "${m.name}"? As anotações e sessões serão perdidas.`)) return;
+  mentees = mentees.filter(x => x.id !== currentMenteeId);
+  saveMentees();
+  closeMenteeModal();
+  renderMenteeList();
+  buildTarefas();
 }
 
 /* ── DATE ── */
@@ -1117,7 +1307,6 @@ function autoSave() {
 document.addEventListener('input', autoSave);
 document.addEventListener('change', autoSave);
 
-
 /* ── TAREFAS ── */
 function buildTarefas() {
   const container = document.getElementById('tarefas-container');
@@ -1125,16 +1314,26 @@ function buildTarefas() {
 
   const today = new Date(); today.setHours(0,0,0,0);
 
-  // Collect all events that have a future or today date
-  const tasks = events.map(e => ({
+  // Collect calendar events
+  let tasks = events.map(e => ({
     titulo: e.titulo,
     empresa: e.empresa,
     data: e.data,
-    badge: 'b-info',
-    label: 'evento'
+    tipo: 'evento'
   }));
 
-  // Sort by date ascending, undated last
+  // Collect mentee tasks
+  mentees.forEach(m => {
+    (m.tasks || []).forEach(t => {
+      tasks.push({
+        titulo: `[${m.name}] ${t.titulo}`,
+        empresa: 'gisella',
+        data: t.data || '',
+        tipo: 'mentoria'
+      });
+    });
+  });
+
   tasks.sort((a, b) => {
     if (!a.data && !b.data) return 0;
     if (!a.data) return 1;
@@ -1149,9 +1348,7 @@ function buildTarefas() {
 
   const empresaColors = { editora: 'b-editora', leia: 'b-leia', gisella: 'b-gisella' };
   const empresaLabels = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol' };
-  const empresaBorder = { editora: 'var(--editora)', leia: 'var(--leia)', gisella: 'var(--gisella)' };
 
-  // Group: atrasado / hoje / esta semana / próximas
   const groups = { atrasado: [], hoje: [], semana: [], proximas: [] };
 
   tasks.forEach(t => {
@@ -1164,16 +1361,16 @@ function buildTarefas() {
     else groups.proximas.push(t);
   });
 
-  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const mesesAb = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   function fmtDate(val) {
     if (!val) return '—';
     const [y,m,d] = val.split('-').map(Number);
     const diff = Math.round((new Date(y,m-1,d) - today) / 86400000);
     if (diff === 0) return 'hoje';
     if (diff === 1) return 'amanhã';
-    if (diff < 0) return `${d} ${meses[m-1]} (atrasado)`;
+    if (diff < 0) return `${d} ${mesesAb[m-1]} (atrasado)`;
     if (diff <= 7) return `em ${diff} dias`;
-    return `${d} ${meses[m-1]}`;
+    return `${d} ${mesesAb[m-1]}`;
   }
 
   function renderGroup(label, items, accentColor) {
@@ -1184,9 +1381,11 @@ function buildTarefas() {
         <thead><tr><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
         <tbody>`;
     items.forEach(t => {
+      const badgeCls = empresaColors[t.empresa] || 'b-gray';
+      const badgeLabel = empresaLabels[t.empresa] || t.empresa;
       html += `<tr>
         <td><div class="row-name">${t.titulo}</div></td>
-        <td><span class="badge ${empresaColors[t.empresa]}">${empresaLabels[t.empresa]}</span></td>
+        <td><span class="badge ${badgeCls}" style="${badgeCls==='b-editora'?'background:var(--editora-bg);color:var(--editora);':badgeCls==='b-leia'?'background:var(--leia-bg);color:var(--leia);':badgeCls==='b-gisella'?'background:var(--gisella-bg);color:var(--gisella);':''}">${badgeLabel}</span></td>
         <td style="color:${accentColor};font-size:12px;font-weight:500;">${fmtDate(t.data)}</td>
       </tr>`;
     });
@@ -1201,10 +1400,334 @@ function buildTarefas() {
     renderGroup('Próximas', groups.proximas, 'var(--text-soft)');
 }
 
+/* ── CLAUDE CHAT ── */
+let chatOpen = false;
+let chatHistory = [];
+let claudeApiKey = localStorage.getItem('gc-claude-key') || '';
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const panel = document.getElementById('chat-panel');
+  panel.classList.toggle('open', chatOpen);
+  if (chatOpen) {
+    updateKeyBar();
+    if (chatHistory.length === 0) addSystemMsg('Olá! Posso navegar pelo dashboard, adicionar tarefas, eventos, alertas e muito mais. O que você precisa?');
+    setTimeout(() => document.getElementById('chat-input').focus(), 300);
+  }
+}
+
+function updateKeyBar() {
+  const bar = document.getElementById('chat-key-bar');
+  const label = document.getElementById('chat-status-label');
+  if (claudeApiKey) {
+    bar.style.display = 'none';
+    label.textContent = 'Conectado · Claude Haiku';
+    label.style.color = 'var(--gisella)';
+  } else {
+    bar.style.display = 'flex';
+    label.textContent = 'Chave API necessária';
+    label.style.color = 'var(--warn)';
+  }
+}
+
+function saveApiKey() {
+  const val = document.getElementById('claude-api-key').value.trim();
+  if (!val.startsWith('sk-ant-')) { alert('Chave inválida. Deve começar com sk-ant-'); return; }
+  claudeApiKey = val;
+  localStorage.setItem('gc-claude-key', val);
+  updateKeyBar();
+  addSystemMsg('Chave salva! Pode começar a dar comandos.');
+}
+
+function addSystemMsg(text) {
+  appendMsg('system-msg', text);
+}
+
+function appendMsg(type, text, actions) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${type}`;
+  div.textContent = text;
+  if (actions && actions.length > 0) {
+    actions.forEach(a => {
+      const tag = document.createElement('div');
+      tag.className = 'chat-action-tag';
+      tag.textContent = '✓ ' + a;
+      div.appendChild(tag);
+    });
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showThinking() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg chat-thinking';
+  div.id = 'chat-thinking';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideThinking() {
+  const el = document.getElementById('chat-thinking');
+  if (el) el.remove();
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+function getDashboardContext() {
+  const today = new Date().toISOString().slice(0, 10);
+  const menteeList = mentees.map(m => `${m.name} (status: ${m.status}, sessões: ${m.sessions.length}, tarefas: ${(m.tasks||[]).length})`).join(', ');
+  const eventList = events.slice(0, 15).map(e => `${e.titulo} [${e.empresa}] ${e.data}`).join('; ');
+  return `Você é o assistente pessoal de Gisella Cassol dentro do seu dashboard de gestão "Central de Controle".
+Hoje é ${today}.
+
+O dashboard tem 5 abas: visao (visão geral), editora (Editora Cassol), leia (Léia Cassol - escritora), gisella (Gisella Cassol - mentoria Plano Diretor), tarefas.
+
+Mentoradas do Plano Diretor (${mentees.length}): ${menteeList}
+
+Próximos eventos no calendário: ${eventList}
+
+Responda SEMPRE em português, de forma concisa e direta. Quando executar ações, use as ferramentas disponíveis. Pode executar múltiplas ferramentas numa resposta.`;
+}
+
+const CLAUDE_TOOLS = [
+  {
+    name: 'navigate',
+    description: 'Navegar para uma página do dashboard',
+    input_schema: {
+      type: 'object',
+      properties: {
+        page: { type: 'string', enum: ['visao', 'editora', 'leia', 'gisella', 'tarefas'], description: 'Qual página abrir' }
+      },
+      required: ['page']
+    }
+  },
+  {
+    name: 'add_event',
+    description: 'Adicionar um evento ao calendário',
+    input_schema: {
+      type: 'object',
+      properties: {
+        empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] },
+        titulo: { type: 'string' },
+        data: { type: 'string', description: 'Data no formato YYYY-MM-DD' }
+      },
+      required: ['empresa', 'titulo', 'data']
+    }
+  },
+  {
+    name: 'add_alert',
+    description: 'Adicionar um alerta ou prioridade na visão geral',
+    input_schema: {
+      type: 'object',
+      properties: {
+        empresa: { type: 'string', enum: ['editora', 'leia', 'gisella'] },
+        titulo: { type: 'string' },
+        prazo: { type: 'string', description: 'Ex: hoje, 2 dias, 5 jun' },
+        nivel: { type: 'string', enum: ['urgente', 'atencao', 'normal'] }
+      },
+      required: ['empresa', 'titulo', 'nivel']
+    }
+  },
+  {
+    name: 'add_mentee_task',
+    description: 'Adicionar uma tarefa para uma mentorada específica. A tarefa aparece na aba Tarefas.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        mentee_name: { type: 'string', description: 'Nome (parcial ou completo) da mentorada' },
+        titulo: { type: 'string' },
+        data: { type: 'string', description: 'Prazo no formato YYYY-MM-DD (opcional)' }
+      },
+      required: ['mentee_name', 'titulo']
+    }
+  },
+  {
+    name: 'add_mentee',
+    description: 'Cadastrar uma nova mentorada',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        status: { type: 'string', enum: ['ok', 'indiv. pend.', 'aguardando', 'sem contato'] }
+      },
+      required: ['name']
+    }
+  },
+  {
+    name: 'get_info',
+    description: 'Buscar informações do dashboard para responder perguntas',
+    input_schema: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', enum: ['mentees', 'events', 'mentees_status', 'tasks'] }
+      },
+      required: ['topic']
+    }
+  }
+];
+
+function executeTool(name, input) {
+  const empresaLabel = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol' };
+  const navLabel = { visao: 'Visão Geral', editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'Gisella Cassol', tarefas: 'Tarefas' };
+
+  if (name === 'navigate') {
+    const navBtns = document.querySelectorAll('.nav-item');
+    let targetBtn = null;
+    navBtns.forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(input.page)) targetBtn = b; });
+    showPage(input.page, targetBtn);
+    return { ok: true, result: `Navegado para ${navLabel[input.page]}` };
+  }
+
+  if (name === 'add_event') {
+    events.push({ id: Date.now(), empresa: input.empresa, titulo: input.titulo, data: input.data });
+    saveEvents(); refreshCalendars(); buildTarefas();
+    return { ok: true, result: `Evento "${input.titulo}" adicionado no calendário da ${empresaLabel[input.empresa]} para ${input.data}` };
+  }
+
+  if (name === 'add_alert') {
+    const cls = input.nivel === 'urgente' ? 'urgente' : input.nivel === 'atencao' ? 'atencao' : 'normal';
+    const badgeMap = { urgente: 'b-danger', atencao: 'b-warn', normal: 'b-ok' };
+    const div = document.createElement('div');
+    div.className = `alert-item ${cls}`;
+    div.innerHTML = `<div class="alert-left"><div class="alert-empresa">${empresaLabel[input.empresa]}</div><div class="alert-title" contenteditable="true">${input.titulo}</div></div><span class="alert-prazo" contenteditable="true">${input.prazo || '—'}</span><span class="badge ${badgeMap[input.nivel]}">${input.nivel}</span>`;
+    document.getElementById('alerts-list').appendChild(div);
+    return { ok: true, result: `Alerta "${input.titulo}" adicionado (${input.nivel})` };
+  }
+
+  if (name === 'add_mentee_task') {
+    const query = input.mentee_name.toLowerCase();
+    const m = mentees.find(x => x.name.toLowerCase().includes(query));
+    if (!m) return { ok: false, result: `Mentorada "${input.mentee_name}" não encontrada. Mentoradas disponíveis: ${mentees.map(x=>x.name).join(', ')}` };
+    if (!m.tasks) m.tasks = [];
+    m.tasks.push({ id: Date.now().toString(), titulo: input.titulo, data: input.data || '' });
+    saveMentees(); buildTarefas();
+    return { ok: true, result: `Tarefa "${input.titulo}" adicionada para ${m.name}` };
+  }
+
+  if (name === 'add_mentee') {
+    const newId = Date.now();
+    mentees.push({ id: newId, name: input.name, status: input.status || 'ok', notes: '', sessions: [], tasks: [] });
+    saveMentees(); renderMenteeList();
+    return { ok: true, result: `Mentorada "${input.name}" cadastrada` };
+  }
+
+  if (name === 'get_info') {
+    if (input.topic === 'mentees') return { ok: true, result: JSON.stringify(mentees.map(m => ({ name: m.name, status: m.status, sessions: m.sessions.length, tasks: (m.tasks||[]).length }))) };
+    if (input.topic === 'mentees_status') {
+      const groups = {};
+      mentees.forEach(m => { groups[m.status] = (groups[m.status] || []); groups[m.status].push(m.name); });
+      return { ok: true, result: JSON.stringify(groups) };
+    }
+    if (input.topic === 'events') return { ok: true, result: JSON.stringify(events.map(e => ({ titulo: e.titulo, empresa: e.empresa, data: e.data }))) };
+    if (input.topic === 'tasks') {
+      const all = [];
+      mentees.forEach(m => (m.tasks||[]).forEach(t => all.push({ mentee: m.name, titulo: t.titulo, data: t.data })));
+      return { ok: true, result: JSON.stringify(all) };
+    }
+  }
+
+  return { ok: false, result: 'Ferramenta desconhecida' };
+}
+
+async function sendChatMessage() {
+  if (!claudeApiKey) { addSystemMsg('Configure sua chave API primeiro.'); return; }
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = '42px';
+  document.getElementById('chat-send-btn').disabled = true;
+
+  appendMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  showThinking();
+
+  try {
+    let messages = [...chatHistory];
+    let finalText = '';
+    let actions = [];
+    let iterations = 0;
+
+    while (iterations < 5) {
+      iterations++;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': claudeApiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1024,
+          system: getDashboardContext(),
+          tools: CLAUDE_TOOLS,
+          messages
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Erro ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Collect text and tool use from this response
+      const toolUses = [];
+      data.content.forEach(block => {
+        if (block.type === 'text' && block.text) finalText = block.text;
+        if (block.type === 'tool_use') toolUses.push(block);
+      });
+
+      if (data.stop_reason === 'end_turn' || toolUses.length === 0) {
+        // Done
+        messages.push({ role: 'assistant', content: data.content });
+        break;
+      }
+
+      // Execute tools and collect results
+      messages.push({ role: 'assistant', content: data.content });
+      const toolResults = toolUses.map(tu => {
+        const result = executeTool(tu.name, tu.input);
+        if (result.ok) actions.push(result.result);
+        return { type: 'tool_result', tool_use_id: tu.id, content: result.result };
+      });
+      messages.push({ role: 'user', content: toolResults });
+    }
+
+    hideThinking();
+
+    // Update history with final exchange
+    chatHistory = messages;
+
+    if (finalText || actions.length > 0) {
+      appendMsg('assistant', finalText || (actions.length > 0 ? 'Feito!' : '…'), actions);
+    }
+
+  } catch (err) {
+    hideThinking();
+    appendMsg('assistant', `Erro: ${err.message}`);
+  }
+
+  document.getElementById('chat-send-btn').disabled = false;
+  document.getElementById('chat-messages').scrollTop = 99999;
+}
+
 /* ── INIT ── */
 initCalendars();
 buildTarefas();
 renderMenteeList();
+updateMenteeCounters();
 </script>
 </body>
 </html>
