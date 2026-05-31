@@ -603,11 +603,14 @@ tr:hover td { background: var(--bg); }
     <button class="modal-close" onclick="closeModal('modal-quickadd')">×</button>
     <div class="modal-title" id="qa-modal-title">Adicionar item</div>
     <form onsubmit="event.preventDefault();submitQuickAdd();">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label class="form-label">Empresa</label>
-          <select class="form-select" id="qa-empresa">
-            <option value="editora">Editora Cassol</option><option value="leia">Léia Cassol</option><option value="gisella">GC Estratégias</option>
-          </select></div>
+      <div class="form-group"><label class="form-label">Empresa(s)</label>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-emp-leia" style="accent-color:var(--leia);"> <span style="color:var(--leia);">Léia Cassol</span></label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-emp-gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC Estratégias</span></label>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr;gap:12px;">
         <div class="form-group"><label class="form-label">Tipo</label>
           <select class="form-select" id="qa-tipo" onchange="updateQaFields()">
             <option value="tarefa" selected>Tarefa</option>
@@ -755,12 +758,12 @@ tr:hover td { background: var(--bg); }
     <form onsubmit="event.preventDefault();submitProjeto();">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Nome do projeto *</label><input class="form-input" id="mp-nome" type="text" placeholder="Ex: Lançamento coleção 2027"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresa</label>
-          <select class="form-select" id="mp-empresa">
-            <option value="editora">Editora Cassol</option>
-            <option value="leia">Léia Cassol</option>
-            <option value="gisella">GC Estratégias</option>
-          </select></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresa(s)</label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mp-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mp-emp-leia" style="accent-color:var(--leia);"> <span style="color:var(--leia);">Léia Cassol</span></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mp-emp-gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC Estratégias</span></label>
+          </div></div>
         <div class="form-group"><label class="form-label">Status</label>
           <select class="form-select" id="mp-status" onchange="checkProjetoFinalizado()">
             <option value="pendente">Pendente</option>
@@ -876,10 +879,12 @@ tr:hover td { background: var(--bg); }
     <form onsubmit="event.preventDefault();saveConteudo();">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Nome do conteúdo</label><input class="form-input" id="mc-nome" type="text" placeholder="Ex: Reels sobre estratégia literária"></div>
-        <div class="form-group"><label class="form-label">Empresa</label>
-          <select class="form-select" id="mc-empresa">
-            <option value="editora">Editora Cassol</option><option value="leia">Léia Cassol</option><option value="gisella">GC Estratégias</option>
-          </select></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresa(s)</label>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-emp-leia" style="accent-color:var(--leia);"> <span style="color:var(--leia);">Léia Cassol</span></label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-emp-gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC Estratégias</span></label>
+          </div></div>
         <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="mc-responsavel" type="text"></div>
         <div class="form-group"><label class="form-label">Rede social</label>
           <select class="form-select" id="mc-rede">
@@ -941,6 +946,97 @@ tr:hover td { background: var(--bg); }
 </div>
 
 <script>
+
+/* ── EMPRESA HELPERS ── */
+function getEmpresasChecked(prefix) {
+  const emps = ['editora','leia','gisella'].filter(e => {
+    const cb = document.getElementById(prefix + e);
+    return cb && cb.checked;
+  });
+  return emps.length > 0 ? emps : null;
+}
+
+function setEmpresasChecked(prefix, empresaStr) {
+  const emps = (empresaStr || '').split(',');
+  ['editora','leia','gisella'].forEach(e => {
+    const cb = document.getElementById(prefix + e);
+    if (cb) cb.checked = emps.includes(e);
+  });
+}
+
+function getEmpresaStr(prefix, fallback) {
+  const emps = getEmpresasChecked(prefix);
+  return emps ? emps.join(',') : (fallback || 'editora');
+}
+
+
+/* ── CHAT ── */
+function toggleChat() {
+  const panel = document.getElementById('chat-panel');
+  panel.classList.toggle('open');
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const messages = document.getElementById('chat-messages');
+  const sendBtn = document.getElementById('chat-send-btn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Add user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg user';
+  userMsg.textContent = text;
+  messages.appendChild(userMsg);
+  input.value = '';
+  input.style.height = 'auto';
+  messages.scrollTop = messages.scrollHeight;
+
+  // Add loading message
+  const loadingMsg = document.createElement('div');
+  loadingMsg.className = 'chat-msg assistant loading';
+  loadingMsg.textContent = 'Pensando...';
+  messages.appendChild(loadingMsg);
+  messages.scrollTop = messages.scrollHeight;
+  sendBtn.disabled = true;
+
+  try {
+    // Build context summary
+    const ctx = `Você é um assistente integrado ao dashboard da Grupo Cassol — uma organização com três empresas: Editora Cassol, Léia Cassol e GC Estratégias. Responda de forma direta e útil, sempre em português.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: ctx,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+
+    const data = await response.json();
+    const reply = (data.content || []).map(b => b.text || '').join('');
+    loadingMsg.className = 'chat-msg assistant';
+    loadingMsg.textContent = reply || 'Não consegui responder. Tente novamente.';
+  } catch (err) {
+    loadingMsg.className = 'chat-msg assistant';
+    loadingMsg.textContent = 'Erro ao conectar. Verifique sua conexão.';
+  }
+
+  sendBtn.disabled = false;
+  messages.scrollTop = messages.scrollHeight;
+}
+
+
+function empBadgesHtml(empresaStr) {
+  const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
+  const EMP_L = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
+  return (empresaStr||'editora').split(',').map(e =>
+    `<span class="badge ${EMP_B[e]||'b-gray'}">${EMP_L[e]||e}</span>`
+  ).join(' ');
+}
+
 /* ── STORAGE ── */
 function load(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; } }
 function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); autoSave(); }
@@ -1177,7 +1273,7 @@ function openQuickAdd() {
   window._addingToMenteeId = null;
   document.getElementById('qa-titulo').value = '';
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
-  document.getElementById('qa-empresa').value = 'editora';
+  setEmpresasChecked('qa-emp-', 'editora');
   document.getElementById('qa-tipo').value = 'tarefa';
   // Reset all fields
   ['qa-l-autor','qa-l-ilustrador','qa-l-publico','qa-l-faixa','qa-l-paginas',
@@ -1211,7 +1307,7 @@ function openEditEvent(id) {
   const delBtn = document.getElementById('qa-delete-btn');
   if (delBtn) delBtn.style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
-  document.getElementById('qa-empresa').value = ev.empresa || 'editora';
+  setEmpresasChecked('qa-emp-', ev.empresa || 'editora');
   document.getElementById('qa-tipo').value = ev.tipo || 'evento';
   document.getElementById('qa-prazo').value = ev.data || '';
   document.getElementById('qa-hora-inicio').value = ev.horaInicio || '';
@@ -1249,7 +1345,7 @@ function deleteCurrentEvent() {
 function getQaVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 
 function submitQuickAdd() {
-  const empresa = getQaVal('qa-empresa');
+  const empresa = getEmpresaStr('qa-emp-', 'editora');
   const tipo = getQaVal('qa-tipo');
   const titulo = getQaVal('qa-titulo').trim();
   if (!titulo) { document.getElementById('qa-titulo').focus(); return; }
@@ -1877,7 +1973,7 @@ function openNewConteudo() {
   currentConteudoId = null;
   document.getElementById('mc-title').textContent = 'Novo conteúdo';
   ['mc-nome','mc-responsavel','mc-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('mc-empresa').value='gisella';
+  setEmpresasChecked('mc-emp-', 'gisella');
   document.getElementById('mc-rede').value='instagram';
   document.getElementById('mc-tipo').value='reel';
   document.getElementById('mc-status').value='copy';
@@ -1888,7 +1984,7 @@ function openNewConteudo() {
   setTimeout(()=>document.getElementById('mc-nome').focus(),50);
 }
 
-function openNewConteudoEmpresa(emp) { openNewConteudo(); document.getElementById('mc-empresa').value=emp; }
+function openNewConteudoEmpresa(emp) { openNewConteudo(); setEmpresasChecked('mc-emp-', emp); }
 
 function openConteudo(id) {
   const c = conteudos.find(x=>x.id===id);
@@ -1896,7 +1992,7 @@ function openConteudo(id) {
   currentConteudoId = id;
   document.getElementById('mc-title').textContent = c.nome;
   document.getElementById('mc-nome').value=c.nome;
-  document.getElementById('mc-empresa').value=c.empresa;
+  setEmpresasChecked('mc-emp-', c.empresa || 'editora');
   document.getElementById('mc-responsavel').value=c.responsavel||'';
   document.getElementById('mc-rede').value=c.rede;
   document.getElementById('mc-tipo').value=c.tipo;
@@ -1913,7 +2009,7 @@ function openConteudo(id) {
 function saveConteudo() {
   const nome = document.getElementById('mc-nome').value.trim();
   if (!nome) { document.getElementById('mc-nome').focus(); return; }
-  const data = {nome, empresa:document.getElementById('mc-empresa').value, responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value};
+  const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value};
   if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
   else conteudos.push({id:Date.now(), done:false, ...data});
   save('gc-conteudos',conteudos); renderConteudos(); closeModal('modal-conteudo');
@@ -1985,8 +2081,8 @@ function buildTarefas() {
   const today = new Date(); today.setHours(0,0,0,0);
 
   const _tf = getFilter('tarefas');
-  const ativas = events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||e.empresa===_tf));
-  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||e.empresa===_tf));
+  const ativas = events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)));
+  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)));
 
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
@@ -2010,7 +2106,7 @@ function buildTarefas() {
         <button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
       </td>
       <td>
-        <span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span>
+        ${empBadgesHtml(e.empresa)}
         ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
@@ -2135,7 +2231,7 @@ function buildEventosList() {
   const el = document.getElementById('eventos-lista');
   if (!el) return;
   const _ef = getFilter('eventos');
-  const evList = events.filter(e => (e.tipo === 'evento' || !e.tipo) && (_ef==='all'||e.empresa===_ef));
+  const evList = events.filter(e => (e.tipo === 'evento' || !e.tipo) && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
   if (evList.length === 0) {
@@ -2167,7 +2263,7 @@ function openAddProjeto(emp) {
   currentProjetoEmpresa = emp;
   document.getElementById('mp-title').textContent = 'Novo projeto';
   document.getElementById('mp-nome').value = '';
-  document.getElementById('mp-empresa').value = emp || 'editora';
+  setEmpresasChecked('mp-emp-', emp || 'editora');
   document.getElementById('mp-status').value = 'pendente';
   document.getElementById('mp-resp').value = '';
   document.getElementById('mp-inicio').value = '';
@@ -2183,7 +2279,7 @@ function submitProjeto() {
   if (!nome) { document.getElementById('mp-nome').focus(); return; }
   const data = {
     nome,
-    empresa: document.getElementById('mp-empresa').value,
+    empresa: getEmpresaStr('mp-emp-', 'editora'),
     status: document.getElementById('mp-status').value,
     responsavel: document.getElementById('mp-resp').value,
     inicio: document.getElementById('mp-inicio').value,
@@ -2278,7 +2374,7 @@ function renderProjetos() {
   ['editora','leia','gisella'].forEach(emp => {
     const el = document.getElementById('projetos-'+emp);
     if (!el) return;
-    const lista = ativos.filter(p=>p.empresa===emp);
+    const lista = ativos.filter(p=>(p.empresa||'').split(',').includes(emp));
     el.innerHTML = lista.length===0
       ? `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto. <button class="add-btn" onclick="openAddProjeto('${emp}')" style="display:inline-flex;margin-top:8px;">+ novo projeto</button></div>`
       : lista.map(p=>projetoHtml(p,false)).join('') + `<button class="add-btn" onclick="openAddProjeto('${emp}')" style="margin-top:8px;">+ novo projeto</button>`;
@@ -2311,7 +2407,7 @@ function openEditProjeto(id) {
   editingProjetoId = id;
   document.getElementById('mp-title').textContent = 'Editar projeto';
   document.getElementById('mp-nome').value = p.nome;
-  document.getElementById('mp-empresa').value = p.empresa;
+  setEmpresasChecked('mp-emp-', p.empresa || 'editora');
   document.getElementById('mp-status').value = p.status;
   document.getElementById('mp-resp').value = p.responsavel||'';
   document.getElementById('mp-inicio').value = p.inicio||'';
@@ -2473,8 +2569,17 @@ function buildColabTarefas() {
         return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
       })() : 'var(--text-soft)';
       const numericId = parseInt(t.id);
-      const editBtn = !isNaN(numericId) ? `<button onclick="openEditEvent(${numericId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>` : '';
-      const delBtn = !isNaN(numericId) ? `<button onclick="deleteEventDirect(${numericId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '';
+      // Para tarefas de projeto, buscar eventId
+      let editEventId = numericId;
+      if (isNaN(numericId) && t.id && t.id.startsWith('proj-')) {
+        const parts = t.id.split('-');
+        const pId = parseInt(parts[1]);
+        const tIdx = parseInt(parts[2]);
+        const proj = projetos.find(x=>x.id===pId);
+        if (proj && proj.tarefas && proj.tarefas[tIdx]) editEventId = proj.tarefas[tIdx].eventId;
+      }
+      const editBtn = editEventId ? `<button onclick="openEditEvent(${editEventId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>` : '';
+      const delBtn = editEventId && !isNaN(editEventId) ? `<button onclick="deleteEventDirect(${editEventId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '';
       return `<tr style="${isArq?'opacity:0.5;':''}"
         ${!isArq ? `draggable="true" ondragstart="colabTaskDragStart(event,'${t.id}','${colabKey}')" ondragover="event.preventDefault()" ondrop="colabTaskDrop(event,'${t.id}','${colabKey}')"` : ''}>
         <td onclick="event.stopPropagation();" style="width:32px;">
@@ -2488,7 +2593,7 @@ function buildColabTarefas() {
           ${editBtn}${delBtn}
         </td>
         <td>
-          <span class="badge ${EMP_BADGE[t.empresa]||'b-gray'}">${EMP_LABEL[t.empresa]||t.empresa}</span>
+          ${empBadgesHtml(t.empresa)}
           ${t.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${t.responsavel==='Gisella'?'var(--gisella-bg)':t.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.responsavel==='Gisella'?'var(--gisella)':t.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${t.responsavel}</span>`:''}
         </td>
         <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDate(t.data):'—'}</td>
