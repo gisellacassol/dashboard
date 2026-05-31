@@ -1776,10 +1776,7 @@ function projetoHtml(p, showEmpresa) {
           </select>
           <button onclick="deleteProjetoTask(${p.id},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.1s;" class="etapa-del-btn">×</button>
         </div>`).join('')}
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <input class="form-input" id="ptask-${p.id}" type="text" placeholder="+ nova tarefa" style="font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addProjetoTask(${p.id});}">
-        <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="addProjetoTask(${p.id})">+</button>
-      </div>
+      <button class="add-btn" style="margin-top:8px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar item</button>
     </div>
   </div>`;
 }
