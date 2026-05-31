@@ -995,20 +995,7 @@ function openEditEvent(id) {
 
 function deleteCurrentEvent() {
   if (!editingEventId) return;
-  if (!confirm('Excluir este item?')) return;
   events = events.filter(x => x.id !== editingEventId);
-  // If adding to projeto context, also add to projeto.tarefas
-  if (tipo === 'tarefa' && window._addingToProjetoId) {
-    const p = projetos.find(x => x.id === window._addingToProjetoId);
-    if (p) {
-      if (!p.tarefas) p.tarefas = [];
-      p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: events[events.length-1].id});
-      save('gc-projetos', projetos);
-      renderProjetos();
-    }
-    window._addingToProjetoId = null;
-  }
-
   save('gc-events', events);
   refreshCalendars();
   buildCalendar('cal-eventos', 'all');
@@ -2153,6 +2140,13 @@ function buildKanban(colab) {
 }
 
 let draggedTask = null;
+
+function startDragFromList(event, taskId, titulo, empresa) {
+  draggedTask = {taskObj: {id: taskId, titulo: titulo, empresa: empresa}};
+  dragSource = 'list';
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', taskId);
+}
 let dragSource = null;
 
 function dragKanbanTask(event, colab, fromDay, taskId) {
@@ -2170,16 +2164,19 @@ function dropKanbanTask(event, colab, toDay) {
   document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
 
   if (dragSource === 'list' && draggedTask) {
-    // Coming from task list
     const {taskObj} = draggedTask;
     if (!kanbanData[colab]) kanbanData[colab] = {};
     if (!kanbanData[colab][toDay]) kanbanData[colab][toDay] = [];
-    kanbanData[colab][toDay].push({id: taskObj.id.toString(), titulo: taskObj.titulo, empresa: taskObj.empresa});
-    // Mark as scheduled in events
-    const ev = events.find(x => x.id === taskObj.id);
-    if (ev) ev.kanbanDay = toDay;
-    save('gc-events', events);
-    save('gc-kanban', kanbanData);
+    const tid = taskObj.id.toString();
+    // Avoid duplicates
+    const already = Object.values(kanbanData[colab]).flat().some(t => t.id === tid);
+    if (!already) {
+      kanbanData[colab][toDay].push({id: tid, titulo: taskObj.titulo, empresa: taskObj.empresa});
+      const ev = events.find(x => x.id.toString() === tid);
+      if (ev) ev.kanbanDay = toDay;
+      save('gc-events', events);
+      save('gc-kanban', kanbanData);
+    }
     buildKanban(colab);
     buildColabTarefas();
   } else if (dragSource === 'kanban' && draggedTask && draggedTask.colab === colab) {
