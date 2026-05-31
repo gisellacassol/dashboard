@@ -130,6 +130,16 @@ tr:hover td { background: var(--bg); }
 
 
 
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.filter-btn { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border-mid); background: var(--surface); color: var(--text-mid); cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(--text-mid); color: var(--text); }
+.filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+.filter-btn.f-editora.active { background: var(--editora); border-color: var(--editora); color: white; }
+.filter-btn.f-leia.active { background: var(--leia); border-color: var(--leia); color: white; }
+.filter-btn.f-gisella.active { background: var(--gisella); border-color: var(--gisella); color: white; }
+
 /* KANBAN */
 .kanban-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
 .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; min-width: 600px; }
@@ -268,9 +278,13 @@ tr:hover td { background: var(--bg); }
     <div class="nav-label">Empresas</div>
     <button class="nav-item" onclick="showPage('editora',this)"><span class="nav-dot dot-editora"></span> Editora Cassol</button>
     <button class="nav-item" onclick="showPage('leia',this)"><span class="nav-dot dot-leia"></span> Léia Cassol</button>
-    <button class="nav-item" onclick="showPage('gisella',this)"><span class="nav-dot dot-gisella"></span> GC Estratégias</button>
+    <button class="nav-item" onclick="showPage('gisella',this)"><span class="nav-dot dot-gisella"></span> GC</button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Sessões</div>
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
     <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
+    <button class="nav-item" onclick="showPage('conteudo-menu',this)"><span style="font-size:13px;">✍</span> Conteúdo</button>
     <button class="nav-item" onclick="showPage('projetos',this)"><span style="font-size:13px;">◆</span> Projetos</button>
     <button class="nav-item" onclick="showPage('livros',this)"><span style="font-size:13px;">📖</span> Livros</button>
   </div>
@@ -303,10 +317,7 @@ tr:hover td { background: var(--bg); }
   </div>
 
   <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openNewConteudo()">+ novo conteúdo</button>
-    </div>
+    <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap">
       <table class="content-table">
         <thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
@@ -354,10 +365,7 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-editora"></div>
   </div>
   <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openNewConteudoEmpresa('editora')">+ novo conteúdo</button>
-    </div>
+    <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-editora"></tbody></table></div>
   </div>
   <div class="section">
@@ -389,10 +397,7 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
   <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openNewConteudoEmpresa('leia')">+ novo conteúdo</button>
-    </div>
+    <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-leia"></tbody></table></div>
   </div>
   <div class="section">
@@ -424,10 +429,7 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-gisella"></div>
   </div>
   <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openNewConteudoEmpresa('gisella')">+ novo conteúdo</button>
-    </div>
+    <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-gisella"></tbody></table></div>
   </div>
   <div class="section">
@@ -469,8 +471,52 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Eventos</div>
     <div class="page-subtitle">Calendário de eventos das três empresas</div>
   </div>
+  <div class="filter-bar" id="filter-bar-eventos">
+    <button class="filter-btn active" onclick="setFilter('eventos','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('eventos','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('eventos','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('eventos','gisella',this)">GC Estratégias</button>
+  </div>
+
   <div class="section">
     <div class="cal-wrap" id="cal-eventos"></div>
+  </div>
+</div>
+
+<!-- CONTEUDO MENU -->
+<div class="page" id="page-conteudo-menu">
+  <div class="page-header">
+    <div class="page-title">Criação de Conteúdo</div>
+    <div class="page-subtitle">Calendário e lista de conteúdos das três empresas</div>
+  </div>
+  <div class="filter-bar" id="filter-bar-conteudo-menu">
+    <button class="filter-btn active" onclick="setFilter('conteudo-menu','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('conteudo-menu','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('conteudo-menu','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('conteudo-menu','gisella',this)">GC Estratégias</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Calendário de conteúdo</div>
+    <div class="cal-wrap" id="cal-conteudo"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Todos os conteúdos</div>
+    <div class="content-table-wrap">
+      <table class="content-table">
+        <thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
+        <tbody id="conteudo-tbody-menu"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:1rem;">
+      <button class="archived-toggle" onclick="toggleArchivedMenu()"><span id="archived-arrow-menu">▸</span> Arquivados (<span id="archived-count-menu">0</span>)</button>
+      <div id="archived-section-menu" style="display:none;margin-top:8px;">
+        <div class="content-table-wrap">
+          <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Rede</th><th>Data postagem</th></tr></thead>
+          <tbody id="archived-tbody-menu"></tbody></table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -480,6 +526,13 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Projetos</div>
     <div class="page-subtitle">Todos os projetos das três empresas</div>
   </div>
+  <div class="filter-bar" id="filter-bar-projetos">
+    <button class="filter-btn active" onclick="setFilter('projetos','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('projetos','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('projetos','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('projetos','gisella',this)">GC Estratégias</button>
+  </div>
+
 
   <div id="projetos-todos"></div>
   <div style="margin-top:1.5rem;">
@@ -501,6 +554,13 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Livros</div>
     <div class="page-subtitle">Todos os livros em produção</div>
   </div>
+  <div class="filter-bar" id="filter-bar-livros">
+    <button class="filter-btn active" onclick="setFilter('livros','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('livros','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('livros','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('livros','gisella',this)">GC Estratégias</button>
+  </div>
+
   <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
     <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
   </div>
@@ -569,9 +629,9 @@ tr:hover td { background: var(--bg); }
 
 <!-- MODAL QUICK ADD -->
 <div class="modal-overlay" id="modal-quickadd">
-  <div class="modal">
+  <div class="modal" style="width:520px;">
     <button class="modal-close" onclick="closeModal('modal-quickadd')">×</button>
-    <div class="modal-title">Adicionar item</div>
+    <div class="modal-title" id="qa-modal-title">Adicionar item</div>
     <form onsubmit="event.preventDefault();submitQuickAdd();">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group"><label class="form-label">Empresa</label>
@@ -583,26 +643,97 @@ tr:hover td { background: var(--bg); }
             <option value="tarefa" selected>Tarefa</option>
             <option value="evento">Evento</option>
             <option value="projeto">Projeto</option>
+            <option value="conteudo">Criação de conteúdo</option>
           </select></div>
       </div>
       <div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="qa-titulo" type="text" placeholder="Descreva..."></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="qa-prazo" type="date"></div>
-        <div class="form-group"><label class="form-label">Horário de início</label><input class="form-input" id="qa-hora-inicio" type="time"></div>
+
+      <!-- TAREFA FIELDS -->
+      <div id="qa-fields-tarefa">
+        <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" id="qa-prazo" type="date"></div>
+        <div class="form-group"><label class="form-label">Responsável</label>
+          <select class="form-select" id="qa-responsavel">
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+          </select></div>
+        <div class="form-group"><label class="form-label">Observação</label>
+          <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="qa-fim-fields">
-        <div class="form-group"><label class="form-label">Data de término</label><input class="form-input" id="qa-data-fim" type="date"></div>
-        <div class="form-group"><label class="form-label">Horário de término</label><input class="form-input" id="qa-hora-fim" type="time"></div>
+
+      <!-- EVENTO FIELDS -->
+      <div id="qa-fields-evento" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="qa-evento-inicio" type="date"></div>
+          <div class="form-group"><label class="form-label">Horário de início</label><input class="form-input" id="qa-hora-inicio" type="time"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Data de término</label><input class="form-input" id="qa-data-fim" type="date"></div>
+          <div class="form-group"><label class="form-label">Horário de término</label><input class="form-input" id="qa-hora-fim" type="time"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Responsável</label>
+          <select class="form-select" id="qa-responsavel-evento">
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+          </select></div>
+        <div class="form-group"><label class="form-label">Observação</label>
+          <textarea class="notes-area" id="qa-observacao-evento" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
       </div>
-      <div class="form-group"><label class="form-label">Responsável</label>
-        <select class="form-select" id="qa-responsavel">
-          <option value="">— nenhum —</option>
-          <option value="Gisella">Gisella</option>
-          <option value="Milena">Milena</option>
-          <option value="Luiggi">Luiggi</option>
-        </select></div>
-      <div class="form-group"><label class="form-label">Observação</label>
-        <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+
+      <!-- PROJETO FIELDS -->
+      <div id="qa-fields-projeto" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-select" id="qa-proj-status">
+              <option value="pendente">Pendente</option><option value="execucao">Em execução</option><option value="finalizado">Finalizado</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Responsável</label>
+            <select class="form-select" id="qa-responsavel-projeto">
+              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+            </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="qa-proj-inicio" type="date"></div>
+          <div class="form-group"><label class="form-label">Data de fim</label><input class="form-input" id="qa-proj-fim" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Observação</label>
+          <textarea class="notes-area" id="qa-observacao-projeto" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+      </div>
+
+      <!-- CONTEUDO FIELDS -->
+      <div id="qa-fields-conteudo" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Rede social</label>
+            <select class="form-select" id="qa-c-rede">
+              <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
+            <select class="form-select" id="qa-c-organico">
+              <option value="organico">Orgânico</option>
+              <option value="anuncio">Anúncio</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Formato de conteúdo</label>
+            <select class="form-select" id="qa-c-tipo">
+              <option value="reel">Reel</option><option value="foto">Foto</option><option value="dump">Dump</option><option value="card">Card</option><option value="carrossel">Carrossel</option><option value="story">Story</option><option value="emailmkt">Email mkt</option><option value="video">Vídeo</option>
+            </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-select" id="qa-c-status">
+              <option value="copy">Copy</option><option value="gravado">Gravado</option><option value="edicao">Em edição</option><option value="aprovado">Aprovado</option><option value="agendado">Agendado</option><option value="postado">Postado</option><option value="turbinar">Turbinar</option><option value="metricas">Métricas</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">Responsável</label>
+            <select class="form-select" id="qa-responsavel-conteudo">
+              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+            </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Data de produção</label><input class="form-input" id="qa-c-dataprod" type="date"></div>
+          <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="qa-c-datapost" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
+        <div class="form-group"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
+        <div class="form-group"><label class="form-label">Legenda</label><textarea class="notes-area" id="qa-c-legenda" style="min-height:60px;"></textarea></div>
+        <div class="form-group"><label class="form-label">Observação</label><textarea class="notes-area" id="qa-observacao-conteudo" style="min-height:40px;"></textarea></div>
+      </div>
+
       <div class="btn-row">
         <button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button>
         <button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button>
@@ -741,7 +872,12 @@ tr:hover td { background: var(--bg); }
           <select class="form-select" id="mc-rede">
             <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option>
           </select></div>
-        <div class="form-group"><label class="form-label">Tipo</label>
+        <div class="form-group"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
+          <select class="form-select" id="mc-organico">
+            <option value="organico">Orgânico</option>
+            <option value="anuncio">Anúncio</option>
+          </select></div>
+        <div class="form-group"><label class="form-label">Formato</label>
           <select class="form-select" id="mc-tipo">
             <option value="reel">Reel</option><option value="foto">Foto</option><option value="dump">Dump</option><option value="card">Card</option><option value="carrossel">Carrossel</option><option value="story">Story</option><option value="emailmkt">Email mkt</option><option value="video">Vídeo</option>
           </select></div>
@@ -837,12 +973,17 @@ function showPage(id, btn) {
   if (id === 'colab-gisella') { buildKanban('gisella'); buildColabTarefas(); }
   if (id === 'colab-milena') { buildKanban('milena'); buildColabTarefas(); }
   if (id === 'colab-luiggi') { buildKanban('luiggi'); buildColabTarefas(); }
+  if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function updateQaFields() {
-  // placeholder - no dynamic fields needed currently
+  const tipo = document.getElementById('qa-tipo').value;
+  ['tarefa','evento','projeto','conteudo'].forEach(t => {
+    const el = document.getElementById('qa-fields-' + t);
+    if (el) el.style.display = t === tipo ? 'block' : 'none';
+  });
 }
 
 function updateDocsLink() {
@@ -902,7 +1043,12 @@ function buildCalendar(id, filter) {
     const isToday = new Date(y,m,d).getTime() === today.getTime();
     const feriadoNome = isFeriado(ds) ? getFeriadoNome(ds) : null;
     // For eventos page show only eventos tipo; for others show all
+    // Conteudos for cal-conteudo and cal-visao
+    const dayConteudos = (id === 'cal-conteudo' || id === 'cal-visao')
+      ? conteudos.filter(c => !c.done && c.dataPost === ds)
+      : [];
     const dayEvs = events.filter(e => {
+      if (id === 'cal-conteudo') return false;
       if (e.data !== ds) return false;
       if (id === 'cal-eventos') return e.tipo === 'evento' || !e.tipo;
       if (filter !== 'all' && e.empresa !== filter) return false;
@@ -910,8 +1056,10 @@ function buildCalendar(id, filter) {
     });
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
+    evHtml += dayConteudos.slice(0,1).map(c => `<div class="cal-event" style="background:#E8F8F8;color:#0A5F5F;cursor:pointer;" onclick="event.stopPropagation();openConteudo(${c.id})">✍ ${c.nome}</div>`).join('');
     evHtml += dayEvs.slice(0,2).map(e => `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`).join('');
-    if (dayEvs.length > 2) evHtml += `<div style="font-size:10px;color:var(--text-soft);padding-left:4px;">+${dayEvs.length-2}</div>`;
+    const total = dayConteudos.length + dayEvs.length;
+    if (total > 3) evHtml += `<div style="font-size:10px;color:var(--text-soft);padding-left:4px;">+${total-3}</div>`;
     html += `<div class="cal-day${isToday?' today':''}${feriadoNome?' feriado-day':''}" onclick="quickAddDate('${ds}')" title="${feriadoNome||''}"><div class="cal-num">${d}</div>${evHtml}</div>`;
   }
   const rem = (first + days) % 7;
@@ -934,6 +1082,7 @@ function initCalendars() {
   buildCalendar('cal-leia','leia');
   buildCalendar('cal-gisella','gisella');
   buildCalendar('cal-eventos','all');
+  buildCalendar('cal-conteudo','all');
 }
 function refreshCalendars() { Object.keys(CAL_STATE).forEach(id => buildCalendar(id, CAL_STATE[id].filter)); }
 
@@ -956,16 +1105,27 @@ let editingEventId = null;
 
 function openQuickAdd() {
   editingEventId = null;
-  document.querySelector('#modal-quickadd .modal-title').textContent = 'Adicionar item';
+  document.getElementById('qa-modal-title').textContent = 'Adicionar item';
   document.getElementById('qa-submit-btn').textContent = 'Adicionar';
   window._addingToProjetoId = null;
   window._addingToMenteeId = null;
+  document.getElementById('qa-titulo').value = '';
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
-  ['qa-titulo','qa-observacao'].forEach(id => document.getElementById(id).value = '');
-  ['qa-prazo','qa-hora-inicio','qa-data-fim','qa-hora-fim'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('qa-empresa').value = 'editora';
   document.getElementById('qa-tipo').value = 'tarefa';
-  document.getElementById('qa-responsavel').value = '';
+  // Reset all fields
+  ['qa-prazo','qa-evento-inicio','qa-hora-inicio','qa-data-fim','qa-hora-fim',
+   'qa-proj-inicio','qa-proj-fim','qa-c-dataprod','qa-c-datapost','qa-c-link'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['qa-observacao','qa-observacao-evento','qa-observacao-projeto','qa-observacao-conteudo',
+   'qa-c-copy','qa-c-legenda'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['qa-responsavel','qa-responsavel-evento','qa-responsavel-projeto','qa-responsavel-conteudo'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  updateQaFields();
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
 }
@@ -1012,73 +1172,88 @@ function deleteCurrentEvent() {
   editingEventId = null;
 }
 
+function getQaVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
 function submitQuickAdd() {
-  const empresa = document.getElementById('qa-empresa').value;
-  const tipo = document.getElementById('qa-tipo').value;
-  const titulo = document.getElementById('qa-titulo').value.trim();
-  const prazoRaw = document.getElementById('qa-prazo').value;
-  const horaInicio = document.getElementById('qa-hora-inicio').value;
-  const dataFim = document.getElementById('qa-data-fim').value;
-  const horaFim = document.getElementById('qa-hora-fim').value;
-  const responsavel = document.getElementById('qa-responsavel').value;
-  const observacao = document.getElementById('qa-observacao').value.trim();
+  const empresa = getQaVal('qa-empresa');
+  const tipo = getQaVal('qa-tipo');
+  const titulo = getQaVal('qa-titulo').trim();
   if (!titulo) { document.getElementById('qa-titulo').focus(); return; }
 
-  const data = { empresa, titulo, data: prazoRaw||'', horaInicio, dataFim, horaFim, responsavel, observacao, tipo };
+  if (tipo === 'projeto') {
+    const proj = {
+      id: Date.now(), tarefas: [], expandido: true, nome: titulo, empresa,
+      status: getQaVal('qa-proj-status')||'pendente',
+      responsavel: getQaVal('qa-responsavel-projeto'),
+      inicio: getQaVal('qa-proj-inicio'), fim: getQaVal('qa-proj-fim'),
+      observacao: getQaVal('qa-observacao-projeto'),
+    };
+    if (editingEventId) {
+      const i = projetos.findIndex(x => x.id === editingEventId);
+      if (i > -1) projetos[i] = {...projetos[i], ...proj};
+      editingEventId = null;
+    } else { projetos.push(proj); }
+    save('gc-projetos', projetos); renderProjetos();
+    closeModal('modal-quickadd'); return;
+  }
+
+  if (tipo === 'conteudo') {
+    const c = {
+      id: Date.now(), done: false, nome: titulo, empresa,
+      rede: getQaVal('qa-c-rede'), tipo: getQaVal('qa-c-tipo'),
+      status: getQaVal('qa-c-status'), responsavel: getQaVal('qa-responsavel-conteudo'),
+      dataProd: getQaVal('qa-c-dataprod'), dataPost: getQaVal('qa-c-datapost'),
+      link: getQaVal('qa-c-link'), copy: getQaVal('qa-c-copy'),
+      legenda: getQaVal('qa-c-legenda'), observacao: getQaVal('qa-observacao-conteudo'),
+    };
+    if (editingEventId) {
+      const i = conteudos.findIndex(x => x.id === editingEventId);
+      if (i > -1) conteudos[i] = {...conteudos[i], ...c};
+      editingEventId = null;
+    } else { conteudos.push(c); }
+    save('gc-conteudos', conteudos); renderConteudos();
+    buildCalendar('cal-conteudo', 'all');
+    closeModal('modal-quickadd'); return;
+  }
+
+  const responsavel = tipo === 'evento' ? getQaVal('qa-responsavel-evento') : getQaVal('qa-responsavel');
+  const observacao = tipo === 'evento' ? getQaVal('qa-observacao-evento') : getQaVal('qa-observacao');
+  const eventData = {
+    empresa, titulo, tipo,
+    data: tipo === 'tarefa' ? getQaVal('qa-prazo') : getQaVal('qa-evento-inicio'),
+    horaInicio: getQaVal('qa-hora-inicio'),
+    dataFim: getQaVal('qa-data-fim'), horaFim: getQaVal('qa-hora-fim'),
+    responsavel, observacao,
+  };
 
   if (editingEventId) {
-    const idx = events.findIndex(x => x.id === editingEventId);
-    if (idx > -1) events[idx] = { ...events[idx], ...data };
+    const i = events.findIndex(x => x.id === editingEventId);
+    if (i > -1) events[i] = {...events[i], ...eventData};
     editingEventId = null;
   } else {
-    events.push({ id: Date.now(), ...data });
-  }
-
-  if (tipo === 'projeto') {
-    projetos.push({
-      id: Date.now(), tarefas: [], expandido: true,
-      nome: titulo,
-      empresa: empresa,
-      status: 'pendente',
-      responsavel: responsavel,
-      inicio: prazoRaw||'',
-      fim: dataFim||'',
-      observacao: observacao,
-    });
-    save('gc-projetos', projetos);
-    renderProjetos();
-    closeModal('modal-quickadd');
-    return;
-  }
-
-  // If adding tarefa from mentee context
-  if (tipo === 'tarefa' && window._addingToMenteeId) {
-    const m = mentees.find(x => x.id === window._addingToMenteeId);
-    if (m) {
-      if (!m.tasks) m.tasks = [];
-      const newEv = events[events.length - 1];
-      m.tasks.push({id: newEv.id.toString(), titulo: titulo, done: false});
-      newEv.menteeId = window._addingToMenteeId;
-      save('gc-mentees', mentees);
-      renderMenteeList();
+    const newEv = { id: Date.now(), ...eventData };
+    events.push(newEv);
+    if (tipo === 'tarefa' && window._addingToProjetoId) {
+      const p = projetos.find(x => x.id === window._addingToProjetoId);
+      if (p) {
+        if (!p.tarefas) p.tarefas = [];
+        p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: newEv.id});
+        newEv.projetoId = window._addingToProjetoId;
+        save('gc-projetos', projetos); renderProjetos();
+      }
     }
-    window._addingToMenteeId = null;
-  }
-
-  // If adding tarefa from projeto context, link to projeto
-  if (tipo === 'tarefa' && window._addingToProjetoId) {
-    const p = projetos.find(x => x.id === window._addingToProjetoId);
-    if (p) {
-      if (!p.tarefas) p.tarefas = [];
-      const newEv = events[events.length - 1];
-      p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: newEv.id});
-      // Also store projetoId on the event
-      newEv.projetoId = window._addingToProjetoId;
-      save('gc-projetos', projetos);
-      renderProjetos();
+    if (tipo === 'tarefa' && window._addingToMenteeId) {
+      const m = mentees.find(x => x.id === window._addingToMenteeId);
+      if (m) {
+        if (!m.tasks) m.tasks = [];
+        m.tasks.push({id: newEv.id.toString(), titulo, done: false});
+        newEv.menteeId = window._addingToMenteeId;
+        save('gc-mentees', mentees); renderMenteeList();
+      }
     }
-    window._addingToProjetoId = null;
   }
+  window._addingToProjetoId = null;
+  window._addingToMenteeId = null;
 
   save('gc-events', events);
   refreshCalendars();
@@ -1087,6 +1262,7 @@ function submitQuickAdd() {
   buildColabTarefas();
   closeModal('modal-quickadd');
 }
+
 
 /* ── LIVROS ── */
 let addLivroEmpresa = 'editora';
@@ -1203,13 +1379,15 @@ function renderLivros() {
   if (visaoLivrosEl) {
     visaoLivrosEl.innerHTML = livros.length===0
       ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro cadastrado.</div>'
-      : livros.map(livroCardHtml).join('');
+      : livrosFiltrados.map(livroCardHtml).join('');
   }
 
     // Render unified todos page
+  const _lf = getFilter('livros');
+  const livrosFiltrados = _lf==='all' ? livros : livros.filter(l=>(l.empresa||'').split(',').includes(_lf));
   const todosEl = document.getElementById('livros-todos');
   if (todosEl) {
-    todosEl.innerHTML = livros.length===0
+    todosEl.innerHTML = livrosFiltrados.length===0
       ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro cadastrado. Use "+ novo livro" para adicionar.</div>'
       : livros.map(livroCardHtml).join('');
   }
@@ -1499,6 +1677,16 @@ function renderConteudos() {
     tb.innerHTML = items.length===0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:1rem;">Nenhum conteúdo ativo.</td></tr>' : items.map(c=>rowHtml(c,false)).join('');
   });
 
+  // Menu page
+  const _cf = getFilter('conteudo-menu');
+  const ativosMenu = _cf==='all' ? ativos : ativos.filter(c=>c.empresa===_cf);
+  const menuTb = document.getElementById('conteudo-tbody-menu');
+  if (menuTb) menuTb.innerHTML = ativosMenu.length===0 ? '<tr><td colspan="8" style="text-align:center;color:var(--text-soft);padding:1.5rem;">Nenhum conteúdo ativo.</td></tr>' : ativosMenu.map(c=>rowHtml(c,true)).join('');
+  const archMenuTb = document.getElementById('archived-tbody-menu');
+  const archMenuCnt = document.getElementById('archived-count-menu');
+  if (archMenuCnt) archMenuCnt.textContent = arquivados.length;
+  if (archMenuTb) archMenuTb.innerHTML = arquivados.map(c=>`<tr onclick="openConteudo(${c.id})" style="opacity:0.6;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;">${c.nome}</td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`).join('');
+
   const archTb = document.getElementById('archived-tbody');
   const archCnt = document.getElementById('archived-count');
   if (archCnt) archCnt.textContent = arquivados.length;
@@ -1509,6 +1697,15 @@ function renderConteudos() {
     <td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td>
     <td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td>
   </tr>`).join('');
+}
+
+function toggleArchivedMenu() {
+  const sec = document.getElementById('archived-section-menu');
+  const arr = document.getElementById('archived-arrow-menu');
+  if (!sec) return;
+  const open = sec.style.display === 'none';
+  sec.style.display = open ? 'block' : 'none';
+  arr.textContent = open ? '▾' : '▸';
 }
 
 function toggleArchived() {
@@ -1630,8 +1827,9 @@ function buildTarefas() {
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const ativas = events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
-  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
+  const _tf = getFilter('tarefas');
+  const ativas = events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||e.empresa===_tf));
+  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||e.empresa===_tf));
 
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
@@ -1756,6 +1954,25 @@ function autoSave() {
 document.addEventListener('input', autoSave);
 document.addEventListener('change', autoSave);
 
+/* ── FILTROS ── */
+const pageFilters = {};
+
+function setFilter(pageId, empresa, btn) {
+  pageFilters[pageId] = empresa;
+  // Update button styles
+  const bar = document.getElementById('filter-bar-' + pageId);
+  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  // Rebuild relevant section
+  if (pageId === 'tarefas') buildTarefas();
+  if (pageId === 'eventos') buildCalendar('cal-eventos', 'all');
+  if (pageId === 'conteudo-menu') { renderConteudos(); buildCalendar('cal-conteudo', 'all'); }
+  if (pageId === 'projetos') renderProjetos();
+  if (pageId === 'livros') renderLivros();
+}
+
+function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
+
 /* ── PROJETOS ── */
 let projetos = load('gc-projetos', []);
 let currentProjetoEmpresa = null;
@@ -1843,11 +2060,13 @@ function renderProjetos() {
   const visaoEl = document.getElementById('projetos-visao');
   if (visaoEl) visaoEl.innerHTML = ativos.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
-    : ativos.map(p=>projetoHtml(p,true)).join('');
+    : ativosFiltered.map(p=>projetoHtml(p,true)).join('');
 
   // Todos page
+  const _pf = getFilter('projetos');
+  const ativosFiltered = _pf==='all' ? ativos : ativos.filter(p=>p.empresa===_pf);
   const todosEl = document.getElementById('projetos-todos');
-  if (todosEl) todosEl.innerHTML = ativos.length===0
+  if (todosEl) todosEl.innerHTML = ativosFiltered.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
   const archTodosEl = document.getElementById('projetos-arquivados-todos');
