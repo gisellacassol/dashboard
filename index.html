@@ -1916,10 +1916,14 @@ function renderConteudos() {
   function rowHtml(c, showEmpresa) {
     const st = ST_MAP[c.status]||{l:c.status,c:'b-gray'};
     const check = `<input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">`;
-    const empCol = showEmpresa ? `<td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td>` : '';
+    const empCol = showEmpresa ? `<td>${empBadgesHtml(c.empresa)}</td>` : '';
     return `<tr onclick="openConteudo(${c.id})" style="${c.done?'opacity:0.5;':''}" >
       <td onclick="event.stopPropagation();">${check}</td>
-      <td style="font-weight:500;">${c.nome}</td>
+      <td style="font-weight:500;">
+        ${c.nome}
+        <button onclick="event.stopPropagation();openConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
+        <button onclick="event.stopPropagation();deleteConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
+      </td>
       ${empCol}
       <td style="font-size:12px;color:var(--text-soft);">${c.responsavel||'—'}</td>
       <td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td>
@@ -2022,6 +2026,14 @@ function saveConteudo() {
   if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
   else conteudos.push({id:Date.now(), done:false, ...data});
   save('gc-conteudos',conteudos); renderConteudos(); closeModal('modal-conteudo');
+}
+
+function deleteConteudo(id) {
+  if (!confirm('Excluir este conteúdo?')) return;
+  conteudos = conteudos.filter(x => x.id !== id);
+  save('gc-conteudos', conteudos);
+  renderConteudos();
+  buildPrioridades();
 }
 
 function toggleConteudoDone(id) {
