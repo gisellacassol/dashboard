@@ -920,7 +920,6 @@ function initCalendars() {
 function refreshCalendars() { Object.keys(CAL_STATE).forEach(id => buildCalendar(id, CAL_STATE[id].filter)); }
 
 /* ── QUICK ADD ── */
-function openQuickAdd() { openModal('modal-quickadd'); setTimeout(() => document.getElementById('qa-titulo').focus(), 50); }
 function quickAddDate(ds) { document.getElementById('qa-prazo').value = ds; openQuickAdd(); }
 
 function fmtDate(val) {
