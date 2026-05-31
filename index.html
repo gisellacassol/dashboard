@@ -718,10 +718,7 @@ tr:hover td { background: var(--bg); }
     </div>
     <div class="modal-tab-content" id="mtab-tarefas">
       <div id="mm-tasks-list" style="margin-bottom:10px;"></div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;">
-        <input class="form-input" id="mm-task-input" type="text" placeholder="Nova tarefa para esta mentorada...">
-        <button class="btn btn-primary" onclick="addMenteeTask()">+</button>
-      </div>
+      <button class="add-btn" onclick="openAddMenteeTask()" style="width:100%;justify-content:center;">+ adicionar item</button>
     </div>
     <div class="btn-row" style="margin-top:1rem;"><button class="btn btn-primary" onclick="closeModal('modal-mentee')">Fechar</button></div>
   </div>
@@ -962,6 +959,8 @@ function openQuickAdd() {
   document.querySelector('#modal-quickadd .modal-title').textContent = 'Adicionar item';
   document.getElementById('qa-submit-btn').textContent = 'Adicionar';
   window._addingToProjetoId = null;
+  window._addingToMenteeId = null;
+  document.getElementById('qa-titulo').placeholder = 'Descreva...';
   ['qa-titulo','qa-observacao'].forEach(id => document.getElementById(id).value = '');
   ['qa-prazo','qa-hora-inicio','qa-data-fim','qa-hora-fim'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('qa-empresa').value = 'editora';
@@ -988,6 +987,17 @@ function openEditEvent(id) {
   document.getElementById('qa-observacao').value = ev.observacao || '';
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
+}
+
+function deleteEventDirect(id) {
+  events = events.filter(x => x.id !== id);
+  // Also remove from projeto if linked
+  projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
+  save('gc-events', events);
+  save('gc-projetos', projetos);
+  buildTarefas();
+  buildColabTarefas();
+  renderProjetos();
 }
 
 function deleteCurrentEvent() {
@@ -1039,6 +1049,20 @@ function submitQuickAdd() {
     renderProjetos();
     closeModal('modal-quickadd');
     return;
+  }
+
+  // If adding tarefa from mentee context
+  if (tipo === 'tarefa' && window._addingToMenteeId) {
+    const m = mentees.find(x => x.id === window._addingToMenteeId);
+    if (m) {
+      if (!m.tasks) m.tasks = [];
+      const newEv = events[events.length - 1];
+      m.tasks.push({id: newEv.id.toString(), titulo: titulo, done: false});
+      newEv.menteeId = window._addingToMenteeId;
+      save('gc-mentees', mentees);
+      renderMenteeList();
+    }
+    window._addingToMenteeId = null;
   }
 
   // If adding tarefa from projeto context, link to projeto
@@ -1378,6 +1402,19 @@ function renderMenteeTasks(m) {
     </div>`).join('');
 }
 
+function openAddMenteeTask() {
+  if (!currentMenteeId) return;
+  const m = mentees.find(x => x.id === currentMenteeId);
+  if (!m) return;
+  closeModal('modal-mentee');
+  openQuickAdd();
+  document.getElementById('qa-tipo').value = 'tarefa';
+  document.getElementById('qa-empresa').value = 'gisella';
+  window._addingToMenteeId = currentMenteeId;
+  // Add mentee name to title placeholder
+  document.getElementById('qa-titulo').placeholder = `Tarefa para ${m.name}...`;
+}
+
 function addMenteeTask() {
   const m = mentees.find(x=>x.id===currentMenteeId);
   if (!m) return;
@@ -1611,10 +1648,11 @@ function buildTarefas() {
           style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"
           title="${isArquivada?'Desmarcar para voltar à lista':'Marcar como concluída'}">
       </td>
-      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}">
+      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
         <span>${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
-        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:4px;" title="Editar">✎</button>
+        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>
+        <button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
       </td>
       <td>
         <span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span>
@@ -1784,16 +1822,13 @@ function projetoHtml(p, showEmpresa) {
     <div class="projeto-body${p.expandido?' open':''}">
       ${p.inicio||p.fim ? `<div style="font-size:12px;color:var(--text-soft);padding:6px 0 10px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : ''}
       ${(p.tarefas||[]).map((t,i) => `
-        <div class="projeto-task-row">
-          <input type="checkbox" ${t.feito?'checked':''} onchange="toggleProjetoTask(${p.id},${i})">
-          <span class="projeto-task-nome${t.feito?' done':''}">${t.nome}</span>
-          <select style="font-size:11px;padding:2px 6px;border:1px solid var(--border-mid);border-radius:6px;background:var(--bg);font-family:'DM Sans',sans-serif;" onchange="setProjetoTaskResp(${p.id},${i},this.value)">
-            <option value="">resp.</option>
-            <option value="Gisella" ${t.resp==='Gisella'?'selected':''}>Gisella</option>
-            <option value="Milena" ${t.resp==='Milena'?'selected':''}>Milena</option>
-            <option value="Luiggi" ${t.resp==='Luiggi'?'selected':''}>Luiggi</option>
-          </select>
-          <button onclick="deleteProjetoTask(${p.id},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.1s;" class="etapa-del-btn">×</button>
+        <div class="projeto-task-row" style="${t.feito?'opacity:0.6;':''}">
+          <input type="checkbox" ${t.feito?'checked':''} onchange="toggleProjetoTask(${p.id},${i})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">
+          <span class="projeto-task-nome${t.feito?' done':''}" style="flex:1;">${t.nome}
+            ${t.resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${t.resp==='Gisella'?'var(--gisella-bg)':t.resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.resp==='Gisella'?'var(--gisella)':t.resp==='Milena'?'var(--leia)':'var(--editora)'};">${t.resp}</span>`:''}
+          </span>
+          <button onclick="t.eventId?openEditEvent(t.eventId):null" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
+          <button onclick="deleteProjetoTask(${p.id},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
         </div>`).join('')}
       <button class="add-btn" style="margin-top:8px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar item</button>
     </div>
