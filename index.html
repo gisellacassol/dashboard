@@ -916,18 +916,7 @@ function submitQuickAdd() {
   const responsavel = document.getElementById('qa-responsavel').value;
   if (tipo === 'evento') {
     events.push({id:Date.now(), empresa, titulo, data: prazoRaw || new Date().toISOString().slice(0,10), responsavel});
-    save('gc-events', events); refreshCalendars(); buildTarefas();
-buildColabTarefas();
-renderProjetos();
-initKanban();
-// Init steira link indicators
-Object.keys(steiraData).forEach(nome => {
-  const d = steiraData[nome];
-  if (d && d.link) {
-    const span = document.getElementById('steira-link-' + nome);
-    if (span) { span.textContent = '🔗 portal'; span.style.display = 'inline'; }
-  }
-});
+    save('gc-events', events); refreshCalendars(); buildTarefas(); buildColabTarefas();
   } else if (tipo === 'alerta') {
     const cls = status === 'urgente' ? 'urgente' : status === 'atencao' ? 'atencao' : 'normal';
     const div = document.createElement('div');
