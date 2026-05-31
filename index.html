@@ -561,9 +561,7 @@ tr:hover td { background: var(--bg); }
     <button class="filter-btn f-gisella" onclick="setFilter('livros','gisella',this)">GC Estratégias</button>
   </div>
 
-  <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
-    <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
-  </div>
+
   <div id="livros-todos"></div>
 </div>
 
@@ -644,6 +642,7 @@ tr:hover td { background: var(--bg); }
             <option value="evento">Evento</option>
             <option value="projeto">Projeto</option>
             <option value="conteudo">Criação de conteúdo</option>
+            <option value="livro">Livro</option>
           </select></div>
       </div>
       <div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="qa-titulo" type="text" placeholder="Descreva..."></div>
@@ -695,6 +694,31 @@ tr:hover td { background: var(--bg); }
         </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao-projeto" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+      </div>
+
+      <!-- LIVRO FIELDS -->
+      <div id="qa-fields-livro" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Autor</label><input class="form-input" id="qa-l-autor" type="text"></div>
+          <div class="form-group"><label class="form-label">Ilustrador</label><input class="form-input" id="qa-l-ilustrador" type="text"></div>
+          <div class="form-group"><label class="form-label">Público-alvo</label><input class="form-input" id="qa-l-publico" type="text"></div>
+          <div class="form-group"><label class="form-label">Faixa etária</label><input class="form-input" id="qa-l-faixa" type="text"></div>
+          <div class="form-group"><label class="form-label">Nº de páginas</label><input class="form-input" id="qa-l-paginas" type="text"></div>
+          <div class="form-group"><label class="form-label">Tiragem</label><input class="form-input" id="qa-l-tiragem" type="text"></div>
+          <div class="form-group"><label class="form-label">ISBN</label><input class="form-input" id="qa-l-isbn" type="text"></div>
+          <div class="form-group"><label class="form-label">Formato</label><input class="form-input" id="qa-l-formato" type="text"></div>
+          <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="qa-l-colecao" type="text"></div>
+          <div class="form-group"><label class="form-label">Editora responsável</label><input class="form-input" id="qa-l-editora" type="text"></div>
+          <div class="form-group"><label class="form-label">Data de lançamento</label><input class="form-input" id="qa-l-lancamento" type="date"></div>
+          <div class="form-group"><label class="form-label">Empresas</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora</span></label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-leia" style="accent-color:var(--leia);"> <span style="color:var(--leia);">Léia</span></label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Sinopse</label><textarea class="notes-area" id="qa-l-sinopse" style="min-height:70px;"></textarea></div>
       </div>
 
       <!-- CONTEUDO FIELDS -->
@@ -960,7 +984,28 @@ let conteudos = load('gc-conteudos', []);
 let steiraData = load('gc-steira', {});
 let kanbanData = load('gc-kanban', {});
 
-const ETAPAS_DEFAULT = ['Originais recebidos','Edição','Revisão','Ilustração','Diagramação','Capa','Revisão final','Aprovação','Impressão','Entrega'];
+const ETAPAS_DEFAULT = [
+  'Briefing',
+  'Envio do original',
+  'Preparação de original',
+  'Original aprovado',
+  'Reunião de alinhamento de conceito',
+  'Pré-diagramação',
+  'Esboços',
+  'Estado da arte — coloração',
+  'Finalização das ilustrações',
+  'Diagramação final',
+  'Revisão',
+  'Revisão final',
+  'UV',
+  'Envio para gráfica',
+  'Boneco',
+  'Ajuste fino',
+  'Aprovação para impressão',
+  'Recebimento do estoque',
+  'Cadastro no sistema',
+  'Liberação no site',
+];
 
 /* ── NAV ── */
 function showPage(id, btn) {
@@ -980,7 +1025,7 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 
 function updateQaFields() {
   const tipo = document.getElementById('qa-tipo').value;
-  ['tarefa','evento','projeto','conteudo'].forEach(t => {
+  ['tarefa','evento','projeto','conteudo','livro'].forEach(t => {
     const el = document.getElementById('qa-fields-' + t);
     if (el) el.style.display = t === tipo ? 'block' : 'none';
   });
@@ -1114,6 +1159,12 @@ function openQuickAdd() {
   document.getElementById('qa-empresa').value = 'editora';
   document.getElementById('qa-tipo').value = 'tarefa';
   // Reset all fields
+  ['qa-l-autor','qa-l-ilustrador','qa-l-publico','qa-l-faixa','qa-l-paginas',
+   'qa-l-tiragem','qa-l-isbn','qa-l-formato','qa-l-colecao','qa-l-editora','qa-l-sinopse'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['editora','leia','gisella'].forEach(e => { const cb = document.getElementById('qa-l-emp-'+e); if(cb) cb.checked = false; });
+  const lcb = document.getElementById('qa-l-lancamento'); if(lcb) lcb.value = '';
   ['qa-prazo','qa-evento-inicio','qa-hora-inicio','qa-data-fim','qa-hora-fim',
    'qa-proj-inicio','qa-proj-fim','qa-c-dataprod','qa-c-datapost','qa-c-link'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
@@ -1197,6 +1248,30 @@ function submitQuickAdd() {
     closeModal('modal-quickadd'); return;
   }
 
+  if (tipo === 'livro') {
+    const emps = ['editora','leia','gisella'].filter(e => {
+      const cb = document.getElementById('qa-l-emp-'+e); return cb && cb.checked;
+    });
+    const empresaStr = emps.length > 0 ? emps.join(',') : getQaVal('qa-empresa');
+    const livro = {
+      id: Date.now(), titulo, empresa: empresaStr, expandido: true,
+      info: {
+        autor: getQaVal('qa-l-autor'), ilustrador: getQaVal('qa-l-ilustrador'),
+        publico: getQaVal('qa-l-publico'), faixa: getQaVal('qa-l-faixa'),
+        paginas: getQaVal('qa-l-paginas'), tiragem: getQaVal('qa-l-tiragem'),
+        isbn: getQaVal('qa-l-isbn'), formato: getQaVal('qa-l-formato'),
+        colecao: getQaVal('qa-l-colecao'), editora: getQaVal('qa-l-editora'),
+        lancamento: getQaVal('qa-l-lancamento'), sinopse: getQaVal('qa-l-sinopse'),
+      },
+      etapas: ETAPAS_DEFAULT.map(nome => ({nome, feito: false, prazo: ''}))
+    };
+    livros.push(livro);
+    save('gc-livros', livros);
+    renderLivros();
+    closeModal('modal-quickadd');
+    return;
+  }
+
   if (tipo === 'conteudo') {
     const c = {
       id: Date.now(), done: false, nome: titulo, empresa,
@@ -1267,12 +1342,18 @@ function submitQuickAdd() {
 /* ── LIVROS ── */
 let addLivroEmpresa = 'editora';
 let editingLivroId = null;
+function openAddLivroTodos() {
+  // Open quickadd modal with livro type
+  openQuickAdd();
+  document.getElementById('qa-tipo').value = 'livro';
+  updateQaFields();
+}
+
 function openAddLivro(emp) {
   addLivroEmpresa = emp;
   editingLivroId = null;
   document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
   document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-  // Reset checkboxes
   ['editora','leia','gisella'].forEach(e => {
     const cb = document.getElementById('nl-emp-'+e);
     if (cb) cb.checked = (e === emp);
