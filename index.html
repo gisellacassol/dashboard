@@ -1454,7 +1454,16 @@ function submitQuickAdd() {
         if (!p.tarefas) p.tarefas = [];
         p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: newEv.id});
         newEv.projetoId = window._addingToProjetoId;
-        save('gc-projetos', projetos); renderProjetos();
+        save('gc-projetos', projetos);
+        save('gc-events', events);
+        buildTarefas();
+        buildColabTarefas();
+        buildPrioridades();
+        renderProjetos();
+        closeModal('modal-quickadd');
+        window._addingToProjetoId = null;
+        window._addingToMenteeId = null;
+        return;
       }
     }
     if (tipo === 'tarefa' && window._addingToMenteeId) {
@@ -2421,12 +2430,13 @@ function openEditProjeto(id) {
 function openAddTarefaProjeto(projetoId) {
   const p = projetos.find(x => x.id === projetoId);
   if (!p) return;
-  // Open quickadd modal pre-filled as tarefa for this projeto
+  editingEventId = null;
   openQuickAdd();
   document.getElementById('qa-tipo').value = 'tarefa';
-  document.getElementById('qa-empresa').value = p.empresa;
+  updateQaFields();
+  setEmpresasChecked('qa-emp-', p.empresa || 'editora');
   document.getElementById('qa-responsavel').value = p.responsavel || '';
-  // Store projeto context
+  document.getElementById('qa-modal-title').textContent = 'Nova tarefa · ' + p.nome;
   window._addingToProjetoId = projetoId;
 }
 
