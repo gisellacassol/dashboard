@@ -170,14 +170,14 @@ tr:hover td { background: var(--bg); }
 .cal-nav:hover { background: var(--bg); }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-dow { text-align: center; font-size: 10px; font-weight: 500; color: var(--text-soft); padding: 8px 4px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
-.cal-day { min-height: 72px; padding: 6px 6px 4px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.cal-day { min-height: 60px; padding: 4px 4px 3px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; word-break: break-word; }
 .cal-day:nth-child(7n) { border-right: none; }
 .cal-day:hover { background: var(--bg); }
 .cal-day.other-month .cal-num { color: var(--text-soft); opacity: 0.4; }
 .cal-day.today { background: #FFFDF5; }
 .cal-day.today .cal-num { background: var(--text); color: var(--surface); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
 .cal-num { font-size: 12px; font-weight: 500; margin-bottom: 3px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-.cal-event { font-size: 10px; font-weight: 500; padding: 1px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-event { font-size: 10px; font-weight: 500; padding: 1px 5px; border-radius: 3px; margin-bottom: 2px; white-space: normal; word-break: break-word; line-height: 1.3; }
 .cal-event.ev-editora { background: var(--editora-bg); color: var(--editora); }
 .cal-event.ev-leia { background: var(--leia-bg); color: var(--leia); }
 .cal-event.ev-gisella { background: var(--gisella-bg); color: var(--gisella); }
@@ -665,10 +665,7 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
     <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Tarefas atribuídas &middot; Agenda</div>
-  </div>
-  <div class="section">
-    <div id="colab-tarefas-gisella"></div>
+    <div class="page-subtitle">Agenda &middot; Tarefas atribuídas</div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -682,6 +679,10 @@ tr:hover td { background: var(--bg); }
     <div id="gcal-container">
       <div style="padding:2rem;text-align:center;color:var(--text-soft);font-size:13px;">Carregando agenda...</div>
     </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas atribuídas</div>
+    <div id="colab-tarefas-gisella"></div>
   </div>
 </div>
 
@@ -3622,10 +3623,10 @@ function renderGcal() {
   const todayStr = today.toISOString().slice(0,10);
   const nowMin = today <= new Date() ? new Date().getHours()*60 + new Date().getMinutes() : -1;
 
-  const HOUR_START = 8;
-  const HOUR_END   = 23;
-  const TOTAL_HOURS = HOUR_END - HOUR_START; // 15 hours
-  const HOUR_PX = 56; // px per hour
+  const HOUR_START = 9;
+  const HOUR_END   = 22;
+  const TOTAL_HOURS = HOUR_END - HOUR_START; // 13 hours
+  const HOUR_PX = 48; // px per hour — altura fixa sem scroll
   const TOTAL_PX = TOTAL_HOURS * HOUR_PX;
 
   // Separate timed events from all-day events
@@ -3676,7 +3677,7 @@ function renderGcal() {
   out += `</div>`;
 
   // ── SCROLLABLE TIME GRID ──
-  out += `<div style="overflow-y:auto;max-height:520px;position:relative;">`;
+  out += `<div style="position:relative;">`;
   out += `<div style="display:grid;grid-template-columns:44px repeat(7,1fr);position:relative;">`;
 
   // Hour labels column
@@ -3754,13 +3755,7 @@ function renderGcal() {
   out += `</div></div></div>`;
   el.innerHTML = out;
 
-  // Auto-scroll to current hour or 8h
-  const scrollEl = el.querySelector('div[style*="overflow-y:auto"]');
-  if (scrollEl) {
-    const now = new Date();
-    const scrollHour = Math.max(HOUR_START, now.getHours() - 1);
-    scrollEl.scrollTop = (scrollHour - HOUR_START) * HOUR_PX;
-  }
+  // Sem scroll — altura fixa
 }
 
 function gcalPrevMonth() {
