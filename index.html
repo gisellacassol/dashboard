@@ -1435,28 +1435,37 @@ async function uploadLocalToFirebase() {
     alert('Firebase não está conectado. Verifique sua conexão e tente novamente.');
     return;
   }
+
+  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
+
+  // Verificar se há dados no localStorage
+  const hasData = KEYS.some(k => localStorage.getItem(k));
+  if (!hasData) {
+    alert('Nenhum dado local encontrado para enviar.');
+    return;
+  }
+
   const btn = document.getElementById('upload-firebase-btn');
   if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviando...</span>';
 
-  const KEYS = [
-    ['gc-events',      events],
-    ['gc-livros',      livros],
-    ['gc-conteudos',   conteudos],
-    ['gc-projetos',    projetos],
-    ['gc-mentees',     mentees],
-    ['gc-kanban',      kanbanData],
-    ['gc-steira',      steiraData],
-    ['gc-colab-ordem', colabOrdem],
-  ];
-
   try {
-    await Promise.all(KEYS.map(([key, val]) => window.fbSave(key, val)));
+    // Ler direto do localStorage — garante os dados originais
+    const promises = KEYS.map(key => {
+      const raw = localStorage.getItem(key);
+      if (!raw) return Promise.resolve();
+      try {
+        const val = JSON.parse(raw);
+        return window.fbSave(key, val);
+      } catch(e) { return Promise.resolve(); }
+    });
+    await Promise.all(promises);
+
     if (btn) btn.innerHTML = '&#10003; <span>Enviado com sucesso!</span>';
     const ind = document.getElementById('sync-indicator');
     if (ind) ind.style.display = 'flex';
     setTimeout(() => {
       if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviar dados locais &#8594; nuvem</span>';
-    }, 3000);
+    }, 4000);
   } catch(e) {
     if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviar dados locais &#8594; nuvem</span>';
     alert('Erro ao enviar: ' + e.message);
