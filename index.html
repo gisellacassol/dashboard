@@ -128,6 +128,24 @@ tr:hover td { background: var(--bg); }
 .archived-toggle:hover { color: var(--text); }
 
 
+
+/* KANBAN */
+.kanban-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+.kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; min-width: 600px; }
+.kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; min-height: 120px; }
+.kanban-col-header { font-size: 11px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; text-align: center; }
+.kanban-col-date { font-size: 10px; color: var(--text-soft); opacity: 0.7; display: block; text-align: center; margin-top: 2px; }
+.kanban-col.today-col { border-color: var(--gisella); }
+.kanban-col.today-col .kanban-col-header { color: var(--gisella); }
+.kanban-col.drag-over { background: var(--gisella-bg); border-color: var(--gisella); }
+.kanban-task { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; font-size: 12px; cursor: grab; display: flex; align-items: flex-start; gap: 6px; }
+.kanban-task:active { cursor: grabbing; opacity: 0.7; }
+.kanban-task-text { flex: 1; line-height: 1.4; }
+.kanban-task-emp { display: inline-block; font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 10px; margin-top: 3px; }
+.kanban-return { background: none; border: none; font-size: 13px; color: var(--text-soft); cursor: pointer; padding: 0; flex-shrink: 0; margin-top: 1px; }
+.kanban-return:hover { color: var(--danger); }
+.kanban-drop-hint { font-size: 11px; color: var(--text-soft); text-align: center; padding: 8px 0; opacity: 0.5; }
+
 /* CHAT */
 .chat-btn { position: fixed; bottom: 2rem; left: 2rem; width: 48px; height: 48px; border-radius: 50%; background: #6B4EFF; color: white; border: none; font-size: 22px; cursor: pointer; z-index: 150; box-shadow: 0 4px 20px rgba(107,78,255,0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
 .chat-btn:hover { transform: scale(1.08); }
@@ -469,27 +487,54 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
     <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Tarefas atribuídas</div>
+    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
   </div>
-  <div id="colab-tarefas-gisella"></div>
+  <div class="section">
+    <div class="section-title">Semana</div>
+    <div class="kanban-wrap">
+      <div class="kanban-board" id="kanban-gisella"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas pendentes</div>
+    <div id="colab-tarefas-gisella"></div>
+  </div>
 </div>
 
 <!-- COLABORADOR: MILENA -->
 <div class="page" id="page-colab-milena">
   <div class="page-header">
     <div class="page-title">Milena</div>
-    <div class="page-subtitle">Tarefas atribuídas</div>
+    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
   </div>
-  <div id="colab-tarefas-milena"></div>
+  <div class="section">
+    <div class="section-title">Semana</div>
+    <div class="kanban-wrap">
+      <div class="kanban-board" id="kanban-milena"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas pendentes</div>
+    <div id="colab-tarefas-milena"></div>
+  </div>
 </div>
 
 <!-- COLABORADOR: LUIGGI -->
 <div class="page" id="page-colab-luiggi">
   <div class="page-header">
     <div class="page-title">Luiggi</div>
-    <div class="page-subtitle">Tarefas atribuídas</div>
+    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
   </div>
-  <div id="colab-tarefas-luiggi"></div>
+  <div class="section">
+    <div class="section-title">Semana</div>
+    <div class="kanban-wrap">
+      <div class="kanban-board" id="kanban-luiggi"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas pendentes</div>
+    <div id="colab-tarefas-luiggi"></div>
+  </div>
 </div>
 
 </main>
@@ -756,6 +801,10 @@ function showPage(id, btn) {
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+function updateQaFields() {
+  // placeholder - no dynamic fields needed currently
+}
+
 function updateDocsLink() {
   const val = document.getElementById('mm-docs').value.trim();
   const link = document.getElementById('mm-docs-open');
@@ -870,6 +919,7 @@ function submitQuickAdd() {
     save('gc-events', events); refreshCalendars(); buildTarefas();
 buildColabTarefas();
 renderProjetos();
+initKanban();
 // Init steira link indicators
 Object.keys(steiraData).forEach(nome => {
   const d = steiraData[nome];
@@ -1104,7 +1154,8 @@ function openLivroFicha(id) {
 function deleteLivro(id) { if(!confirm('Excluir este livro?')) return; livros=livros.filter(x=>x.id!==id); save('gc-livros',livros); renderLivros(); }
 function toggleEtapa(id, i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].feito=!l.etapas[i].feito; save('gc-livros',livros); renderLivros(); buildTarefas();
 buildColabTarefas();
-renderProjetos(); } }
+renderProjetos();
+initKanban(); } }
 function setPrazoEtapa(id,i,val) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].prazo=val; save('gc-livros',livros); renderLivros(); } }
 function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
 function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildColabTarefas(); } }
@@ -1119,7 +1170,7 @@ const S_BADGE = {'ok':'b-ok','indiv. pend.':'b-warn','sem contato':'b-danger','a
 function renderMenteeList() {
   const el = document.getElementById('mentee-list-rendered');
   if (!el) return;
-  document.getElementById('cnt-mentoradas').textContent = mentees.length;
+  const cntM2 = document.getElementById('cnt-mentoradas'); if(cntM2) cntM2.textContent = mentees.length;
   el.innerHTML = mentees.map(m => `
     <div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
       <div class="avatar">${getInitials(m.name)}</div>
@@ -1227,6 +1278,7 @@ function addMenteeTask() {
   renderMenteeTasks(m); buildTarefas();
 buildColabTarefas();
 renderProjetos();
+initKanban();
 }
 
 function toggleMenteeTask(tid) {
@@ -1522,10 +1574,15 @@ const dateEl = document.getElementById('today-date-text');
 if (dateEl) dateEl.textContent = `${DIAS[now.getDay()]}, ${now.getDate()} de ${MESES_PT[now.getMonth()]}`;
 
 // Alert counters
-const cntU = document.getElementById('cnt-urgentes');
-const cntA = document.getElementById('cnt-atencao');
-if (cntU) cntU.textContent = document.querySelectorAll('.alert-item.urgente').length;
-if (cntA) cntA.textContent = document.querySelectorAll('.alert-item.atencao').length;
+// Alert counters (elements may not exist)
+try {
+  const cntU = document.getElementById('cnt-urgentes');
+  const cntA = document.getElementById('cnt-atencao');
+  const cntM = document.getElementById('cnt-mentoradas');
+  if (cntU) cntU.textContent = document.querySelectorAll('.alert-item.urgente').length;
+  if (cntA) cntA.textContent = document.querySelectorAll('.alert-item.atencao').length;
+  if (cntM) cntM.textContent = mentees.length;
+} catch(e) {}
 
 /* ── AUTOSAVE ── */
 let saveTimer;
@@ -1550,9 +1607,11 @@ function buildColabTarefas() {
 
     const tasks = [];
 
-    // From events
-    events.filter(e => e.responsavel === colab && e.titulo).forEach(e => {
-      tasks.push({titulo: e.titulo, empresa: e.empresa, data: e.data||'', fonte: 'Tarefa/Evento'});
+    // From events (exclude those already in kanban)
+    const colabKanban = kanbanData[colab.toLowerCase()] || {};
+    const kanbanIds = new Set(Object.values(colabKanban).flat().map(t=>t.id));
+    events.filter(e => e.responsavel === colab && e.titulo && !kanbanIds.has(e.id.toString())).forEach(e => {
+      tasks.push({id: e.id, titulo: e.titulo, empresa: e.empresa, data: e.data||'', fonte: 'Tarefa/Evento'});
     });
 
     // From livro etapas
@@ -1861,6 +1920,121 @@ async function sendChat() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+/* ── KANBAN ── */
+const DIAS_UTEIS = ['Seg','Ter','Qua','Qui','Sex'];
+let kanbanData = load('gc-kanban', {}); // {colab: {dayKey: [{taskId, titulo, empresa}]}}
+
+function getWeekDays() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dow = today.getDay(); // 0=sun
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  return DIAS_UTEIS.map((label, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    const isToday = d.getTime() === today.getTime();
+    const dd = d.getDate();
+    const mm = d.getMonth()+1;
+    return {label, key, isToday, display: `${String(dd).padStart(2,'0')}/${String(mm).padStart(2,'0')}`};
+  });
+}
+
+function buildKanban(colab) {
+  const board = document.getElementById('kanban-' + colab);
+  if (!board) return;
+  const days = getWeekDays();
+  const colabData = kanbanData[colab] || {};
+  const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
+  const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
+
+  board.innerHTML = days.map(day => {
+    const tasks = (colabData[day.key] || []);
+    const taskHtml = tasks.length === 0
+      ? `<div class="kanban-drop-hint">solte aqui</div>`
+      : tasks.map(t => `
+          <div class="kanban-task" draggable="true"
+            ondragstart="dragKanbanTask(event,'${colab}','${day.key}','${t.id}')"
+            ondragend="dragEndKanban(event)">
+            <div class="kanban-task-text">
+              ${t.titulo}
+              <span class="kanban-task-emp badge ${EMP_B[t.empresa]||'b-gray'}">${EMP_S[t.empresa]||t.empresa}</span>
+            </div>
+            <button class="kanban-return" onclick="returnFromKanban('${colab}','${day.key}','${t.id}')" title="Devolver à lista">↩</button>
+          </div>`).join('');
+
+    return `<div class="kanban-col${day.isToday?' today-col':''}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="dropKanbanTask(event,'${colab}','${day.key}')">
+      <div class="kanban-col-header">${day.label}<span class="kanban-col-date">${day.display}</span></div>
+      ${taskHtml}
+    </div>`;
+  }).join('');
+}
+
+let draggedTask = null;
+let dragSource = null;
+
+function dragKanbanTask(event, colab, fromDay, taskId) {
+  draggedTask = {colab, fromDay, taskId};
+  dragSource = 'kanban';
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function dragEndKanban(event) {
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+}
+
+function dropKanbanTask(event, colab, toDay) {
+  event.preventDefault();
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+
+  if (dragSource === 'list' && draggedTask) {
+    // Coming from task list
+    const {taskObj} = draggedTask;
+    if (!kanbanData[colab]) kanbanData[colab] = {};
+    if (!kanbanData[colab][toDay]) kanbanData[colab][toDay] = [];
+    kanbanData[colab][toDay].push({id: taskObj.id.toString(), titulo: taskObj.titulo, empresa: taskObj.empresa});
+    // Mark as scheduled in events
+    const ev = events.find(x => x.id === taskObj.id);
+    if (ev) ev.kanbanDay = toDay;
+    save('gc-events', events);
+    save('gc-kanban', kanbanData);
+    buildKanban(colab);
+    buildColabTarefas();
+  } else if (dragSource === 'kanban' && draggedTask && draggedTask.colab === colab) {
+    // Moving between days
+    const {fromDay, taskId} = draggedTask;
+    if (!kanbanData[colab]) return;
+    const fromList = kanbanData[colab][fromDay] || [];
+    const task = fromList.find(t => t.id === taskId);
+    if (!task) return;
+    kanbanData[colab][fromDay] = fromList.filter(t => t.id !== taskId);
+    if (!kanbanData[colab][toDay]) kanbanData[colab][toDay] = [];
+    kanbanData[colab][toDay].push(task);
+    save('gc-kanban', kanbanData);
+    buildKanban(colab);
+  }
+  draggedTask = null;
+  dragSource = null;
+}
+
+function returnFromKanban(colab, day, taskId) {
+  if (!kanbanData[colab] || !kanbanData[colab][day]) return;
+  kanbanData[colab][day] = kanbanData[colab][day].filter(t => t.id !== taskId);
+  // Remove kanbanDay from event
+  const ev = events.find(x => x.id.toString() === taskId);
+  if (ev) { delete ev.kanbanDay; save('gc-events', events); }
+  save('gc-kanban', kanbanData);
+  buildKanban(colab);
+  buildColabTarefas();
+}
+
+function initKanban() {
+  ['gisella','milena','luiggi'].forEach(c => buildKanban(c));
+}
+
 /* ── INIT ── */
 initCalendars();
 renderLivros();
@@ -1869,6 +2043,7 @@ renderConteudos();
 buildTarefas();
 buildColabTarefas();
 renderProjetos();
+initKanban();
 </script>
 
 <!-- CHAT BUTTON -->
