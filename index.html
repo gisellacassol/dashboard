@@ -575,7 +575,7 @@ tr:hover td { background: var(--bg); }
       </div>
       <div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="qa-titulo" type="text" placeholder="Descreva..."></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label class="form-label">Data de início *</label><input class="form-input" id="qa-prazo" type="date"></div>
+        <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="qa-prazo" type="date"></div>
         <div class="form-group"><label class="form-label">Horário de início</label><input class="form-input" id="qa-hora-inicio" type="time"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="qa-fim-fields">
@@ -589,7 +589,9 @@ tr:hover td { background: var(--bg); }
           <option value="Milena">Milena</option>
           <option value="Luiggi">Luiggi</option>
         </select></div>
-      <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button><button type="submit" class="btn btn-primary">Adicionar</button></div>
+      <div class="form-group"><label class="form-label">Observação</label>
+        <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+      <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button><button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button></div>
     </form>
   </div>
 </div>
@@ -802,6 +804,7 @@ let mentees = load('gc-mentees', [
 let livros = load('gc-livros', []);
 let conteudos = load('gc-conteudos', []);
 let steiraData = load('gc-steira', {});
+let kanbanData = load('gc-kanban', {});
 
 const ETAPAS_DEFAULT = ['Originais recebidos','Edição','Revisão','Ilustração','Diagramação','Capa','Revisão final','Aprovação','Impressão','Entrega'];
 
@@ -812,6 +815,10 @@ function showPage(id, btn) {
   const el = document.getElementById('page-' + id);
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
+  // Rebuild kanban when navigating to colab pages
+  if (id === 'colab-gisella') { buildKanban('gisella'); buildColabTarefas(); }
+  if (id === 'colab-milena') { buildKanban('milena'); buildColabTarefas(); }
+  if (id === 'colab-luiggi') { buildKanban('luiggi'); buildColabTarefas(); }
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -928,6 +935,40 @@ function fmtDate(val) {
   return `${d} ${ms[m-1]}`;
 }
 
+let editingEventId = null;
+
+function openQuickAdd() {
+  editingEventId = null;
+  document.querySelector('#modal-quickadd .modal-title').textContent = 'Adicionar item';
+  document.getElementById('qa-submit-btn').textContent = 'Adicionar';
+  ['qa-titulo','qa-observacao'].forEach(id => document.getElementById(id).value = '');
+  ['qa-prazo','qa-hora-inicio','qa-data-fim','qa-hora-fim'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('qa-empresa').value = 'editora';
+  document.getElementById('qa-tipo').value = 'evento';
+  document.getElementById('qa-responsavel').value = '';
+  openModal('modal-quickadd');
+  setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
+}
+
+function openEditEvent(id) {
+  const ev = events.find(x => x.id === id);
+  if (!ev) return;
+  editingEventId = id;
+  document.querySelector('#modal-quickadd .modal-title').textContent = 'Editar item';
+  document.getElementById('qa-submit-btn').textContent = 'Salvar';
+  document.getElementById('qa-titulo').value = ev.titulo || '';
+  document.getElementById('qa-empresa').value = ev.empresa || 'editora';
+  document.getElementById('qa-tipo').value = ev.tipo || 'evento';
+  document.getElementById('qa-prazo').value = ev.data || '';
+  document.getElementById('qa-hora-inicio').value = ev.horaInicio || '';
+  document.getElementById('qa-data-fim').value = ev.dataFim || '';
+  document.getElementById('qa-hora-fim').value = ev.horaFim || '';
+  document.getElementById('qa-responsavel').value = ev.responsavel || '';
+  document.getElementById('qa-observacao').value = ev.observacao || '';
+  openModal('modal-quickadd');
+  setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
+}
+
 function submitQuickAdd() {
   const empresa = document.getElementById('qa-empresa').value;
   const tipo = document.getElementById('qa-tipo').value;
@@ -937,34 +978,25 @@ function submitQuickAdd() {
   const dataFim = document.getElementById('qa-data-fim').value;
   const horaFim = document.getElementById('qa-hora-fim').value;
   const responsavel = document.getElementById('qa-responsavel').value;
+  const observacao = document.getElementById('qa-observacao').value.trim();
   if (!titulo) { document.getElementById('qa-titulo').focus(); return; }
 
-  if (tipo === 'evento') {
-    events.push({
-      id: Date.now(), empresa, titulo,
-      data: prazoRaw || new Date().toISOString().slice(0,10),
-      horaInicio, dataFim, horaFim, responsavel, tipo: 'evento'
-    });
-    save('gc-events', events);
-    refreshCalendars();
-    buildCalendar('cal-eventos', 'all');
-    buildColabTarefas();
-  } else if (tipo === 'tarefa') {
-    events.push({
-      id: Date.now(), empresa, titulo,
-      data: prazoRaw||'', horaInicio, dataFim, horaFim,
-      responsavel, tipo: 'tarefa'
-    });
-    save('gc-events', events);
-    buildTarefas();
-    buildColabTarefas();
+  const data = { empresa, titulo, data: prazoRaw||'', horaInicio, dataFim, horaFim, responsavel, observacao, tipo };
+
+  if (editingEventId) {
+    const idx = events.findIndex(x => x.id === editingEventId);
+    if (idx > -1) events[idx] = { ...events[idx], ...data };
+    editingEventId = null;
+  } else {
+    events.push({ id: Date.now(), ...data });
   }
+
+  save('gc-events', events);
+  refreshCalendars();
+  buildCalendar('cal-eventos', 'all');
+  buildTarefas();
+  buildColabTarefas();
   closeModal('modal-quickadd');
-  document.getElementById('qa-titulo').value = '';
-  document.getElementById('qa-prazo').value = '';
-  document.getElementById('qa-hora-inicio').value = '';
-  document.getElementById('qa-data-fim').value = '';
-  document.getElementById('qa-hora-fim').value = '';
 }
 
 /* ── LIVROS ── */
@@ -1514,7 +1546,7 @@ function buildTarefas() {
           style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"
           title="${isArquivada?'Desmarcar para voltar à lista':'Marcar como concluída'}">
       </td>
-      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}">${e.titulo}</td>
+      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" onclick="openEditEvent(${e.id})">${e.titulo}</td>
       <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
     </tr>`;
@@ -1767,7 +1799,6 @@ function getFeriadoNome(dateStr) {
 
 /* ── KANBAN ── */
 const DIAS_UTEIS = ['Seg','Ter','Qua','Qui','Sex'];
-let kanbanData = load('gc-kanban', {}); // {colab: {dayKey: [{taskId, titulo, empresa}]}}
 
 function getWeekDays() {
   const today = new Date(); today.setHours(0,0,0,0);
