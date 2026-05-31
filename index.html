@@ -1044,6 +1044,21 @@ function submitQuickAdd() {
     return;
   }
 
+  // If adding tarefa from projeto context, link to projeto
+  if (tipo === 'tarefa' && window._addingToProjetoId) {
+    const p = projetos.find(x => x.id === window._addingToProjetoId);
+    if (p) {
+      if (!p.tarefas) p.tarefas = [];
+      const newEv = events[events.length - 1];
+      p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: newEv.id});
+      // Also store projetoId on the event
+      newEv.projetoId = window._addingToProjetoId;
+      save('gc-projetos', projetos);
+      renderProjetos();
+    }
+    window._addingToProjetoId = null;
+  }
+
   save('gc-events', events);
   refreshCalendars();
   buildCalendar('cal-eventos', 'all');
@@ -1581,8 +1596,8 @@ function buildTarefas() {
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const ativas = events.filter(e=>e.data && !e.arquivada && e.tipo !== 'evento');
-  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento');
+  const ativas = events.filter(e=>e.data && !e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
+  const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
 
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
@@ -1599,8 +1614,12 @@ function buildTarefas() {
           style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"
           title="${isArquivada?'Desmarcar para voltar à lista':'Marcar como concluída'}">
       </td>
-      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" onclick="openEditEvent(${e.id})">${e.titulo}</td>
-      <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
+      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" onclick="openEditEvent(${e.id})">${e.titulo}${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
+      </td>
+      <td>
+        <span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span>
+        ${e.responsavel?`<span style="font-size:11px;color:var(--text-soft);display:block;margin-top:2px;">${e.responsavel}</span>`:''}
+      </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
     </tr>`;
   }
