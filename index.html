@@ -1399,6 +1399,19 @@ function buildCalendar(id, filter) {
   const days = new Date(y, m+1, 0).getDate();
   const prevDays = new Date(y, m, 0).getDate();
 
+  // Eventos do Google Calendar em memória (não salvos)
+  const gcalEventsNative = (window.gcalEventsCache || []).map(ev => ({
+    id: 'gcal-' + ev.start + '-' + ev.title.slice(0,10).replace(/\s/g,''),
+    titulo: ev.title,
+    empresa: 'gisella',
+    tipo: 'evento',
+    data: ev.start,
+    dataFim: ev.end || ev.start,
+    _gcal: true,
+    startTime: ev.startTime,
+    endTime: ev.endTime,
+  }));
+
   let html = `<div class="cal-header"><button class="cal-nav" onclick="calNav('${id}',-1)">‹</button><div class="cal-month">${MESES[m]} ${y}</div><button class="cal-nav" onclick="calNav('${id}',1)">›</button></div><div class="cal-grid">`;
   DOWS.forEach(d => html += `<div class="cal-dow">${d}</div>`);
   for (let i = first-1; i >= 0; i--) html += `<div class="cal-day other-month"><div class="cal-num">${prevDays-i}</div></div>`;
@@ -1406,21 +1419,16 @@ function buildCalendar(id, filter) {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isToday = new Date(y,m,d).getTime() === today.getTime();
     const feriadoNome = isFeriado(ds) ? getFeriadoNome(ds) : null;
-    // For eventos page show only eventos tipo; for others show all
-    // Conteudos for cal-conteudo and cal-visao
-    // cal-conteudo: só conteúdos; cal-eventos: só eventos; cal-visao: ambos; outros: só eventos
     const showConteudos = (id === 'cal-conteudo' || id === 'cal-visao');
     const showEventos = (id !== 'cal-conteudo');
     const dayConteudos = showConteudos
       ? conteudos.filter(c => !c.done && c.dataPost === ds)
       : [];
-    // Eventos multi-dia: aparecer em cada dia dentro do intervalo
-    const dayEvs = showEventos ? events.filter(e => {
+    const allEvents = showEventos ? [...events, ...gcalEventsNative] : [];
+    const dayEvs = showEventos ? allEvents.filter(e => {
       if (e.tipo !== 'evento' && e.tipo !== undefined && e.tipo !== null && e.tipo !== '') {
-        // tarefas/livros etc — só mostrar se não for eventos/conteudo
         if (id === 'cal-eventos') return false;
       }
-      // Check if event spans this date
       const eStart = e.data || '';
       const eEnd = e.dataFim || e.data || '';
       if (!eStart) return false;
@@ -1428,13 +1436,19 @@ function buildCalendar(id, filter) {
       if (!inRange) return false;
       if (id === 'cal-eventos') return e.tipo === 'evento' || !e.tipo;
       if (id === 'cal-visao') return e.tipo === 'evento' || !e.tipo;
-      if (filter !== 'all' && e.empresa !== filter) return false;
+      if (filter !== 'all' && !(e.empresa||'').split(',').includes(filter)) return false;
       return e.tipo === 'evento' || !e.tipo;
     }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
     evHtml += dayConteudos.slice(0,1).map(c => `<div class="cal-event" style="background:#E8F8F8;color:#0A5F5F;cursor:pointer;" onclick="event.stopPropagation();openConteudo(${c.id})">✍ ${c.nome}</div>`).join('');
-    evHtml += dayEvs.slice(0,2).map(e => `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`).join('');
+    evHtml += dayEvs.slice(0,2).map(e => {
+      if (e._gcal) {
+        const time = e.startTime ? `${e.startTime} ` : '';
+        return `<div class="cal-event" style="background:var(--gisella-bg);color:var(--gisella);cursor:default;border-left:2px solid var(--gisella);" title="${e.titulo} (Google Calendar)">${time}${e.titulo}</div>`;
+      }
+      return `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`;
+    }).join('');
     const total = dayConteudos.length + dayEvs.length;
     if (total > 3) evHtml += `<div style="font-size:10px;color:var(--text-soft);padding-left:4px;">+${total-3}</div>`;
     html += `<div class="cal-day${isToday?' today':''}${feriadoNome?' feriado-day':''}" onclick="quickAddDate('${ds}')" title="${feriadoNome||''}"><div class="cal-num">${d}</div>${evHtml}</div>`;
@@ -1442,7 +1456,7 @@ function buildCalendar(id, filter) {
   const rem = (first + days) % 7;
   if (rem > 0) for (let i = 1; i <= 7-rem; i++) html += `<div class="cal-day other-month"><div class="cal-num">${i}</div></div>`;
   html += '</div>';
-  if (filter === 'all') html += `<div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--leia);"></div>Léia</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>GC</div></div>`;
+  if (filter === 'all') html += `<div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--leia);"></div>Léia</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>GC</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);opacity:0.5;border:1px solid var(--gisella);"></div>Google Cal</div></div>`;
   el.innerHTML = html;
 }
 
@@ -3342,40 +3356,57 @@ function livrosDrop(e, id) {
 const GCAL_API_KEY = 'AIzaSyBSQ7t6xtS6va7yaXMVvOKchCl1pkq_Whw';
 const GCAL_ID      = 'gcestrategiasliterarias@gmail.com';
 
-let gcalYear  = new Date().getFullYear();
-let gcalMonth = new Date().getMonth(); // 0-based
-let gcalEvents = [];
-
+// Semana atual: domingo da semana corrente
 const GCAL_MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                          'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const GCAL_DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+let gcalWeekStart = (function() {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay()); // vai para domingo
+  return d;
+})();
+let gcalEvents = [];
 
 async function loadGcal() {
   const el = document.getElementById('gcal-container');
   if (!el) return;
   el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-soft);font-size:13px;">Carregando...</div>';
 
-  const firstDay = new Date(gcalYear, gcalMonth, 1).toISOString();
-  const lastDay  = new Date(gcalYear, gcalMonth + 1, 0, 23, 59, 59).toISOString();
+  const weekEnd = new Date(gcalWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23,59,59);
+
+  // Busca 6 meses ao redor de hoje para cobrir navegação nos calendários
+  const rangeStart = new Date(); rangeStart.setMonth(rangeStart.getMonth() - 2); rangeStart.setDate(1);
+  const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 4); rangeEnd.setDate(1);
+
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(GCAL_ID)}/events`
-    + `?key=${GCAL_API_KEY}&timeMin=${firstDay}&timeMax=${lastDay}`
-    + `&singleEvents=true&orderBy=startTime&maxResults=100`;
+    + `?key=${GCAL_API_KEY}&timeMin=${rangeStart.toISOString()}&timeMax=${rangeEnd.toISOString()}`
+    + `&singleEvents=true&orderBy=startTime&maxResults=250`;
 
   try {
-    const res  = await fetch(url);
+    const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json();
-      el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro ao carregar agenda: ${(err.error||{}).message||res.status}<br><small>Verifique se o calendário est&aacute; p&uacute;blico e a API Key est&aacute; correta.</small></div>`;
+      el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro ao carregar agenda: ${(err.error||{}).message||res.status}<br><small>Verifique se o calendário está público e a API Key está correta.</small></div>`;
       return;
     }
     const data = await res.json();
-    gcalEvents = (data.items || []).map(ev => {
-      const start = ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date;
-      const end   = ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date;
+    const mapped = (data.items || []).map(ev => {
+      const start     = ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date;
+      const end       = ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date;
       const startTime = ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null;
       const endTime   = ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null;
-      return { title: ev.summary||'(sem título)', start, end, startTime, endTime, color: ev.colorId };
+      return { title: ev.summary||'(sem título)', start, end, startTime, endTime };
     });
+
+    // Salvar cache global e filtrar para a semana atual
+    window.gcalEventsCache = mapped;
+    gcalEvents = mapped.filter(ev => ev.start >= gcalWeekStart.toISOString().slice(0,10)
+      && ev.start <= weekEnd.toISOString().slice(0,10));
+
+    // Atualizar todos os calendários da GC em tempo real
+    refreshCalendars();
     renderGcal();
   } catch(e) {
     el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro de rede: ${e.message}</div>`;
@@ -3386,101 +3417,92 @@ function renderGcal() {
   const el = document.getElementById('gcal-container');
   const lbl = document.getElementById('gcal-month-label');
   if (!el) return;
-  if (lbl) lbl.textContent = GCAL_MONTHS_PT[gcalMonth] + ' ' + gcalYear;
 
-  const firstWeekday = new Date(gcalYear, gcalMonth, 1).getDay();
-  const daysInMonth  = new Date(gcalYear, gcalMonth + 1, 0).getDate();
-  const today = new Date();
-  const todayStr = today.getFullYear() + '-'
-    + String(today.getMonth()+1).padStart(2,'0') + '-'
-    + String(today.getDate()).padStart(2,'0');
+  // Label: "2 – 8 de Junho 2025"
+  const weekEnd = new Date(gcalWeekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
+  const fmtShort = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'});
+  if (lbl) {
+    const sameMonth = gcalWeekStart.getMonth() === weekEnd.getMonth();
+    lbl.textContent = sameMonth
+      ? `${gcalWeekStart.getDate()} – ${fmt(weekEnd)}`
+      : `${fmtShort(gcalWeekStart)} – ${fmt(weekEnd)}`;
+  }
 
-  // Map events to day strings
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+
+  // Build byDay map
   const byDay = {};
   gcalEvents.forEach(ev => {
-    // Multi-day: fill each day
     let cur = new Date(ev.start + 'T12:00:00');
     const endD = new Date((ev.end || ev.start) + 'T12:00:00');
     while (cur <= endD) {
       const ds = cur.toISOString().slice(0,10);
       if (!byDay[ds]) byDay[ds] = [];
       byDay[ds].push(ev);
-      cur.setDate(cur.getDate()+1);
+      cur.setDate(cur.getDate() + 1);
     }
   });
 
-  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;">`;
+  // 7 columns: one per day of the week
+  let out = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;">`;
 
-  // Headers
-  GCAL_DAYS_PT.forEach(d => {
-    html += `<div style="background:var(--surface2,var(--surface));padding:6px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--text-soft);">${d}</div>`;
-  });
-
-  // Empty cells before first day
-  for (let i = 0; i < firstWeekday; i++) {
-    html += `<div style="background:var(--surface);min-height:70px;"></div>`;
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ds = gcalYear + '-' + String(gcalMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(gcalWeekStart); day.setDate(day.getDate() + i);
+    const ds = day.toISOString().slice(0,10);
     const isToday = ds === todayStr;
-    const dayEvents = byDay[ds] || [];
+    const dayNum = day.getDate();
+    const dayName = GCAL_DAYS_PT[day.getDay()];
+    const monthName = GCAL_MONTHS_PT[day.getMonth()].slice(0,3);
+    const dayEvs = byDay[ds] || [];
 
-    html += `<div style="background:var(--surface);padding:4px;min-height:70px;${isToday?'outline:2px solid var(--gisella);outline-offset:-2px;':''}">`;
-    html += `<div style="font-size:11px;font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text-soft)'};margin-bottom:3px;">${d}</div>`;
-    dayEvents.slice(0,3).forEach(ev => {
-      const time = ev.startTime ? `<span style="opacity:0.7;">${ev.startTime}</span> ` : '';
-      html += `<div title="${ev.title}" style="font-size:10px;background:var(--gisella-bg);color:var(--gisella);border-radius:3px;padding:1px 4px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default;">${time}${ev.title}</div>`;
+    out += `<div style="background:var(--surface);min-height:120px;display:flex;flex-direction:column;${isToday?'outline:2px solid var(--gisella);outline-offset:-2px;':''}">`;
+    // Header
+    out += `<div style="padding:6px 6px 4px;border-bottom:1px solid var(--border);text-align:center;">
+      <div style="font-size:10px;color:var(--text-soft);font-weight:500;">${dayName}</div>
+      <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text)'};line-height:1.2;">${dayNum}</div>
+      <div style="font-size:9px;color:var(--text-soft);">${monthName}</div>
+    </div>`;
+    // Events
+    out += `<div style="padding:4px;flex:1;">`;
+    dayEvs.forEach(ev => {
+      const time = ev.startTime ? `<span style="font-size:9px;opacity:0.75;display:block;">${ev.startTime}${ev.endTime?' – '+ev.endTime:''}</span>` : '';
+      out += `<div title="${ev.title}" style="background:var(--gisella-bg);color:var(--gisella);border-radius:4px;padding:3px 5px;margin-bottom:3px;font-size:10px;font-weight:500;word-break:break-word;cursor:default;">${time}${ev.title}</div>`;
     });
-    if (dayEvents.length > 3) {
-      html += `<div style="font-size:10px;color:var(--text-soft);">+${dayEvents.length-3} mais</div>`;
+    if (dayEvs.length === 0) {
+      out += `<div style="font-size:10px;color:var(--border-mid);text-align:center;padding-top:8px;">—</div>`;
     }
-    html += `</div>`;
+    out += `</div></div>`;
   }
 
-  // Fill remaining cells
-  const totalCells = firstWeekday + daysInMonth;
-  const remaining  = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-  for (let i = 0; i < remaining; i++) {
-    html += `<div style="background:var(--surface);min-height:70px;"></div>`;
-  }
-
-  html += `</div>`;
-
-  // List of events this month below calendar
-  if (gcalEvents.length > 0) {
-    html += `<div style="margin-top:1rem;">`;
-    html += `<div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${gcalEvents.length} evento${gcalEvents.length>1?'s':''} em ${GCAL_MONTHS_PT[gcalMonth]}</div>`;
-    gcalEvents.forEach(ev => {
-      const dateStr = ev.start ? new Date(ev.start+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
-      const timeStr = ev.startTime ? ` &middot; ${ev.startTime}${ev.endTime?' – '+ev.endTime:''}` : '';
-      html += `<div style="display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        <span style="font-size:11px;color:var(--text-soft);min-width:60px;">${dateStr}${timeStr}</span>
-        <span style="font-weight:500;">${ev.title}</span>
-      </div>`;
-    });
-    html += `</div>`;
-  } else {
-    html += `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;margin-top:1rem;">Nenhum evento em ${GCAL_MONTHS_PT[gcalMonth]}.</div>`;
-  }
-
-  el.innerHTML = html;
+  out += `</div>`;
+  el.innerHTML = out;
 }
 
 function gcalPrevMonth() {
-  gcalMonth--;
-  if (gcalMonth < 0) { gcalMonth = 11; gcalYear--; }
-  loadGcal();
+  gcalWeekStart = new Date(gcalWeekStart);
+  gcalWeekStart.setDate(gcalWeekStart.getDate() - 7);
+  const weekEnd = new Date(gcalWeekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+  gcalEvents = (window.gcalEventsCache || []).filter(ev =>
+    ev.start >= gcalWeekStart.toISOString().slice(0,10) &&
+    ev.start <= weekEnd.toISOString().slice(0,10));
+  renderGcal();
 }
 
 function gcalNextMonth() {
-  gcalMonth++;
-  if (gcalMonth > 11) { gcalMonth = 0; gcalYear++; }
-  loadGcal();
+  gcalWeekStart = new Date(gcalWeekStart);
+  gcalWeekStart.setDate(gcalWeekStart.getDate() + 7);
+  const weekEnd = new Date(gcalWeekStart); weekEnd.setDate(weekEnd.getDate() + 6);
+  gcalEvents = (window.gcalEventsCache || []).filter(ev =>
+    ev.start >= gcalWeekStart.toISOString().slice(0,10) &&
+    ev.start <= weekEnd.toISOString().slice(0,10));
+  renderGcal();
 }
 /* ---- FIM GOOGLE CALENDAR ---- */
 
 /* ── INIT ── */
+window.gcalEventsCache = [];
 // Restaurar página salva
 (function() {
   const savedPage = localStorage.getItem('gc-current-page');
@@ -3504,6 +3526,7 @@ buildColabTarefas();
 renderProjetos();
 buildPrioridades();
 buildEventosList();
+loadGcal();
 </script>
 
 <!-- CHAT BUTTON -->
