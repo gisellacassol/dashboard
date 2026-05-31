@@ -759,6 +759,7 @@ tr:hover td { background: var(--bg); }
       </div>
 
       <div class="btn-row">
+        <button type="button" class="btn" id="qa-delete-btn" onclick="deleteCurrentEvent()" style="display:none;color:var(--danger);border-color:var(--danger);">Excluir</button>
         <button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button>
         <button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button>
       </div>
@@ -1019,6 +1020,7 @@ function showPage(id, btn) {
   if (id === 'colab-milena') { buildKanban('milena'); buildColabTarefas(); }
   if (id === 'colab-luiggi') { buildKanban('luiggi'); buildColabTarefas(); }
   if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
+  if (id === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1151,6 +1153,8 @@ let editingEventId = null;
 function openQuickAdd() {
   editingEventId = null;
   document.getElementById('qa-modal-title').textContent = 'Adicionar item';
+  const delBtnQa = document.getElementById('qa-delete-btn');
+  if (delBtnQa) delBtnQa.style.display = 'none';
   document.getElementById('qa-submit-btn').textContent = 'Adicionar';
   window._addingToProjetoId = null;
   window._addingToMenteeId = null;
@@ -1185,8 +1189,10 @@ function openEditEvent(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
   editingEventId = id;
-  document.querySelector('#modal-quickadd .modal-title').textContent = 'Editar item';
+  document.getElementById('qa-modal-title').textContent = 'Editar item';
   document.getElementById('qa-submit-btn').textContent = 'Salvar';
+  const delBtn = document.getElementById('qa-delete-btn');
+  if (delBtn) delBtn.style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
   document.getElementById('qa-empresa').value = ev.empresa || 'editora';
   document.getElementById('qa-tipo').value = ev.tipo || 'evento';
@@ -1362,11 +1368,6 @@ function openAddLivro(emp) {
   setTimeout(() => document.getElementById('nl-titulo').focus(), 50);
 }
 
-function openAddLivroTodos() {
-  addLivroEmpresa = null;
-  openModal('modal-livro');
-  setTimeout(()=>document.getElementById('nl-titulo').focus(),50);
-}
 
 function submitAddLivro() {
   const titulo = document.getElementById('nl-titulo').value.trim();
@@ -1455,6 +1456,8 @@ function livroCardHtml(l) {
 }
 
 function renderLivros() {
+  const _lf = getFilter('livros');
+  let livrosFiltrados = _lf==='all' ? livros : livros.filter(l=>(l.empresa||'').split(',').includes(_lf));
   // Render visao geral
   const visaoLivrosEl = document.getElementById('livros-visao');
   if (visaoLivrosEl) {
@@ -1464,8 +1467,6 @@ function renderLivros() {
   }
 
     // Render unified todos page
-  const _lf = getFilter('livros');
-  const livrosFiltrados = _lf==='all' ? livros : livros.filter(l=>(l.empresa||'').split(',').includes(_lf));
   const todosEl = document.getElementById('livros-todos');
   if (todosEl) {
     todosEl.innerHTML = livrosFiltrados.length===0
@@ -1671,7 +1672,7 @@ function openAddMenteeTask() {
   document.getElementById('qa-empresa').value = 'gisella';
   window._addingToMenteeId = currentMenteeId;
   // Add mentee name to title placeholder
-  document.getElementById('qa-titulo').placeholder = `Tarefa para ${m.name}...`;
+  document.getElementById('qa-titulo').placeholder = 'Tarefa';
 }
 
 function addMenteeTask() {
@@ -2046,13 +2047,39 @@ function setFilter(pageId, empresa, btn) {
   if (btn) btn.classList.add('active');
   // Rebuild relevant section
   if (pageId === 'tarefas') buildTarefas();
-  if (pageId === 'eventos') buildCalendar('cal-eventos', 'all');
+  if (pageId === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
   if (pageId === 'conteudo-menu') { renderConteudos(); buildCalendar('cal-conteudo', 'all'); }
   if (pageId === 'projetos') renderProjetos();
   if (pageId === 'livros') renderLivros();
 }
 
 function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
+
+function buildEventosList() {
+  const el = document.getElementById('eventos-lista');
+  if (!el) return;
+  const _ef = getFilter('eventos');
+  const evList = events.filter(e => (e.tipo === 'evento' || !e.tipo) && (_ef==='all'||e.empresa===_ef));
+  const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
+  const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
+  if (evList.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum evento cadastrado.</div>';
+    return;
+  }
+  evList.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Evento</th><th>Empresa</th><th>Data</th><th>Horário</th></tr></thead>
+    <tbody>${evList.map(e=>`<tr>
+      <td style="font-weight:500;">${e.titulo}
+        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;">✎</button>
+        <button onclick="deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;">×</button>
+      </td>
+      <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
+      <td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDate(e.data):'—'}</td>
+      <td style="font-size:12px;color:var(--text-soft);">${e.horaInicio||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
 
 /* ── PROJETOS ── */
 let projetos = load('gc-projetos', []);
@@ -2144,8 +2171,6 @@ function renderProjetos() {
     : ativosFiltered.map(p=>projetoHtml(p,true)).join('');
 
   // Todos page
-  const _pf = getFilter('projetos');
-  const ativosFiltered = _pf==='all' ? ativos : ativos.filter(p=>p.empresa===_pf);
   const todosEl = document.getElementById('projetos-todos');
   if (todosEl) todosEl.innerHTML = ativosFiltered.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
@@ -2354,14 +2379,44 @@ function buildColabTarefas() {
       </tr>`;
     }
 
+    // Use same render as buildTarefas
+    const today2 = new Date(); today2.setHours(0,0,0,0);
+
+    function colabRow(t, isArq) {
+      const prazoColor = !isArq && t.data ? (() => {
+        const diff = Math.round((new Date(t.data+'T00:00:00')-today2)/86400000);
+        return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
+      })() : 'var(--text-soft)';
+      return `<tr style="${isArq?'opacity:0.5;':''}" draggable="${!isArq}"
+        ondragstart="startDragFromList(event,this.dataset.id,this.dataset.titulo,this.dataset.empresa)"
+        data-id="${t.id}" data-titulo="${(t.titulo||'').substring(0,50).replace(/"/g,'')}" data-empresa="${t.empresa||''}">
+        <td onclick="event.stopPropagation();" style="width:32px;">
+          <input type="checkbox" ${isArq?'checked':''}
+            onchange="toggleColabTarefaArq('${t.id}',this.checked,'${colabKey}')"
+            style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
+        </td>
+        <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
+          ${t.titulo}
+          ${t.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===t.projetoId)||{}).nome||''}</span>`:''}
+          <button onclick="openEditEvent(${t.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
+          <button onclick="deleteEventDirect(${t.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
+        </td>
+        <td>
+          <span class="badge ${EMP_BADGE[t.empresa]||'b-gray'}">${EMP_LABEL[t.empresa]||t.empresa}</span>
+          ${t.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${t.responsavel==='Gisella'?'var(--gisella-bg)':t.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.responsavel==='Gisella'?'var(--gisella)':t.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${t.responsavel}</span>`:''}
+        </td>
+        <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDate(t.data):'—'}</td>
+      </tr>`;
+    }
+
     let html = '';
     if (ativas.length === 0 && arquivadas.length === 0) {
       html = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa atribuída.</div>';
     } else {
       if (ativas.length > 0) {
         html += `<div class="table-wrap" style="margin-bottom:1rem;"><table>
-          <thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Origem</th><th>Prazo</th></tr></thead>
-          <tbody>${ativas.map(t=>tarefaRowColab(t,false)).join('')}</tbody>
+          <thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+          <tbody>${ativas.map(t=>colabRow(t,false)).join('')}</tbody>
         </table></div>`;
       } else {
         html += '<div style="padding:0.5rem 0 1rem;font-size:13px;color:var(--text-soft);">Nenhuma tarefa pendente.</div>';
@@ -2372,8 +2427,8 @@ function buildColabTarefas() {
         </button>
         <div id="colab-arq-${colabKey}" style="display:none;margin-top:8px;">
           <div class="table-wrap"><table>
-            <thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Origem</th><th>Prazo</th></tr></thead>
-            <tbody>${arquivadas.map(t=>tarefaRowColab(t,true)).join('')}</tbody>
+            <thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+            <tbody>${arquivadas.map(t=>colabRow(t,true)).join('')}</tbody>
           </table></div>
         </div>`;
       }
@@ -2493,10 +2548,10 @@ function buildKanban(colab) {
 let draggedTask = null;
 
 function startDragFromList(event, taskId, titulo, empresa) {
-  draggedTask = {taskObj: {id: taskId, titulo: titulo, empresa: empresa}};
+  draggedTask = {taskObj: {id: taskId.toString(), titulo: titulo, empresa: empresa}};
   dragSource = 'list';
   event.dataTransfer.effectAllowed = 'move';
-  event.dataTransfer.setData('text/plain', taskId);
+  event.dataTransfer.setData('text/plain', taskId.toString());
 }
 let dragSource = null;
 
