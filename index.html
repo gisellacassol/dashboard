@@ -951,6 +951,18 @@ tr:hover td { background: var(--bg); }
 </div>
 
 <!-- MODAL STEIRA -->
+<div class="modal-overlay" id="modal-gcal-event" onclick="if(event.target===this)closeModal('modal-gcal-event')">
+  <div class="modal" style="width:420px;">
+    <button class="modal-close" onclick="closeModal('modal-gcal-event')">×</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+      <div style="width:12px;height:12px;border-radius:50%;background:var(--gisella);flex-shrink:0;"></div>
+      <div class="modal-title" id="gcal-modal-title" style="margin:0;"></div>
+    </div>
+    <div id="gcal-modal-body" style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text);">
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-steira">
   <div class="modal" style="width:540px;">
     <button class="modal-close" onclick="closeModal('modal-steira')">×</button>
@@ -3397,7 +3409,8 @@ async function loadGcal() {
       const end       = ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date;
       const startTime = ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null;
       const endTime   = ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null;
-      return { title: ev.summary||'(sem título)', start, end, startTime, endTime };
+      return { title: ev.summary||'(sem título)', start, end, startTime, endTime,
+               description: ev.description||'', location: ev.location||'', link: ev.htmlLink||'' };
     });
 
     // Salvar cache global e filtrar para a semana atual
@@ -3418,7 +3431,7 @@ function renderGcal() {
   const lbl = document.getElementById('gcal-month-label');
   if (!el) return;
 
-  // Label: "2 – 8 de Junho 2025"
+  // Label
   const weekEnd = new Date(gcalWeekStart); weekEnd.setDate(weekEnd.getDate() + 6);
   const fmt = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
   const fmtShort = d => d.toLocaleDateString('pt-BR', {day:'2-digit', month:'long'});
@@ -3431,53 +3444,146 @@ function renderGcal() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStr = today.toISOString().slice(0,10);
+  const nowMin = today <= new Date() ? new Date().getHours()*60 + new Date().getMinutes() : -1;
 
-  // Build byDay map
-  const byDay = {};
+  const HOUR_START = 8;
+  const HOUR_END   = 23;
+  const TOTAL_HOURS = HOUR_END - HOUR_START; // 15 hours
+  const HOUR_PX = 56; // px per hour
+  const TOTAL_PX = TOTAL_HOURS * HOUR_PX;
+
+  // Separate timed events from all-day events
+  const allDayByDay = {};
+  const timedByDay  = {};
   gcalEvents.forEach(ev => {
-    let cur = new Date(ev.start + 'T12:00:00');
-    const endD = new Date((ev.end || ev.start) + 'T12:00:00');
-    while (cur <= endD) {
-      const ds = cur.toISOString().slice(0,10);
-      if (!byDay[ds]) byDay[ds] = [];
-      byDay[ds].push(ev);
-      cur.setDate(cur.getDate() + 1);
+    if (!ev.startTime) {
+      // all-day: spread across days
+      let cur = new Date(ev.start + 'T12:00:00');
+      const endD = new Date((ev.end || ev.start) + 'T12:00:00');
+      while (cur <= endD) {
+        const ds = cur.toISOString().slice(0,10);
+        if (!allDayByDay[ds]) allDayByDay[ds] = [];
+        allDayByDay[ds].push(ev);
+        cur.setDate(cur.getDate()+1);
+      }
+    } else {
+      const ds = ev.start;
+      if (!timedByDay[ds]) timedByDay[ds] = [];
+      timedByDay[ds].push(ev);
     }
   });
 
-  // 7 columns: one per day of the week
-  let out = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden;">`;
-
+  // Build days array
+  const days = [];
   for (let i = 0; i < 7; i++) {
-    const day = new Date(gcalWeekStart); day.setDate(day.getDate() + i);
-    const ds = day.toISOString().slice(0,10);
-    const isToday = ds === todayStr;
-    const dayNum = day.getDate();
-    const dayName = GCAL_DAYS_PT[day.getDay()];
-    const monthName = GCAL_MONTHS_PT[day.getMonth()].slice(0,3);
-    const dayEvs = byDay[ds] || [];
-
-    out += `<div style="background:var(--surface);min-height:120px;display:flex;flex-direction:column;${isToday?'outline:2px solid var(--gisella);outline-offset:-2px;':''}">`;
-    // Header
-    out += `<div style="padding:6px 6px 4px;border-bottom:1px solid var(--border);text-align:center;">
-      <div style="font-size:10px;color:var(--text-soft);font-weight:500;">${dayName}</div>
-      <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text)'};line-height:1.2;">${dayNum}</div>
-      <div style="font-size:9px;color:var(--text-soft);">${monthName}</div>
-    </div>`;
-    // Events
-    out += `<div style="padding:4px;flex:1;">`;
-    dayEvs.forEach(ev => {
-      const time = ev.startTime ? `<span style="font-size:9px;opacity:0.75;display:block;">${ev.startTime}${ev.endTime?' – '+ev.endTime:''}</span>` : '';
-      out += `<div title="${ev.title}" style="background:var(--gisella-bg);color:var(--gisella);border-radius:4px;padding:3px 5px;margin-bottom:3px;font-size:10px;font-weight:500;word-break:break-word;cursor:default;">${time}${ev.title}</div>`;
-    });
-    if (dayEvs.length === 0) {
-      out += `<div style="font-size:10px;color:var(--border-mid);text-align:center;padding-top:8px;">—</div>`;
-    }
-    out += `</div></div>`;
+    const d = new Date(gcalWeekStart); d.setDate(d.getDate() + i);
+    days.push(d);
   }
 
+  // ── OUTER WRAPPER ──
+  let out = `<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);">`;
+
+  // ── DAY HEADERS ──
+  out += `<div style="display:grid;grid-template-columns:44px repeat(7,1fr);border-bottom:1px solid var(--border);">`;
+  out += `<div style="background:var(--surface);"></div>`;
+  days.forEach(day => {
+    const ds = day.toISOString().slice(0,10);
+    const isToday = ds === todayStr;
+    const adEvs = allDayByDay[ds] || [];
+    out += `<div style="padding:6px 4px;text-align:center;border-left:1px solid var(--border);background:${isToday?'var(--gisella-bg)':'var(--surface)'};">
+      <div style="font-size:10px;color:var(--text-soft);font-weight:500;">${GCAL_DAYS_PT[day.getDay()]}</div>
+      <div style="font-size:${isToday?'18px':'15px'};font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text)'};">${day.getDate()}</div>
+      <div style="font-size:9px;color:var(--text-soft);">${GCAL_MONTHS_PT[day.getMonth()].slice(0,3)}</div>
+      ${adEvs.map(ev=>`<div onclick="openGcalEvent(${JSON.stringify(ev).replace(/\/g,'\\').replace(/`/g,'\`')})" style="background:var(--gisella-bg);color:var(--gisella);border-radius:3px;padding:1px 4px;margin-top:2px;font-size:9px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;" title="${ev.title}">${ev.title}</div>`).join('')}
+    </div>`;
+  });
   out += `</div>`;
+
+  // ── SCROLLABLE TIME GRID ──
+  out += `<div style="overflow-y:auto;max-height:520px;position:relative;">`;
+  out += `<div style="display:grid;grid-template-columns:44px repeat(7,1fr);position:relative;">`;
+
+  // Hour labels column
+  out += `<div style="position:relative;height:${TOTAL_PX}px;">`;
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    const top = (h - HOUR_START) * HOUR_PX;
+    out += `<div style="position:absolute;top:${top}px;left:0;right:0;font-size:9px;color:var(--text-soft);padding-right:4px;text-align:right;transform:translateY(-6px);">${String(h).padStart(2,'0')}:00</div>`;
+  }
+  out += `</div>`;
+
+  // Day columns
+  days.forEach(day => {
+    const ds = day.toISOString().slice(0,10);
+    const isToday = ds === todayStr;
+    const tevs = timedByDay[ds] || [];
+
+    out += `<div style="border-left:1px solid var(--border);position:relative;height:${TOTAL_PX}px;background:${isToday?'rgba(26,107,74,0.03)':'var(--surface)'};">`;
+
+    // Hour grid lines
+    for (let h = HOUR_START; h <= HOUR_END; h++) {
+      const top = (h - HOUR_START) * HOUR_PX;
+      out += `<div style="position:absolute;top:${top}px;left:0;right:0;border-top:1px solid var(--border);"></div>`;
+      if (h < HOUR_END) {
+        const halfTop = top + HOUR_PX/2;
+        out += `<div style="position:absolute;top:${halfTop}px;left:0;right:0;border-top:1px dashed var(--border);opacity:0.5;"></div>`;
+      }
+    }
+
+    // Current time line
+    if (isToday) {
+      const now = new Date();
+      const nowTotalMin = now.getHours()*60 + now.getMinutes();
+      const startMin = HOUR_START * 60;
+      const endMin = HOUR_END * 60;
+      if (nowTotalMin >= startMin && nowTotalMin <= endMin) {
+        const pct = (nowTotalMin - startMin) / ((HOUR_END - HOUR_START) * 60);
+        const topPx = Math.round(pct * TOTAL_PX);
+        out += `<div style="position:absolute;top:${topPx}px;left:0;right:0;border-top:2px solid var(--gisella);z-index:3;">
+          <div style="position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--gisella);"></div>
+        </div>`;
+      }
+    }
+
+    // Timed events
+    tevs.forEach(ev => {
+      if (!ev.startTime) return;
+      const [sh, sm] = ev.startTime.split(':').map(Number);
+      const [eh, em] = ev.endTime ? ev.endTime.split(':').map(Number) : [sh+1, sm];
+      const startMin = sh*60 + sm;
+      const endMin   = eh*60 + em;
+      const startPx  = Math.max(0, (startMin - HOUR_START*60) / 60 * HOUR_PX);
+      const heightPx = Math.max(20, (endMin - startMin) / 60 * HOUR_PX - 2);
+
+      if (startMin < HOUR_START*60 || startMin > HOUR_END*60) return;
+
+      out += `<div onclick="openGcalEvent(${JSON.stringify(ev).replace(/`/g,'\`')})" title="${ev.title}" style="
+        position:absolute;top:${startPx}px;left:2px;right:2px;height:${heightPx}px;
+        background:var(--gisella-bg);color:var(--gisella);
+        border-left:3px solid var(--gisella);
+        border-radius:4px;padding:2px 4px;
+        font-size:10px;font-weight:500;
+        overflow:hidden;z-index:2;cursor:pointer;
+        box-sizing:border-box;transition:filter 0.1s;"
+        onmouseover="this.style.filter='brightness(0.92)'"
+        onmouseout="this.style.filter=''">
+        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.title}</div>
+        <div style="font-size:9px;opacity:0.75;">${ev.startTime}${ev.endTime?' – '+ev.endTime:''}</div>
+      </div>`;
+    });
+
+    out += `</div>`;
+  });
+
+  out += `</div></div></div>`;
   el.innerHTML = out;
+
+  // Auto-scroll to current hour or 8h
+  const scrollEl = el.querySelector('div[style*="overflow-y:auto"]');
+  if (scrollEl) {
+    const now = new Date();
+    const scrollHour = Math.max(HOUR_START, now.getHours() - 1);
+    scrollEl.scrollTop = (scrollHour - HOUR_START) * HOUR_PX;
+  }
 }
 
 function gcalPrevMonth() {
@@ -3499,6 +3605,58 @@ function gcalNextMonth() {
     ev.start <= weekEnd.toISOString().slice(0,10));
   renderGcal();
 }
+
+function openGcalEvent(ev) {
+  document.getElementById('gcal-modal-title').textContent = ev.title;
+  const fmt = ds => ds ? new Date(ds + 'T12:00:00').toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'}) : '';
+  let rows = '';
+
+  if (ev.startTime) {
+    // Timed event
+    const dateFmt = fmt(ev.start);
+    const timeStr = ev.startTime + (ev.endTime ? ' – ' + ev.endTime : '');
+    rows += `<div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:16px;">🕐</span>
+      <div><div style="font-weight:500;">${dateFmt}</div><div style="color:var(--text-soft);">${timeStr}</div></div>
+    </div>`;
+  } else {
+    // All-day (possibly multi-day)
+    const startFmt = fmt(ev.start);
+    const endFmt   = ev.end && ev.end !== ev.start ? fmt(ev.end) : null;
+    rows += `<div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:16px;">📅</span>
+      <div><div style="font-weight:500;">${startFmt}</div>${endFmt?`<div style="color:var(--text-soft);">até ${endFmt}</div>`:''}</div>
+    </div>`;
+  }
+
+  if (ev.description) {
+    rows += `<div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:16px;">📝</span>
+      <div style="color:var(--text-soft);white-space:pre-wrap;">${ev.description}</div>
+    </div>`;
+  }
+
+  if (ev.location) {
+    rows += `<div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:16px;">📍</span>
+      <div>${ev.location}</div>
+    </div>`;
+  }
+
+  if (ev.link) {
+    rows += `<div style="margin-top:8px;">
+      <a href="${ev.link}" target="_blank" rel="noopener"
+        style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gisella-bg);color:var(--gisella);border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid var(--gisella-border);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Abrir no Google Calendar
+      </a>
+    </div>`;
+  }
+
+  document.getElementById('gcal-modal-body').innerHTML = rows;
+  openModal('modal-gcal-event');
+}
+
 /* ---- FIM GOOGLE CALENDAR ---- */
 
 /* ── INIT ── */
