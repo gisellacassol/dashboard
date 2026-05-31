@@ -327,7 +327,6 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto(null)">+ novo projeto</button>
     </div>
     <div id="projetos-visao"></div>
   </div>
@@ -371,7 +370,6 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('editora')">+ novo projeto</button>
     </div>
     <div id="projetos-editora"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('editora')"><span id="parq-arrow-editora">▸</span> Arquivados (<span id="parq-count-editora">0</span>)</button>
@@ -386,12 +384,7 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Léia Cassol</div>
     <div class="page-subtitle">Marketing · Redes sociais · Projetos de livro</div>
   </div>
-  <div class="metrics-row">
-    <div class="metric-card"><div class="metric-label">Livros publicados</div><div class="metric-value">100+</div></div>
-    <div class="metric-card"><div class="metric-label">Seguidores Instagram</div><div class="metric-value" contenteditable="true">—</div><div class="metric-sub">clique para atualizar</div></div>
-    <div class="metric-card"><div class="metric-label">Posts este mês</div><div class="metric-value" contenteditable="true">4</div><div class="metric-sub">meta: 12</div></div>
-  </div>
-  <div class="section">
+ <div class="section">
     <div class="section-title">Calendário de conteúdo</div>
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
@@ -412,7 +405,6 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('leia')">+ novo projeto</button>
     </div>
     <div id="projetos-leia"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('leia')"><span id="parq-arrow-leia">▸</span> Arquivados (<span id="parq-count-leia">0</span>)</button>
@@ -464,7 +456,6 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('gisella')">+ novo projeto</button>
     </div>
     <div id="projetos-gisella"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('gisella')"><span id="parq-arrow-gisella">▸</span> Arquivados (<span id="parq-count-gisella">0</span>)</button>
@@ -489,9 +480,7 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Projetos</div>
     <div class="page-subtitle">Todos os projetos das três empresas</div>
   </div>
-  <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
-    <button class="add-btn" style="margin:0;" onclick="openAddProjeto(null)">+ novo projeto</button>
-  </div>
+
   <div id="projetos-todos"></div>
   <div style="margin-top:1.5rem;">
     <button class="archived-toggle" onclick="toggleProjetosArquivadosTodos()"><span id="parq-arrow-todos">▸</span> Arquivados (<span id="parq-count-todos">0</span>)</button>
@@ -593,6 +582,7 @@ tr:hover td { background: var(--bg); }
           <select class="form-select" id="qa-tipo" onchange="updateQaFields()">
             <option value="tarefa" selected>Tarefa</option>
             <option value="evento">Evento</option>
+            <option value="projeto">Projeto</option>
           </select></div>
       </div>
       <div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="qa-titulo" type="text" placeholder="Descreva..."></div>
@@ -613,7 +603,11 @@ tr:hover td { background: var(--bg); }
         </select></div>
       <div class="form-group"><label class="form-label">Observação</label>
         <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
-      <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button><button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button></div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="qa-delete-btn" onclick="deleteCurrentEvent()" style="display:none;color:var(--danger);border-color:var(--danger);">Excluir</button>
+        <button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button>
+      </div>
     </form>
   </div>
 </div>
@@ -648,7 +642,13 @@ tr:hover td { background: var(--bg); }
         <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="mp-inicio" type="date"></div>
         <div class="form-group"><label class="form-label">Data de fim</label><input class="form-input" id="mp-fim" type="date"></div>
       </div>
-      <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-projeto')">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+      <div class="form-group"><label class="form-label">Observação</label>
+        <textarea class="notes-area" id="mp-observacao" placeholder="Notas sobre o projeto..." style="min-height:70px;"></textarea></div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="mp-delete-btn" onclick="deleteCurrentProjeto()" style="display:none;color:var(--danger);border-color:var(--danger);">Excluir projeto</button>
+        <button type="button" class="btn" onclick="closeModal('modal-projeto')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
     </form>
   </div>
 </div>
@@ -914,7 +914,7 @@ function buildCalendar(id, filter) {
     });
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
-    evHtml += dayEvs.slice(0,2).map(e => `<div class="cal-event ev-${e.empresa}">${e.titulo}</div>`).join('');
+    evHtml += dayEvs.slice(0,2).map(e => `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`).join('');
     if (dayEvs.length > 2) evHtml += `<div style="font-size:10px;color:var(--text-soft);padding-left:4px;">+${dayEvs.length-2}</div>`;
     html += `<div class="cal-day${isToday?' today':''}${feriadoNome?' feriado-day':''}" onclick="quickAddDate('${ds}')" title="${feriadoNome||''}"><div class="cal-num">${d}</div>${evHtml}</div>`;
   }
@@ -962,6 +962,8 @@ function openQuickAdd() {
   editingEventId = null;
   document.querySelector('#modal-quickadd .modal-title').textContent = 'Adicionar item';
   document.getElementById('qa-submit-btn').textContent = 'Adicionar';
+  document.getElementById('qa-delete-btn').style.display = 'none';
+  window._addingToProjetoId = null;
   ['qa-titulo','qa-observacao'].forEach(id => document.getElementById(id).value = '');
   ['qa-prazo','qa-hora-inicio','qa-data-fim','qa-hora-fim'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('qa-empresa').value = 'editora';
@@ -977,6 +979,7 @@ function openEditEvent(id) {
   editingEventId = id;
   document.querySelector('#modal-quickadd .modal-title').textContent = 'Editar item';
   document.getElementById('qa-submit-btn').textContent = 'Salvar';
+  document.getElementById('qa-delete-btn').style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
   document.getElementById('qa-empresa').value = ev.empresa || 'editora';
   document.getElementById('qa-tipo').value = ev.tipo || 'evento';
@@ -988,6 +991,31 @@ function openEditEvent(id) {
   document.getElementById('qa-observacao').value = ev.observacao || '';
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
+}
+
+function deleteCurrentEvent() {
+  if (!editingEventId) return;
+  if (!confirm('Excluir este item?')) return;
+  events = events.filter(x => x.id !== editingEventId);
+  // If adding to projeto context, also add to projeto.tarefas
+  if (tipo === 'tarefa' && window._addingToProjetoId) {
+    const p = projetos.find(x => x.id === window._addingToProjetoId);
+    if (p) {
+      if (!p.tarefas) p.tarefas = [];
+      p.tarefas.push({nome: titulo, feito: false, resp: responsavel, eventId: events[events.length-1].id});
+      save('gc-projetos', projetos);
+      renderProjetos();
+    }
+    window._addingToProjetoId = null;
+  }
+
+  save('gc-events', events);
+  refreshCalendars();
+  buildCalendar('cal-eventos', 'all');
+  buildTarefas();
+  buildColabTarefas();
+  closeModal('modal-quickadd');
+  editingEventId = null;
 }
 
 function submitQuickAdd() {
@@ -1010,6 +1038,23 @@ function submitQuickAdd() {
     editingEventId = null;
   } else {
     events.push({ id: Date.now(), ...data });
+  }
+
+  if (tipo === 'projeto') {
+    projetos.push({
+      id: Date.now(), tarefas: [], expandido: true,
+      nome: titulo,
+      empresa: empresa,
+      status: 'pendente',
+      responsavel: responsavel,
+      inicio: prazoRaw||'',
+      fim: dataFim||'',
+      observacao: observacao,
+    });
+    save('gc-projetos', projetos);
+    renderProjetos();
+    closeModal('modal-quickadd');
+    return;
   }
 
   save('gc-events', events);
@@ -1682,6 +1727,8 @@ function openAddProjeto(emp) {
   document.getElementById('mp-resp').value = '';
   document.getElementById('mp-inicio').value = '';
   document.getElementById('mp-fim').value = '';
+  document.getElementById('mp-observacao').value = '';
+  document.getElementById('mp-delete-btn').style.display = 'none';
   openModal('modal-projeto');
   setTimeout(()=>document.getElementById('mp-nome').focus(), 50);
 }
@@ -1696,6 +1743,7 @@ function submitProjeto() {
     responsavel: document.getElementById('mp-resp').value,
     inicio: document.getElementById('mp-inicio').value,
     fim: document.getElementById('mp-fim').value,
+    observacao: document.getElementById('mp-observacao').value.trim(),
   };
   if (editingProjetoId) {
     const i = projetos.findIndex(x=>x.id===editingProjetoId);
@@ -1788,6 +1836,16 @@ function renderProjetos() {
 }
 
 function toggleProjeto(id) { const p=projetos.find(x=>x.id===id); if(p){p.expandido=!p.expandido; save('gc-projetos',projetos); renderProjetos();} }
+function deleteCurrentProjeto() {
+  if (!editingProjetoId) return;
+  if (!confirm('Excluir este projeto? As tarefas internas também serão removidas.')) return;
+  projetos = projetos.filter(x => x.id !== editingProjetoId);
+  save('gc-projetos', projetos);
+  renderProjetos();
+  closeModal('modal-projeto');
+  editingProjetoId = null;
+}
+
 function deleteProjeto(id) { if(!confirm('Excluir este projeto?')) return; projetos=projetos.filter(x=>x.id!==id); save('gc-projetos',projetos); renderProjetos(); }
 
 function openEditProjeto(id) {
@@ -1801,7 +1859,21 @@ function openEditProjeto(id) {
   document.getElementById('mp-resp').value = p.responsavel||'';
   document.getElementById('mp-inicio').value = p.inicio||'';
   document.getElementById('mp-fim').value = p.fim||'';
+  document.getElementById('mp-observacao').value = p.observacao||'';
+  document.getElementById('mp-delete-btn').style.display = 'inline-block';
   openModal('modal-projeto');
+}
+
+function openAddTarefaProjeto(projetoId) {
+  const p = projetos.find(x => x.id === projetoId);
+  if (!p) return;
+  // Open quickadd modal pre-filled as tarefa for this projeto
+  openQuickAdd();
+  document.getElementById('qa-tipo').value = 'tarefa';
+  document.getElementById('qa-empresa').value = p.empresa;
+  document.getElementById('qa-responsavel').value = p.responsavel || '';
+  // Store projeto context
+  window._addingToProjetoId = projetoId;
 }
 
 function addProjetoTask(id) {
@@ -1811,16 +1883,34 @@ function addProjetoTask(id) {
   const nome = input ? input.value.trim() : '';
   if (!nome) return;
   if (!p.tarefas) p.tarefas=[];
-  p.tarefas.push({nome, feito:false, resp:''});
+  const taskId = Date.now();
+  p.tarefas.push({nome, feito:false, resp:'', eventId: taskId});
+  // Add to events so it appears in tarefas section
+  events.push({
+    id: taskId, empresa: p.empresa,
+    titulo: `[${p.nome}] ${nome}`,
+    data: p.fim||'', tipo: 'tarefa',
+    projetoId: id, responsavel: p.responsavel||''
+  });
   if (input) input.value='';
-  save('gc-projetos',projetos); renderProjetos();
+  save('gc-projetos', projetos);
+  save('gc-events', events);
+  buildTarefas();
+  renderProjetos();
 }
 
 function toggleProjetoTask(id, i) {
   const p = projetos.find(x=>x.id===id);
   if (!p) return;
   p.tarefas[i].feito = !p.tarefas[i].feito;
-  save('gc-projetos',projetos); renderProjetos();
+  // Sync with events
+  if (p.tarefas[i].eventId) {
+    const ev = events.find(x => x.id === p.tarefas[i].eventId);
+    if (ev) ev.arquivada = p.tarefas[i].feito;
+    save('gc-events', events);
+    buildTarefas();
+  }
+  save('gc-projetos', projetos); renderProjetos();
 }
 
 function setProjetoTaskResp(id, i, resp) {
@@ -1833,8 +1923,14 @@ function setProjetoTaskResp(id, i, resp) {
 function deleteProjetoTask(id, i) {
   const p = projetos.find(x=>x.id===id);
   if (!p) return;
+  const t = p.tarefas[i];
+  if (t && t.eventId) {
+    events = events.filter(x => x.id !== t.eventId);
+    save('gc-events', events);
+    buildTarefas();
+  }
   p.tarefas.splice(i,1);
-  save('gc-projetos',projetos); renderProjetos();
+  save('gc-projetos', projetos); renderProjetos();
 }
 
 function toggleProjetosArquivados(emp) {
