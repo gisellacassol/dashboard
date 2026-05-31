@@ -310,39 +310,12 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-visao"></div>
   </div>
   <div class="section">
-    <div class="section-title">Alertas e prioridades</div>
-    <div class="alerts" id="alerts-list">
-      <div class="alert-item urgente"><div class="alert-left"><div class="alert-empresa">Editora Cassol</div><div class="alert-title" contenteditable="true">Livro 07 — confirmar tiragem com gráfica</div></div><span class="alert-prazo" contenteditable="true">2 dias</span><span class="badge b-danger">urgente</span></div>
-      <div class="alert-item atencao"><div class="alert-left"><div class="alert-empresa">Léia Cassol</div><div class="alert-title" contenteditable="true">Reels do novo livro — ainda não gravado</div></div><span class="alert-prazo" contenteditable="true">amanhã</span><span class="badge b-warn">atenção</span></div>
-      <div class="alert-item normal"><div class="alert-left"><div class="alert-empresa">GC Estratégias</div><div class="alert-title" contenteditable="true">Encontro semanal Plano Diretor</div></div><span class="alert-prazo" contenteditable="true">hoje</span><span class="badge b-ok">ok</span></div>
+    <div class="section-title">Prioridades — últimos 3 dias</div>
+    <div id="prioridades-container"></div>
+    <div style="margin-top:8px;">
+      <button class="archived-toggle" id="prio-arq-btn" onclick="togglePrioridadesArquivadas()" style="display:none;"><span id="prio-arq-arrow">▸</span> Arquivados (<span id="prio-arq-count">0</span>)</button>
+      <div id="prioridades-arquivados" style="display:none;margin-top:8px;"></div>
     </div>
-    <button class="add-btn" onclick="addAlert()">+ adicionar alerta</button>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Criação de conteúdo</div>
-    <div class="content-table-wrap">
-      <table class="content-table">
-        <thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
-        <tbody id="conteudo-tbody"></tbody>
-      </table>
-    </div>
-    <div style="margin-top:1rem;">
-      <button class="archived-toggle" onclick="toggleArchived()"><span id="archived-arrow">▸</span> Arquivados (<span id="archived-count">0</span>)</button>
-      <div id="archived-section" style="display:none;margin-top:8px;">
-        <div class="content-table-wrap">
-          <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Rede</th><th>Data postagem</th></tr></thead>
-          <tbody id="archived-tbody"></tbody></table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos</div>
-    </div>
-    <div id="projetos-visao"></div>
   </div>
 
   <div class="section">
@@ -351,7 +324,7 @@ tr:hover td { background: var(--bg); }
       <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
     </div>
     <div id="livros-visao"></div>
-    <div id="livros-visao-arq-wrap" style="margin-top:8px;">
+    <div style="margin-top:8px;">
       <button class="archived-toggle" id="livros-visao-arq-btn" onclick="toggleLivrosArquivadosVisao()" style="display:none;"><span id="livros-visao-arq-arrow">▸</span> Arquivados (<span id="livros-visao-arq-count">0</span>)</button>
       <div id="livros-visao-arquivados" style="display:none;margin-top:8px;"></div>
     </div>
@@ -1001,14 +974,11 @@ let steiraData = load('gc-steira', {});
 let kanbanData = load('gc-kanban', {});
 
 const ETAPAS_DEFAULT = [
+  'Briefing',
   'Texto em andamento',
   'Texto preparado',
   'Texto finalizado',
   'Escolha do ilustrador',
-  'Briefing',
-  'Envio do original',
-  'Preparação de original',
-  'Original aprovado',
   'Reunião de alinhamento de conceito',
   'Pré-diagramação',
   'Esboços',
@@ -1409,6 +1379,24 @@ function submitQuickAdd() {
   buildCalendar('cal-eventos', 'all');
   buildTarefas();
   buildColabTarefas();
+  buildPrioridades();
+  // Se for edição de tarefa vinculada a projeto, sincronizar nome e responsável
+  if (editingEventId && tipo === 'tarefa') {
+    projetos.forEach(p => {
+      (p.tarefas||[]).forEach(t => {
+        if (t.eventId === editingEventId) {
+          t.nome = titulo;
+          t.resp = responsavel;
+          t.feito = !!(events.find(x=>x.id===editingEventId)||{}).arquivada;
+        }
+      });
+    });
+    save('gc-projetos', projetos);
+    renderProjetos();
+  } else {
+    renderProjetos();
+  }
+  editingEventId = null;
   closeModal('modal-quickadd');
 }
 
@@ -2221,6 +2209,32 @@ function projetoHtml(p, showEmpresa) {
   const st = ST_PROJ[p.status] || {l:p.status, c:'b-gray'};
   const done = (p.tarefas||[]).filter(t=>t.feito).length;
   const total = (p.tarefas||[]).length;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  function projetoTarefaRow(t, i) {
+    // Buscar o evento correspondente para pegar dados atualizados
+    const ev = t.eventId ? events.find(x => x.id === t.eventId) : null;
+    const data = ev ? ev.data : '';
+    const resp = ev ? (ev.responsavel||'') : (t.resp||'');
+    const isArq = t.feito;
+    const prazoColor = !isArq && data ? (() => {
+      const diff = Math.round((new Date(data+'T00:00:00')-today)/86400000);
+      return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
+    })() : 'var(--text-soft)';
+    const respColor = resp==='Gisella'?'var(--gisella)':resp==='Milena'?'var(--leia)':'var(--editora)';
+    const respBg = resp==='Gisella'?'var(--gisella-bg)':resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)';
+    return `<div class="projeto-task-row" style="${isArq?'opacity:0.6;':''}">
+      <input type="checkbox" ${isArq?'checked':''} onchange="toggleProjetoTask(${p.id},${i})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">
+      <span class="projeto-task-nome${isArq?' done':''}" style="flex:1;">
+        ${t.nome}
+        ${resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${respBg};color:${respColor};">${resp}</span>`:''}
+      </span>
+      ${data?`<span style="font-size:11px;color:${prazoColor};font-weight:500;">${fmtDate(data)}</span>`:''}
+      ${ev?`<button onclick="openEditEvent(${ev.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:''}
+      <button onclick="deleteProjetoTask(${p.id},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
+    </div>`;
+  }
+
   return `<div class="projeto-card">
     <div class="projeto-header" onclick="toggleProjeto(${p.id})">
       <div class="projeto-titulo">${p.nome}</div>
@@ -2234,16 +2248,8 @@ function projetoHtml(p, showEmpresa) {
     </div>
     <div class="projeto-body${p.expandido?' open':''}">
       ${p.inicio||p.fim ? `<div style="font-size:12px;color:var(--text-soft);padding:6px 0 10px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : ''}
-      ${(p.tarefas||[]).map((t,i) => `
-        <div class="projeto-task-row" style="${t.feito?'opacity:0.6;':''}">
-          <input type="checkbox" ${t.feito?'checked':''} onchange="toggleProjetoTask(${p.id},${i})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">
-          <span class="projeto-task-nome${t.feito?' done':''}" style="flex:1;">${t.nome}
-            ${t.resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${t.resp==='Gisella'?'var(--gisella-bg)':t.resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.resp==='Gisella'?'var(--gisella)':t.resp==='Milena'?'var(--leia)':'var(--editora)'};">${t.resp}</span>`:''}
-          </span>
-          <button onclick="t.eventId?openEditEvent(t.eventId):null" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
-          <button onclick="deleteProjetoTask(${p.id},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
-        </div>`).join('')}
-      <button class="add-btn" style="margin-top:8px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar item</button>
+      ${(p.tarefas||[]).map((t,i) => projetoTarefaRow(t,i)).join('')}
+      <button class="add-btn" style="margin-top:8px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar tarefa</button>
     </div>
   </div>`;
 }
@@ -2339,7 +2345,7 @@ function addProjetoTask(id) {
   // Add to events so it appears in tarefas section
   events.push({
     id: taskId, empresa: p.empresa,
-    titulo: `[${p.nome}] ${nome}`,
+    titulo: nome,
     data: p.fim||'', tipo: 'tarefa',
     projetoId: id, responsavel: p.responsavel||''
   });
@@ -2354,14 +2360,16 @@ function toggleProjetoTask(id, i) {
   const p = projetos.find(x=>x.id===id);
   if (!p) return;
   p.tarefas[i].feito = !p.tarefas[i].feito;
-  // Sync with events
   if (p.tarefas[i].eventId) {
     const ev = events.find(x => x.id === p.tarefas[i].eventId);
     if (ev) ev.arquivada = p.tarefas[i].feito;
     save('gc-events', events);
-    buildTarefas();
   }
-  save('gc-projetos', projetos); renderProjetos();
+  save('gc-projetos', projetos);
+  renderProjetos();
+  buildTarefas();
+  buildColabTarefas();
+  buildPrioridades();
 }
 
 function setProjetoTaskResp(id, i, resp) {
