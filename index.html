@@ -4,6 +4,64 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central · Grupo Cassol</title>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAWMu3NhnT2KAPtSfXuNYcvH8KmqAReiuY",
+    authDomain: "grupo-cassol.firebaseapp.com",
+    projectId: "grupo-cassol",
+    storageBucket: "grupo-cassol.firebasestorage.app",
+    messagingSenderId: "274995799577",
+    appId: "1:274995799577:web:083c0c30999d40d273ec88"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // ── Nomes das coleções/documentos
+  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
+
+  // Expor funções ao escopo global
+  window._fbReady = false;
+  window._fbDb = db;
+  window._fbDoc = (key) => doc(db, 'dados', key);
+
+  // ── SAVE: escreve no Firestore
+  window.fbSave = async function(key, val) {
+    try {
+      await setDoc(doc(db, 'dados', key), { value: JSON.stringify(val) });
+    } catch(e) { console.warn('fbSave error', key, e); }
+  };
+
+  // ── LOAD inicial: busca todos os documentos de uma vez
+  window.fbLoadAll = async function() {
+    const results = {};
+    await Promise.all(KEYS.map(async key => {
+      try {
+        const snap = await getDoc(doc(db, 'dados', key));
+        if (snap.exists()) results[key] = JSON.parse(snap.data().value);
+      } catch(e) { console.warn('fbLoad error', key, e); }
+    }));
+    return results;
+  };
+
+  // ── REALTIME: escuta mudanças de outros dispositivos
+  window.fbListen = function(key, callback) {
+    return onSnapshot(doc(db, 'dados', key), snap => {
+      if (snap.exists()) {
+        try { callback(JSON.parse(snap.data().value)); } catch(e) {}
+      }
+    });
+  };
+
+  // ── Sinalizar que Firebase está pronto
+  window._fbReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 [data-theme="dark"] {
@@ -281,6 +339,25 @@ tr:hover td { background: var(--bg); }
   .cal-day { min-height: 48px; }
   .sidebar-footer { display: none; }
 }
+
+/* ── UNDO TOAST ── */
+#undo-toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--text); color: var(--bg);
+  padding: 10px 20px; border-radius: 10px;
+  display: flex; align-items: center; gap: 14px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  z-index: 999; transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  white-space: nowrap;
+}
+#undo-toast.visible { transform: translateX(-50%) translateY(0); }
+#undo-toast button {
+  background: none; border: 1px solid rgba(255,255,255,0.3);
+  color: inherit; border-radius: 6px; padding: 3px 10px;
+  font-size: 12px; cursor: pointer; font-weight: 600;
+}
+#undo-toast button:hover { background: rgba(255,255,255,0.15); }
 </style>
 </head>
 <body>
@@ -315,6 +392,10 @@ tr:hover td { background: var(--bg); }
     <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
   </div>
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
+  <div id="sync-indicator" style="display:none;align-items:center;gap:6px;padding:6px 1rem;font-size:11px;color:var(--gisella);">
+    <span style="width:6px;height:6px;border-radius:50%;background:var(--gisella);display:inline-block;"></span>
+    Sincronizado com a nuvem
+  </div>
   <div style="padding:0 1rem 1rem;">
     <button class="nav-item" onclick="toggleDarkMode()" id="dark-mode-btn" style="width:100%;justify-content:flex-start;gap:8px;">
       <span id="dark-mode-icon">🌙</span> <span id="dark-mode-label">Modo escuro</span>
@@ -633,6 +714,11 @@ tr:hover td { background: var(--bg); }
 <button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
 
 <!-- MODAL QUICK ADD -->
+<div id="undo-toast">
+  <span id="undo-msg">Item excluído</span>
+  <button onclick="undoDelete()">Desfazer</button>
+</div>
+
 <div class="modal-overlay" id="modal-quickadd">
   <div class="modal" style="width:520px;">
     <button class="modal-close" onclick="closeModal('modal-quickadd')">×</button>
@@ -886,6 +972,7 @@ tr:hover td { background: var(--bg); }
       <button class="modal-tab active" onclick="switchMenteeTab('notas',this)">Notas gerais</button>
       <button class="modal-tab" onclick="switchMenteeTab('sessoes',this)">Sessões</button>
       <button class="modal-tab" onclick="switchMenteeTab('tarefas',this)">Tarefas</button>
+      <button class="modal-tab" onclick="switchMenteeTab('livros',this)">Livros</button>
     </div>
     <div class="modal-tab-content active" id="mtab-notas">
       <textarea class="notes-area" id="mm-notes" placeholder="Anotações livres sobre a mentorada..." oninput="saveMenteeField()" style="min-height:180px;"></textarea>
@@ -901,6 +988,9 @@ tr:hover td { background: var(--bg); }
     <div class="modal-tab-content" id="mtab-tarefas">
       <div id="mm-tasks-list" style="margin-bottom:10px;"></div>
       <button class="add-btn" onclick="openAddMenteeTask()" style="width:100%;justify-content:center;">+ adicionar item</button>
+    </div>
+    <div class="modal-tab-content" id="mtab-livros">
+      <div id="mm-livros-list"></div>
     </div>
     <div class="btn-row" style="margin-top:1rem;"><button class="btn btn-primary" onclick="closeModal('modal-mentee')">Fechar</button></div>
   </div>
@@ -1265,9 +1355,85 @@ A IA vai sugerir uma lista de tarefas:`);
   }
 }
 
+
+/* ── UNDO ── */
+let _undoStack = null;
+let _undoTimer = null;
+
+function pushUndo(label, restoreFn) {
+  _undoStack = restoreFn;
+  const msg = document.getElementById('undo-msg');
+  const toast = document.getElementById('undo-toast');
+  if (msg) msg.textContent = `"${label}" excluído`;
+  if (toast) toast.classList.add('visible');
+  if (_undoTimer) clearTimeout(_undoTimer);
+  _undoTimer = setTimeout(() => {
+    if (toast) toast.classList.remove('visible');
+    _undoStack = null;
+  }, 5000);
+}
+
+function undoDelete() {
+  if (_undoStack) {
+    _undoStack();
+    _undoStack = null;
+  }
+  const toast = document.getElementById('undo-toast');
+  if (toast) toast.classList.remove('visible');
+  if (_undoTimer) clearTimeout(_undoTimer);
+}
+
+
+/* ── MENTEE LIVRO ── */
+function toggleNlMentee() {
+  const val = document.querySelector('input[name="nl-mentee-opt"]:checked')?.value;
+  const wrap = document.getElementById('nl-mentee-wrap');
+  if (!wrap) return;
+  wrap.style.display = val === 'sim' ? 'block' : 'none';
+  if (val === 'sim') {
+    // Preencher select com mentoradas
+    const sel = document.getElementById('nl-mentee-id');
+    if (sel) {
+      const sorted = [...mentees].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+      sel.innerHTML = '<option value="">Selecione...</option>' +
+        sorted.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    }
+  }
+}
+
+function switchMenteeTab(tab, btn) {
+  document.querySelectorAll('#modal-mentee .modal-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#modal-mentee .modal-tab-content').forEach(c=>c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById('mtab-' + tab);
+  if (el) el.classList.add('active');
+  if (tab === 'livros') renderMenteeLivros();
+}
+
+function renderMenteeLivros() {
+  const el = document.getElementById('mm-livros-list');
+  if (!el) return;
+  const m = mentees.find(x => x.id === currentMenteeId);
+  if (!m) return;
+  const livrosDaMentee = livros.filter(l => l.menteeId === m.id);
+  if (livrosDaMentee.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro vinculado a esta mentorada.</div>';
+    return;
+  }
+  el.innerHTML = livrosDaMentee.map(l => livroCardHtml(l, false)).join('');
+}
+
 /* ── STORAGE ── */
-function load(key, def) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; } }
-function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); autoSave(); }
+function load(key, def) {
+  try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
+}
+function save(key, val) {
+  // Salvar localmente (fallback)
+  localStorage.setItem(key, JSON.stringify(val));
+  // Salvar no Firebase
+  if (window.fbSave) window.fbSave(key, val);
+  autoSave();
+}
 
 /* ── DATA ── */
 let events = load('gc-events', []);
@@ -1805,9 +1971,11 @@ function submitAddLivro() {
   const tipopub = document.querySelector('input[name="nl-tipopub"]:checked')?.value || 'lancamento';
   const lancamentoDate = document.getElementById('nl-lancamento').value;
   const etapasUsar = tipopub === 'reimpressao' ? ETAPAS_REIMP : ETAPAS_DEFAULT;
+  const menteeOpt = document.querySelector('input[name="nl-mentee-opt"]:checked')?.value;
+  const menteeIdSel = menteeOpt === 'sim' ? parseInt(document.getElementById('nl-mentee-id')?.value||'0')||null : null;
   const livro = {
     id: editingLivroId || Date.now(), titulo, empresa: empresaStr, expandido: true,
-    tipopub,
+    tipopub, menteeId: menteeIdSel,
     info: {
       autor: document.getElementById('nl-autor').value.trim(),
       ilustrador: document.getElementById('nl-ilustrador').value.trim(),
@@ -1859,6 +2027,8 @@ function submitAddLivro() {
   ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('nl-lancamento').value = '';
   const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
+  const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
+  const menteeWrap = document.getElementById('nl-mentee-wrap'); if(menteeWrap) menteeWrap.style.display='none';
 }
 
 const EMP_BADGE_L = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
@@ -2305,11 +2475,17 @@ function saveConteudo() {
 }
 
 function deleteConteudo(id) {
-  if (!confirm('Excluir este conteúdo?')) return;
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  const snapshot = [...conteudos];
   conteudos = conteudos.filter(x => x.id !== id);
   save('gc-conteudos', conteudos);
-  renderConteudos();
-  buildPrioridades();
+  renderConteudos(); buildPrioridades();
+  pushUndo(c.nome || 'Conteúdo', () => {
+    conteudos = snapshot;
+    save('gc-conteudos', conteudos);
+    renderConteudos(); buildPrioridades();
+  });
 }
 
 function toggleConteudoDone(id) {
@@ -3494,7 +3670,7 @@ function renderGcal() {
       <div style="font-size:10px;color:var(--text-soft);font-weight:500;">${GCAL_DAYS_PT[day.getDay()]}</div>
       <div style="font-size:${isToday?'18px':'15px'};font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text)'};">${day.getDate()}</div>
       <div style="font-size:9px;color:var(--text-soft);">${GCAL_MONTHS_PT[day.getMonth()].slice(0,3)}</div>
-      ${adEvs.map(ev=>`<div onclick="openGcalEvent(${JSON.stringify(ev).replace(/\/g,'\\').replace(/`/g,'\`')})" style="background:var(--gisella-bg);color:var(--gisella);border-radius:3px;padding:1px 4px;margin-top:2px;font-size:9px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;" title="${ev.title}">${ev.title}</div>`).join('')}
+      ${adEvs.map(ev=>`<div onclick="openGcalEvent(gcalEvents[${gcalEvents.indexOf(ev)}])" style="background:var(--gisella-bg);color:var(--gisella);border-radius:3px;padding:1px 4px;margin-top:2px;font-size:9px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;" title="${ev.title}">${ev.title}</div>`).join('')}
     </div>`;
   });
   out += `</div>`;
@@ -3556,7 +3732,8 @@ function renderGcal() {
 
       if (startMin < HOUR_START*60 || startMin > HOUR_END*60) return;
 
-      out += `<div onclick="openGcalEvent(${JSON.stringify(ev).replace(/`/g,'\`')})" title="${ev.title}" style="
+      const evIdx = gcalEvents.indexOf(ev);
+      out += `<div onclick="openGcalEvent(gcalEvents[${evIdx}])" title="${ev.title}" style="
         position:absolute;top:${startPx}px;left:2px;right:2px;height:${heightPx}px;
         background:var(--gisella-bg);color:var(--gisella);
         border-left:3px solid var(--gisella);
@@ -3661,12 +3838,25 @@ function openGcalEvent(ev) {
 
 /* ── INIT ── */
 window.gcalEventsCache = [];
-// Restaurar página salva
-(function() {
+
+function initApp(cloudData) {
+  // Se vieram dados da nuvem, sobrescrever variáveis locais
+  if (cloudData) {
+    if (cloudData['gc-events'])      { events     = cloudData['gc-events'];      localStorage.setItem('gc-events',      JSON.stringify(events)); }
+    if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
+    if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
+    if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
+    if (cloudData['gc-mentees'])     { mentees     = cloudData['gc-mentees'];     localStorage.setItem('gc-mentees',     JSON.stringify(mentees)); }
+    if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
+    if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
+    if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
+  }
+
+  // Restaurar página salva
   const savedPage = localStorage.getItem('gc-current-page');
   if (savedPage) {
     const el = document.getElementById('page-' + savedPage);
-    const btn = document.querySelector(`[onclick*="showPage('${savedPage}"]`);
+    const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
     if (el) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -3674,17 +3864,74 @@ window.gcalEventsCache = [];
       if (btn) btn.classList.add('active');
     }
   }
-})();
-initCalendars();
-renderLivros();
-renderMenteeList();
-renderConteudos();
-buildTarefas();
-buildColabTarefas();
-renderProjetos();
-buildPrioridades();
-buildEventosList();
-loadGcal();
+
+  initCalendars();
+  renderLivros();
+  renderMenteeList();
+  renderConteudos();
+  buildTarefas();
+  buildColabTarefas();
+  renderProjetos();
+  buildPrioridades();
+  buildEventosList();
+  loadGcal();
+
+  // Indicador de sync
+  const ind = document.getElementById('sync-indicator');
+  if (ind) ind.style.display = cloudData ? 'flex' : 'none';
+
+  // Escutar mudanças em tempo real de outros dispositivos
+  if (window.fbListen) {
+    [
+      ['gc-events',    v => { events    = v; buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
+      ['gc-livros',    v => { livros    = v; renderLivros(); buildTarefas(); }],
+      ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
+      ['gc-projetos',  v => { projetos  = v; renderProjetos(); buildTarefas(); }],
+      ['gc-mentees',   v => { mentees   = v; renderMenteeList(); }],
+    ].forEach(([key, handler]) => {
+      window.fbListen(key, val => { localStorage.setItem(key, JSON.stringify(val)); handler(val); });
+    });
+  }
+}
+
+// Loading overlay
+document.body.insertAdjacentHTML('beforeend',
+  '<div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">' +
+  '<div style="font-size:32px;">🔥</div>' +
+  '<div style="font-size:14px;font-weight:500;color:var(--text);">Carregando dados...</div>' +
+  '<div style="font-size:12px;color:var(--text-soft);">Conectando ao Firebase</div></div>'
+);
+
+function startWithFirebase() {
+  if (window.fbLoadAll) {
+    window.fbLoadAll()
+      .then(cloudData => {
+        const ov = document.getElementById('loading-overlay');
+        if (ov) ov.remove();
+        initApp(cloudData);
+      })
+      .catch(err => {
+        console.warn('Firebase falhou, usando localStorage:', err);
+        const ov = document.getElementById('loading-overlay');
+        if (ov) ov.remove();
+        initApp(null);
+      });
+  } else {
+    setTimeout(startWithFirebase, 100);
+  }
+}
+
+// Timeout de segurança: 6s
+setTimeout(() => {
+  const ov = document.getElementById('loading-overlay');
+  if (ov) { ov.remove(); initApp(null); }
+}, 6000);
+
+if (window._fbReady) {
+  startWithFirebase();
+} else {
+  window.addEventListener('firebase-ready', startWithFirebase, { once: true });
+}
 </script>
 
 <!-- CHAT BUTTON -->
