@@ -396,6 +396,11 @@ tr:hover td { background: var(--bg); }
     <span style="width:6px;height:6px;border-radius:50%;background:var(--gisella);display:inline-block;"></span>
     Sincronizado com a nuvem
   </div>
+  <div style="padding:0 1rem 4px;">
+    <button class="nav-item" id="upload-firebase-btn" onclick="uploadLocalToFirebase()" style="width:100%;justify-content:flex-start;gap:8px;font-size:12px;">
+      ☁️ <span>Enviar dados locais → nuvem</span>
+    </button>
+  </div>
   <div style="padding:0 1rem 1rem;">
     <button class="nav-item" onclick="toggleDarkMode()" id="dark-mode-btn" style="width:100%;justify-content:flex-start;gap:8px;">
       <span id="dark-mode-icon">🌙</span> <span id="dark-mode-label">Modo escuro</span>
@@ -1422,6 +1427,40 @@ function renderMenteeLivros() {
     return;
   }
   el.innerHTML = livrosDaMentee.map(l => livroCardHtml(l, false)).join('');
+}
+
+/* ── UPLOAD LOCAL → FIREBASE ── */
+async function uploadLocalToFirebase() {
+  if (!window.fbSave) {
+    alert('Firebase não está conectado. Verifique sua conexão e tente novamente.');
+    return;
+  }
+  const btn = document.getElementById('upload-firebase-btn');
+  if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviando...</span>';
+
+  const KEYS = [
+    ['gc-events',      events],
+    ['gc-livros',      livros],
+    ['gc-conteudos',   conteudos],
+    ['gc-projetos',    projetos],
+    ['gc-mentees',     mentees],
+    ['gc-kanban',      kanbanData],
+    ['gc-steira',      steiraData],
+    ['gc-colab-ordem', colabOrdem],
+  ];
+
+  try {
+    await Promise.all(KEYS.map(([key, val]) => window.fbSave(key, val)));
+    if (btn) btn.innerHTML = '&#10003; <span>Enviado com sucesso!</span>';
+    const ind = document.getElementById('sync-indicator');
+    if (ind) ind.style.display = 'flex';
+    setTimeout(() => {
+      if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviar dados locais &#8594; nuvem</span>';
+    }, 3000);
+  } catch(e) {
+    if (btn) btn.innerHTML = '&#9729;&#65039; <span>Enviar dados locais &#8594; nuvem</span>';
+    alert('Erro ao enviar: ' + e.message);
+  }
 }
 
 /* ── STORAGE ── */
