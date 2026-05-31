@@ -2290,7 +2290,7 @@ function submitProjeto() {
     const i = projetos.findIndex(x=>x.id===editingProjetoId);
     if (i>-1) projetos[i] = {...projetos[i], ...data};
   } else {
-    projetos.push({id: Date.now(), tarefas: [], expandido: false, ...data});
+    projetos.push({id: Date.now(), tarefas: [], expandido: true, ...data});
   }
   save('gc-projetos', projetos);
   renderProjetos();
@@ -2331,21 +2331,22 @@ function projetoHtml(p, showEmpresa) {
     </div>`;
   }
 
+  const tarefasHtml = (p.tarefas||[]).map((t,i) => projetoTarefaRow(t,i)).join('');
+  const infoHtml = (p.inicio||p.fim) ? `<div style="font-size:12px;color:var(--text-soft);padding:4px 0 8px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : '';
+
   return `<div class="projeto-card">
-    <div class="projeto-header" onclick="toggleProjeto(${p.id})">
+    <div class="projeto-header" style="cursor:default;">
       <div class="projeto-titulo">${p.nome}</div>
-      ${showEmpresa ? `<span class="badge ${EMP_BADGE_P[p.empresa]||'b-gray'}" style="font-size:10px;">${EMP_LABEL_P[p.empresa]||p.empresa}</span>` : ''}
+      ${showEmpresa ? empBadgesHtml(p.empresa) : ''}
       <span class="badge ${st.c}">${st.l}</span>
-      ${p.fim ? `<span style="font-size:11px;color:var(--text-soft);">${fmtDate(p.fim)}</span>` : ''}
       ${total>0 ? `<span style="font-size:11px;color:var(--text-soft);">${done}/${total}</span>` : ''}
-      <button onclick="event.stopPropagation();openEditProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 6px;" title="Editar">✎</button>
-      <button onclick="event.stopPropagation();deleteProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;" title="Excluir">×</button>
-      <span style="color:var(--text-soft);font-size:12px;">${p.expandido?'▾':'▸'}</span>
+      <button onclick="event.stopPropagation();openEditProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 6px;" title="Editar">&#9998;</button>
+      <button onclick="event.stopPropagation();deleteProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;" title="Excluir">&#215;</button>
     </div>
-    <div class="projeto-body${p.expandido?' open':''}">
-      ${p.inicio||p.fim ? `<div style="font-size:12px;color:var(--text-soft);padding:6px 0 10px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : ''}
-      ${(p.tarefas||[]).map((t,i) => projetoTarefaRow(t,i)).join('')}
-      <button class="add-btn" style="margin-top:8px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar tarefa</button>
+    <div style="padding:0 16px 12px;">
+      ${infoHtml}
+      ${tarefasHtml}
+      <button class="add-btn" style="margin-top:6px;" onclick="openAddTarefaProjeto(${p.id})">+ adicionar tarefa</button>
     </div>
   </div>`;
 }
