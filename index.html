@@ -604,7 +604,6 @@ tr:hover td { background: var(--bg); }
       <div class="form-group"><label class="form-label">Observação</label>
         <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
       <div class="btn-row">
-        <button type="button" class="btn" id="qa-delete-btn" onclick="deleteCurrentEvent()" style="display:none;color:var(--danger);border-color:var(--danger);">Excluir</button>
         <button type="button" class="btn" onclick="closeModal('modal-quickadd')">Cancelar</button>
         <button type="submit" class="btn btn-primary" id="qa-submit-btn">Adicionar</button>
       </div>
@@ -962,7 +961,6 @@ function openQuickAdd() {
   editingEventId = null;
   document.querySelector('#modal-quickadd .modal-title').textContent = 'Adicionar item';
   document.getElementById('qa-submit-btn').textContent = 'Adicionar';
-  document.getElementById('qa-delete-btn').style.display = 'none';
   window._addingToProjetoId = null;
   ['qa-titulo','qa-observacao'].forEach(id => document.getElementById(id).value = '');
   ['qa-prazo','qa-hora-inicio','qa-data-fim','qa-hora-fim'].forEach(id => document.getElementById(id).value = '');
@@ -979,7 +977,6 @@ function openEditEvent(id) {
   editingEventId = id;
   document.querySelector('#modal-quickadd .modal-title').textContent = 'Editar item';
   document.getElementById('qa-submit-btn').textContent = 'Salvar';
-  document.getElementById('qa-delete-btn').style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
   document.getElementById('qa-empresa').value = ev.empresa || 'editora';
   document.getElementById('qa-tipo').value = ev.tipo || 'evento';
@@ -1596,7 +1593,7 @@ function buildTarefas() {
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
 
-  const ativas = events.filter(e=>e.data && !e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
+  const ativas = events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
   const arquivadas = events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto');
 
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
@@ -1614,11 +1611,14 @@ function buildTarefas() {
           style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"
           title="${isArquivada?'Desmarcar para voltar à lista':'Marcar como concluída'}">
       </td>
-      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" onclick="openEditEvent(${e.id})">${e.titulo}${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
+      <td style="font-weight:500;${isArquivada?'text-decoration:line-through;':''}">
+        <span>${e.titulo}</span>
+        ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
+        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:4px;" title="Editar">✎</button>
       </td>
       <td>
         <span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span>
-        ${e.responsavel?`<span style="font-size:11px;color:var(--text-soft);display:block;margin-top:2px;">${e.responsavel}</span>`:''}
+        ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
     </tr>`;
