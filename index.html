@@ -195,7 +195,10 @@ tr:hover td { background: var(--bg); }
 .s-finalizado { background: var(--ok-bg); color: var(--ok); }
 
 /* LIVROS */
-.livro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.livro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; cursor: default; }
+.livro-card[draggable="true"] { cursor: grab; }
+.livro-card[draggable="true"]:active { cursor: grabbing; opacity: 0.85; }
+.livro-card.drag-over-livro { border-color: var(--editora); background: var(--editora-bg); }
 .livro-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
 .livro-header:hover { background: var(--bg); }
 .livro-titulo { font-weight: 500; font-size: 14px; flex: 1; }
@@ -348,6 +351,10 @@ tr:hover td { background: var(--bg); }
       <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
     </div>
     <div id="livros-visao"></div>
+    <div id="livros-visao-arq-wrap" style="margin-top:8px;">
+      <button class="archived-toggle" id="livros-visao-arq-btn" onclick="toggleLivrosArquivadosVisao()" style="display:none;"><span id="livros-visao-arq-arrow">▸</span> Arquivados (<span id="livros-visao-arq-count">0</span>)</button>
+      <div id="livros-visao-arquivados" style="display:none;margin-top:8px;"></div>
+    </div>
   </div>
 
 </div>
@@ -481,6 +488,13 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div class="cal-wrap" id="cal-eventos"></div>
   </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Lista de eventos</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='evento';updateQaFields();},50)">+ novo evento</button>
+    </div>
+    <div id="eventos-lista"></div>
+  </div>
 </div>
 
 <!-- CONTEUDO MENU -->
@@ -563,22 +577,21 @@ tr:hover td { background: var(--bg); }
 
 
   <div id="livros-todos"></div>
+  <div id="livros-arquivados-section" style="margin-top:1.5rem;display:none;">
+    <div class="section-title">Arquivados (100% concluídos)</div>
+    <div id="livros-arquivados-todos"></div>
+  </div>
+  <button class="archived-toggle" id="livros-arq-btn" onclick="toggleLivrosArquivados()" style="display:none;"><span id="livros-arq-arrow">▸</span> Arquivados (<span id="livros-arq-count">0</span>)</button>
+  <div id="livros-arquivados-wrap" style="display:none;margin-top:8px;"><div id="livros-arquivados-list"></div></div>
 </div>
 
 <!-- COLABORADOR: GISELLA -->
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
     <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
+    <div class="page-subtitle">Tarefas atribuídas</div>
   </div>
   <div class="section">
-    <div class="section-title">Semana</div>
-    <div class="kanban-wrap">
-      <div class="kanban-board" id="kanban-gisella"></div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">Tarefas pendentes</div>
     <div id="colab-tarefas-gisella"></div>
   </div>
 </div>
@@ -587,16 +600,9 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-milena">
   <div class="page-header">
     <div class="page-title">Milena</div>
-    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
+    <div class="page-subtitle">Tarefas atribuídas</div>
   </div>
   <div class="section">
-    <div class="section-title">Semana</div>
-    <div class="kanban-wrap">
-      <div class="kanban-board" id="kanban-milena"></div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">Tarefas pendentes</div>
     <div id="colab-tarefas-milena"></div>
   </div>
 </div>
@@ -605,16 +611,9 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-luiggi">
   <div class="page-header">
     <div class="page-title">Luiggi</div>
-    <div class="page-subtitle">Quadro semanal · Tarefas atribuídas</div>
+    <div class="page-subtitle">Tarefas atribuídas</div>
   </div>
   <div class="section">
-    <div class="section-title">Semana</div>
-    <div class="kanban-wrap">
-      <div class="kanban-board" id="kanban-luiggi"></div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-title">Tarefas pendentes</div>
     <div id="colab-tarefas-luiggi"></div>
   </div>
 </div>
@@ -698,7 +697,15 @@ tr:hover td { background: var(--bg); }
 
       <!-- LIVRO FIELDS -->
       <div id="qa-fields-livro" style="display:none;">
+        <div class="form-group"><label class="form-label">Tipo de publicação</label>
+          <div style="display:flex;gap:16px;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="radio" name="qa-l-tipopub" value="lancamento" checked onchange="updateLivroTipo()"> Lançamento</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="radio" name="qa-l-tipopub" value="reimpressao" onchange="updateLivroTipo()"> Reimpressão</label>
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="qa-l-os" type="text" placeholder="Número da OS"></div>
+          <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="qa-l-ano" type="text" placeholder="Ex: 2026"></div>
           <div class="form-group"><label class="form-label">Autor</label><input class="form-input" id="qa-l-autor" type="text"></div>
           <div class="form-group"><label class="form-label">Ilustrador</label><input class="form-input" id="qa-l-ilustrador" type="text"></div>
           <div class="form-group"><label class="form-label">Público-alvo</label><input class="form-input" id="qa-l-publico" type="text"></div>
@@ -816,7 +823,15 @@ tr:hover td { background: var(--bg); }
     <p style="font-size:12px;color:var(--text-soft);margin-bottom:1rem;">Preencha o que souber — pode completar depois.</p>
     <form onsubmit="event.preventDefault();submitAddLivro();">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Tipo de publicação</label>
+          <div style="display:flex;gap:16px;margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="radio" name="nl-tipopub" id="nl-tipopub-lanc" value="lancamento" checked onchange="updateNlTipo()"> Lançamento</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="radio" name="nl-tipopub" id="nl-tipopub-reimp" value="reimpressao" onchange="updateNlTipo()"> Reimpressão</label>
+          </div>
+        </div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Título *</label><input class="form-input" id="nl-titulo" type="text" placeholder="Título do livro"></div>
+        <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="nl-os" type="text" placeholder="Número da OS"></div>
+        <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="nl-ano" type="text" placeholder="Ex: 2026"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresas</label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="nl-emp-editora" value="editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
@@ -986,6 +1001,10 @@ let steiraData = load('gc-steira', {});
 let kanbanData = load('gc-kanban', {});
 
 const ETAPAS_DEFAULT = [
+  'Texto em andamento',
+  'Texto preparado',
+  'Texto finalizado',
+  'Escolha do ilustrador',
   'Briefing',
   'Envio do original',
   'Preparação de original',
@@ -995,6 +1014,7 @@ const ETAPAS_DEFAULT = [
   'Esboços',
   'Estado da arte — coloração',
   'Finalização das ilustrações',
+  'ISBN + Código de barras + Ficha catalográfica',
   'Diagramação final',
   'Revisão',
   'Revisão final',
@@ -1008,6 +1028,17 @@ const ETAPAS_DEFAULT = [
   'Liberação no site',
 ];
 
+const ETAPAS_REIMP = [
+  'Pedir orçamento',
+  'Reler impresso',
+  'Localizar arquivos',
+  'Enviar para revisão',
+  'Fazer alterações',
+  'Enviar para gráfica',
+  'Prova digital',
+  'Liberar para impressão',
+];
+
 /* ── NAV ── */
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1015,10 +1046,10 @@ function showPage(id, btn) {
   const el = document.getElementById('page-' + id);
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
-  // Rebuild kanban when navigating to colab pages
-  if (id === 'colab-gisella') { buildKanban('gisella'); buildColabTarefas(); }
-  if (id === 'colab-milena') { buildKanban('milena'); buildColabTarefas(); }
-  if (id === 'colab-luiggi') { buildKanban('luiggi'); buildColabTarefas(); }
+  if (id === 'visao') { buildPrioridades(); }
+  if (id === 'colab-gisella') { buildColabTarefas(); }
+  if (id === 'colab-milena') { buildColabTarefas(); }
+  if (id === 'colab-luiggi') { buildColabTarefas(); }
   if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
   if (id === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
 }
@@ -1040,8 +1071,11 @@ function updateDocsLink() {
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 
+// Modal não fecha ao clicar fora (mantém informações)
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => {
+    // Não fecha ao clicar fora para não perder dados
+  });
 });
 
 /* ── CHECKLIST ── */
@@ -1091,16 +1125,29 @@ function buildCalendar(id, filter) {
     const feriadoNome = isFeriado(ds) ? getFeriadoNome(ds) : null;
     // For eventos page show only eventos tipo; for others show all
     // Conteudos for cal-conteudo and cal-visao
-    const dayConteudos = (id === 'cal-conteudo' || id === 'cal-visao')
+    // cal-conteudo: só conteúdos; cal-eventos: só eventos; cal-visao: ambos; outros: só eventos
+    const showConteudos = (id === 'cal-conteudo' || id === 'cal-visao');
+    const showEventos = (id !== 'cal-conteudo');
+    const dayConteudos = showConteudos
       ? conteudos.filter(c => !c.done && c.dataPost === ds)
       : [];
-    const dayEvs = events.filter(e => {
-      if (id === 'cal-conteudo') return false;
-      if (e.data !== ds) return false;
+    // Eventos multi-dia: aparecer em cada dia dentro do intervalo
+    const dayEvs = showEventos ? events.filter(e => {
+      if (e.tipo !== 'evento' && e.tipo !== undefined && e.tipo !== null && e.tipo !== '') {
+        // tarefas/livros etc — só mostrar se não for eventos/conteudo
+        if (id === 'cal-eventos') return false;
+      }
+      // Check if event spans this date
+      const eStart = e.data || '';
+      const eEnd = e.dataFim || e.data || '';
+      if (!eStart) return false;
+      const inRange = ds >= eStart && ds <= eEnd;
+      if (!inRange) return false;
       if (id === 'cal-eventos') return e.tipo === 'evento' || !e.tipo;
+      if (id === 'cal-visao') return e.tipo === 'evento' || !e.tipo;
       if (filter !== 'all' && e.empresa !== filter) return false;
-      return true;
-    });
+      return e.tipo === 'evento' || !e.tipo;
+    }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
     evHtml += dayConteudos.slice(0,1).map(c => `<div class="cal-event" style="background:#E8F8F8;color:#0A5F5F;cursor:pointer;" onclick="event.stopPropagation();openConteudo(${c.id})">✍ ${c.nome}</div>`).join('');
@@ -1259,21 +1306,42 @@ function submitQuickAdd() {
       const cb = document.getElementById('qa-l-emp-'+e); return cb && cb.checked;
     });
     const empresaStr = emps.length > 0 ? emps.join(',') : getQaVal('qa-empresa');
+    const tipopubEl = document.querySelector('input[name="qa-l-tipopub"]:checked');
+    const tipopub = tipopubEl ? tipopubEl.value : 'lancamento';
+    const etapasUsar = tipopub === 'reimpressao' ? ETAPAS_REIMP : ETAPAS_DEFAULT;
+    const lancamentoDate = getQaVal('qa-l-lancamento');
     const livro = {
-      id: Date.now(), titulo, empresa: empresaStr, expandido: true,
+      id: Date.now(), titulo, empresa: empresaStr, expandido: true, tipopub,
       info: {
         autor: getQaVal('qa-l-autor'), ilustrador: getQaVal('qa-l-ilustrador'),
         publico: getQaVal('qa-l-publico'), faixa: getQaVal('qa-l-faixa'),
         paginas: getQaVal('qa-l-paginas'), tiragem: getQaVal('qa-l-tiragem'),
         isbn: getQaVal('qa-l-isbn'), formato: getQaVal('qa-l-formato'),
         colecao: getQaVal('qa-l-colecao'), editora: getQaVal('qa-l-editora'),
-        lancamento: getQaVal('qa-l-lancamento'), sinopse: getQaVal('qa-l-sinopse'),
+        lancamento: lancamentoDate, sinopse: getQaVal('qa-l-sinopse'),
+        os: getQaVal('qa-l-os'), ano: getQaVal('qa-l-ano'),
       },
-      etapas: ETAPAS_DEFAULT.map(nome => ({nome, feito: false, prazo: ''}))
+      etapas: etapasUsar.map(nome => ({nome, feito: false, prazo: ''}))
     };
     livros.push(livro);
+    // Auto-criar evento de lançamento
+    if (lancamentoDate) {
+      const primeiraEmp = empresaStr.split(',')[0] || 'editora';
+      events.push({
+        id: Date.now() + 1,
+        empresa: primeiraEmp,
+        titulo: 'Lançamento ' + titulo,
+        tipo: 'evento',
+        data: lancamentoDate,
+        dataFim: lancamentoDate,
+        observacao: 'Criado automaticamente ao cadastrar livro',
+      });
+      save('gc-events', events);
+      refreshCalendars();
+    }
     save('gc-livros', livros);
     renderLivros();
+    buildPrioridades();
     closeModal('modal-quickadd');
     return;
   }
@@ -1379,8 +1447,12 @@ function submitAddLivro() {
   });
   const empresas = checkboxes.length > 0 ? checkboxes : [addLivroEmpresa || 'editora'];
   const empresaStr = empresas.join(',');
+  const tipopub = document.querySelector('input[name="nl-tipopub"]:checked')?.value || 'lancamento';
+  const lancamentoDate = document.getElementById('nl-lancamento').value;
+  const etapasUsar = tipopub === 'reimpressao' ? ETAPAS_REIMP : ETAPAS_DEFAULT;
   const livro = {
-    id: Date.now(), titulo, empresa: empresaStr, expandido: true,
+    id: editingLivroId || Date.now(), titulo, empresa: empresaStr, expandido: true,
+    tipopub,
     info: {
       autor: document.getElementById('nl-autor').value.trim(),
       ilustrador: document.getElementById('nl-ilustrador').value.trim(),
@@ -1392,39 +1464,61 @@ function submitAddLivro() {
       formato: document.getElementById('nl-formato').value.trim(),
       colecao: document.getElementById('nl-colecao').value.trim(),
       editora: document.getElementById('nl-editora').value.trim(),
-      lancamento: document.getElementById('nl-lancamento').value,
+      lancamento: lancamentoDate,
       sinopse: document.getElementById('nl-sinopse').value.trim(),
+      os: document.getElementById('nl-os')?.value.trim()||'',
+      ano: document.getElementById('nl-ano')?.value.trim()||'',
     },
-    etapas: ETAPAS_DEFAULT.map(nome => ({nome, feito: false, prazo: ''}))
+    etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : etapasUsar.map(nome => ({nome, feito: false, prazo: ''}))
   };
   if (editingLivroId) {
     const i = livros.findIndex(x=>x.id===editingLivroId);
-    if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; }
+    if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; livros[i].tipopub = tipopub; }
     editingLivroId = null;
   } else {
+    livro.id = Date.now();
     livros.push(livro);
+    // Criar evento de lançamento automaticamente se tiver data
+    if (lancamentoDate) {
+      const primeiraEmp = empresaStr.split(',')[0] || 'editora';
+      events.push({
+        id: Date.now() + 1,
+        empresa: primeiraEmp,
+        titulo: 'Lançamento ' + titulo,
+        tipo: 'evento',
+        data: lancamentoDate,
+        dataFim: lancamentoDate,
+        observacao: 'Criado automaticamente ao cadastrar livro',
+      });
+      save('gc-events', events);
+      refreshCalendars();
+    }
   }
   save('gc-livros', livros);
   renderLivros();
+  buildPrioridades();
   closeModal('modal-livro');
-  // Reset modal title
+  // Reset modal
   document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
   document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-  ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse'].forEach(id => document.getElementById(id).value = '');
+  ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('nl-lancamento').value = '';
+  const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
 }
 
 const EMP_BADGE_L = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
 const EMP_SHORT_L = {editora:'Editora',leia:'Léia',gisella:'GC'};
 
-function livroCardHtml(l) {
+function livroCardHtml(l, draggable) {
   const done = l.etapas.filter(e => e.feito).length;
   const pct = Math.round(done / l.etapas.length * 100);
   const proxima = l.etapas.find(e => !e.feito);
   const emps = (l.empresa||'editora').split(',');
   const empBadges = emps.map(e => `<span class="badge ${EMP_BADGE_L[e]||'b-gray'}" style="font-size:10px;">${EMP_SHORT_L[e]||e}</span>`).join(' ');
-  return `<div class="livro-card">
+  const dragAttrs = draggable ? `draggable="true" ondragstart="livrosDragStart(event,${l.id})" ondragover="livrosDragOver(event,${l.id})" ondrop="livrosDrop(event,${l.id})"` : '';
+  return `<div class="livro-card" ${dragAttrs}>
     <div class="livro-header" onclick="toggleLivro(${l.id})">
+      ${draggable ? '<span style="cursor:grab;color:var(--text-soft);font-size:14px;padding-right:4px;" title="Arrastar para reordenar">⠿</span>' : ''}
       <div class="livro-titulo" onclick="event.stopPropagation();openLivroFicha(${l.id})" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir ficha técnica">${l.titulo}</div>
       ${empBadges}
       <div class="livro-progress-wrap">
@@ -1436,7 +1530,7 @@ function livroCardHtml(l) {
       <span class="livro-toggle">${l.expandido ? '▾' : '▸'}</span>
     </div>
     <div class="livro-body${l.expandido?' open':''}">
-      ${l.info&&l.info.autor ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;"><span class="badge b-gray">Autor: ${l.info.autor}</span>${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}</div>` : ''}
+      ${l.info ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;">${l.info.autor?`<span class="badge b-gray">Autor: ${l.info.autor}</span>`:''}${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}${l.tipopub?`<span class="badge ${l.tipopub==='reimpressao'?'b-warn':'b-editora'}">${l.tipopub==='reimpressao'?'Reimpressão':'Lançamento'}</span>`:''}${l.info.os?`<span class="badge b-gray">OS: ${l.info.os}</span>`:''}${l.info.ano?`<span class="badge b-gray">Ano: ${l.info.ano}</span>`:''}</div>` : ''}
       ${l.etapas.map((e,i) => `
         <div class="livro-etapa-row">
           <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapa(${l.id},${i})">
@@ -1458,65 +1552,53 @@ function livroCardHtml(l) {
 function renderLivros() {
   const _lf = getFilter('livros');
   let livrosFiltrados = _lf==='all' ? livros : livros.filter(l=>(l.empresa||'').split(',').includes(_lf));
+
+  // Separar ativos (< 100%) e arquivados (100%)
+  function isPct100(l) {
+    if (!l.etapas || l.etapas.length === 0) return false;
+    return l.etapas.every(e => e.feito);
+  }
+  const ativos = livros.filter(l => !isPct100(l));
+  const arquivados100 = livros.filter(l => isPct100(l));
+  const ativosFilt = livrosFiltrados.filter(l => !isPct100(l));
+  const arqFilt = livrosFiltrados.filter(l => isPct100(l));
+
   // Render visao geral
   const visaoLivrosEl = document.getElementById('livros-visao');
   if (visaoLivrosEl) {
-    visaoLivrosEl.innerHTML = livros.length===0
-      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro cadastrado.</div>'
-      : livrosFiltrados.map(livroCardHtml).join('');
+    visaoLivrosEl.innerHTML = ativosFilt.length===0
+      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção.</div>'
+      : ativosFilt.map(l => livroCardHtml(l, true)).join('');
   }
+  // Arquivados da visão geral
+  const visaoArqEl = document.getElementById('livros-visao-arquivados');
+  const visaoArqBtn = document.getElementById('livros-visao-arq-btn');
+  const visaoArqCnt = document.getElementById('livros-visao-arq-count');
+  if (visaoArqEl) visaoArqEl.innerHTML = arqFilt.map(l => livroCardHtml(l, true)).join('');
+  if (visaoArqBtn) visaoArqBtn.style.display = arqFilt.length > 0 ? 'flex' : 'none';
+  if (visaoArqCnt) visaoArqCnt.textContent = arqFilt.length;
 
-    // Render unified todos page
+  // Render unified todos page
   const todosEl = document.getElementById('livros-todos');
   if (todosEl) {
-    todosEl.innerHTML = livrosFiltrados.length===0
-      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro cadastrado. Use "+ novo livro" para adicionar.</div>'
-      : livros.map(livroCardHtml).join('');
+    todosEl.innerHTML = ativosFilt.length===0
+      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção. Use "+ novo livro" para adicionar.</div>'
+      : ativosFilt.map(l => livroCardHtml(l, true)).join('');
   }
+  // Arquivados 100% na página livros
+  const arqListEl = document.getElementById('livros-arquivados-list');
+  const arqBtn = document.getElementById('livros-arq-btn');
+  const arqCnt = document.getElementById('livros-arq-count');
+  if (arqListEl) arqListEl.innerHTML = arqFilt.map(l => livroCardHtml(l, true)).join('');
+  if (arqBtn) arqBtn.style.display = arqFilt.length > 0 ? 'flex' : 'none';
+  if (arqCnt) arqCnt.textContent = arqFilt.length;
 
   ['editora','leia','gisella'].forEach(emp => {
     const el = document.getElementById('livros-' + emp);
     if (!el) return;
-    const lista = livros.filter(l => l.empresa === emp);
+    const lista = livros.filter(l => (l.empresa||'').split(',').includes(emp));
     if (lista.length === 0) { el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção. Use "+ novo livro" para adicionar.</div>'; return; }
-    el.innerHTML = lista.map(l => {
-      const done = l.etapas.filter(e => e.feito).length;
-      const pct = Math.round(done / l.etapas.length * 100);
-      const proxima = l.etapas.find(e => !e.feito);
-      return `<div class="livro-card">
-        <div class="livro-header" onclick="toggleLivro(${l.id})">
-          <div class="livro-titulo">${l.titulo}</div>
-          <div class="livro-progress-wrap">
-            <div class="livro-progress"><div class="livro-progress-fill" style="width:${pct}%;"></div></div>
-            <span style="font-size:11px;color:var(--text-soft);">${pct}%</span>
-          </div>
-          ${proxima ? `<span style="font-size:11px;color:var(--text-soft);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proxima.nome}</span>` : '<span class="badge b-ok" style="font-size:10px;">concluído</span>'}
-          <button onclick="event.stopPropagation();deleteLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;">×</button>
-          <span class="livro-toggle">${l.expandido ? '▾' : '▸'}</span>
-        </div>
-        <div class="livro-body${l.expandido?' open':''}">
-          <div style="padding:10px 0 6px;display:flex;flex-wrap:wrap;gap:6px;">
-            ${l.info && l.info.autor ? `<span class="badge b-gray">Autor: ${l.info.autor}</span>` : ''}
-            ${l.info && l.info.lancamento ? `<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>` : ''}
-            ${l.info && l.info.tiragem ? `<span class="badge b-gray">Tiragem: ${l.info.tiragem}</span>` : ''}
-          </div>
-          ${l.etapas.map((e,i) => `
-            <div class="livro-etapa-row">
-              <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapa(${l.id},${i})">
-              <span class="livro-etapa-nome${e.feito?' done':''}">${e.nome}</span>
-              <input class="livro-etapa-date" type="date" value="${e.prazo||''}" onchange="setPrazoEtapa(${l.id},${i},this.value)" title="Prazo desta etapa">
-              ${e.prazo ? `<span style="font-size:11px;color:var(--text-soft);">${fmtDate(e.prazo)}</span>` : ''}
-              <select style="font-size:11px;padding:2px 6px;border:1px solid var(--border-mid);border-radius:6px;background:var(--bg);color:var(--text-soft);font-family:'DM Sans',sans-serif;" onchange="setEtapaResp(${l.id},${i},this.value)" onclick="event.stopPropagation()">
-                <option value="">resp.</option>
-                <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
-                <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
-                <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
-              </select>
-              <button class="etapa-del-btn" onclick="deleteEtapa(${l.id},${i})" title="Excluir etapa" style="opacity:0;">×</button>
-            </div>`).join('')}
-        </div>
-      </div>`;
-    }).join('');
+    el.innerHTML = lista.map(l => livroCardHtml(l, false)).join('');
   });
 }
 
@@ -1534,6 +1616,13 @@ function openLivroFicha(id) {
   });
   const info = l.info||{};
   document.getElementById('nl-titulo').value = l.titulo||'';
+  const tipopubEdit = l.tipopub || 'lancamento';
+  const lancRad = document.getElementById('nl-tipopub-lanc');
+  const reimpRad = document.getElementById('nl-tipopub-reimp');
+  if (lancRad) lancRad.checked = tipopubEdit === 'lancamento';
+  if (reimpRad) reimpRad.checked = tipopubEdit === 'reimpressao';
+  const nlOs = document.getElementById('nl-os'); if(nlOs) nlOs.value = info.os||'';
+  const nlAno = document.getElementById('nl-ano'); if(nlAno) nlAno.value = info.ano||'';
   document.getElementById('nl-autor').value = info.autor||'';
   document.getElementById('nl-ilustrador').value = info.ilustrador||'';
   document.getElementById('nl-publico').value = info.publico||'';
@@ -1551,10 +1640,7 @@ function openLivroFicha(id) {
   openModal('modal-livro');
 }
 function deleteLivro(id) { if(!confirm('Excluir este livro?')) return; livros=livros.filter(x=>x.id!==id); save('gc-livros',livros); renderLivros(); }
-function toggleEtapa(id, i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].feito=!l.etapas[i].feito; save('gc-livros',livros); renderLivros(); buildTarefas();
-buildColabTarefas();
-renderProjetos();
-initKanban(); } }
+function toggleEtapa(id, i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].feito=!l.etapas[i].feito; save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); buildPrioridades(); } }
 function setPrazoEtapa(id,i,val) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].prazo=val; save('gc-livros',livros); renderLivros(); } }
 function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
 function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildColabTarefas(); } }
@@ -1570,7 +1656,8 @@ function renderMenteeList() {
   const el = document.getElementById('mentee-list-rendered');
   if (!el) return;
   const cntM2 = document.getElementById('cnt-mentoradas'); if(cntM2) cntM2.textContent = mentees.length;
-  el.innerHTML = mentees.map(m => `
+  const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  el.innerHTML = menteesSorted.map(m => `
     <div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
@@ -1849,7 +1936,7 @@ function toggleConteudoDone(id) {
   if (!c) return;
   c.done = !c.done;
   c.status = c.done ? 'encerrar' : 'postado';
-  save('gc-conteudos',conteudos); renderConteudos();
+  save('gc-conteudos',conteudos); renderConteudos(); buildPrioridades();
 }
 
 /* ── STEIRA ── */
@@ -1995,6 +2082,7 @@ function toggleTarefaArquivada(id) {
   save('gc-events', events);
   buildTarefas();
   buildColabTarefas();
+  buildPrioridades();
 }
 
 function toggleTarefasArquivadas() {
@@ -2168,11 +2256,11 @@ function renderProjetos() {
   const visaoEl = document.getElementById('projetos-visao');
   if (visaoEl) visaoEl.innerHTML = ativos.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
-    : ativosFiltered.map(p=>projetoHtml(p,true)).join('');
+    : ativos.map(p=>projetoHtml(p,true)).join('');
 
   // Todos page
   const todosEl = document.getElementById('projetos-todos');
-  if (todosEl) todosEl.innerHTML = ativosFiltered.length===0
+  if (todosEl) todosEl.innerHTML = ativos.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
   const archTodosEl = document.getElementById('projetos-arquivados-todos');
@@ -2186,8 +2274,8 @@ function renderProjetos() {
     if (!el) return;
     const lista = ativos.filter(p=>p.empresa===emp);
     el.innerHTML = lista.length===0
-      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
-      : lista.map(p=>projetoHtml(p,false)).join('');
+      ? `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto. <button class="add-btn" onclick="openAddProjeto('${emp}')" style="display:inline-flex;margin-top:8px;">+ novo projeto</button></div>`
+      : lista.map(p=>projetoHtml(p,false)).join('') + `<button class="add-btn" onclick="openAddProjeto('${emp}')" style="margin-top:8px;">+ novo projeto</button>`;
     const archEl = document.getElementById('projetos-arquivados-'+emp);
     const cntEl = document.getElementById('parq-count-'+emp);
     const arch = finalizados.filter(p=>p.empresa===emp);
@@ -2313,6 +2401,9 @@ function toggleProjetosArquivadosTodos() {
 }
 
 /* ── COLABORADORES ── */
+// Ordem manual das tarefas dos colaboradores
+let colabOrdem = load('gc-colab-ordem', {});
+
 function buildColabTarefas() {
   const today = new Date(); today.setHours(0,0,0,0);
   const colabs = ['Gisella','Milena','Luiggi'];
@@ -2324,22 +2415,20 @@ function buildColabTarefas() {
     if (!el) return;
 
     const colabKey = colab.toLowerCase();
-    const colabKanban = kanbanData[colabKey] || {};
-    const kanbanIds = new Set(Object.values(colabKanban).flat().map(t=>t.id));
 
     const tasks = [];
 
     // From events
-    events.filter(e => e.responsavel === colab && e.titulo && !kanbanIds.has(e.id.toString())).forEach(e => {
-      tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', fonte: 'Tarefa/Evento', arquivada: e.arquivada||false});
+    events.filter(e => e.responsavel === colab && e.titulo).forEach(e => {
+      tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', responsavel: e.responsavel||'', projetoId: e.projetoId||null, arquivada: e.arquivada||false});
     });
 
     // From livros
     livros.forEach(l => {
       l.etapas.forEach((e,i) => {
         const tid = `livro-${l.id}-${i}`;
-        if (e.resp === colab && !e.feito && !kanbanIds.has(tid)) {
-          tasks.push({id: tid, titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', fonte: 'Livro', arquivada: false});
+        if (e.resp === colab && !e.feito) {
+          tasks.push({id: tid, titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', responsavel: colab, arquivada: false});
         }
       });
     });
@@ -2348,8 +2437,8 @@ function buildColabTarefas() {
     projetos.forEach(p => {
       (p.tarefas||[]).forEach((t,i) => {
         const tid = `proj-${p.id}-${i}`;
-        if (t.resp === colab && !t.feito && !kanbanIds.has(tid)) {
-          tasks.push({id: tid, titulo: `[${p.nome}] ${t.nome}`, empresa: p.empresa, data: p.fim||'', fonte: 'Projeto', arquivada: false});
+        if (t.resp === colab && !t.feito) {
+          tasks.push({id: tid, titulo: `[${p.nome}] ${t.nome}`, empresa: p.empresa, data: p.fim||'', responsavel: colab, arquivada: false});
         }
       });
     });
@@ -2357,49 +2446,38 @@ function buildColabTarefas() {
     const ativas = tasks.filter(t => !t.arquivada);
     const arquivadas = tasks.filter(t => t.arquivada);
 
-    ativas.sort((a,b) => (a.data||'').localeCompare(b.data||''));
+    // Aplicar ordem manual se existir
+    const ordem = colabOrdem[colabKey] || [];
+    ativas.sort((a,b) => {
+      const ia = ordem.indexOf(a.id);
+      const ib = ordem.indexOf(b.id);
+      if (ia === -1 && ib === -1) return (a.data||'').localeCompare(b.data||'');
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
 
-    function tarefaRowColab(t, isArq) {
+    let colabDragSrc = null;
+
+    function colabRow(t, isArq) {
       const prazoColor = !isArq && t.data ? (() => {
         const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
         return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
       })() : 'var(--text-soft)';
-      return `<tr style="${isArq?'opacity:0.5;':''}" draggable="${!isArq}"
-        ondragstart="if(!event.target.closest('input')) { draggedTask={taskObj:t};dragSource='list';event.dataTransfer.effectAllowed='move'; }"
-        style="${isArq?'opacity:0.5;':'cursor:grab;'}">
+      const numericId = parseInt(t.id);
+      const editBtn = !isNaN(numericId) ? `<button onclick="openEditEvent(${numericId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>` : '';
+      const delBtn = !isNaN(numericId) ? `<button onclick="deleteEventDirect(${numericId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '';
+      return `<tr style="${isArq?'opacity:0.5;':''}"
+        ${!isArq ? `draggable="true" ondragstart="colabTaskDragStart(event,'${t.id}','${colabKey}')" ondragover="event.preventDefault()" ondrop="colabTaskDrop(event,'${t.id}','${colabKey}')"` : ''}>
         <td onclick="event.stopPropagation();" style="width:32px;">
-          <input type="checkbox" ${isArq?'checked':''}
-            onchange="toggleColabTarefaArq('${t.id}',this.checked,'${colab.toLowerCase()}')"
-            style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
-        </td>
-        <td style="font-weight:500;${isArq?'text-decoration:line-through;':''}">${t.titulo}</td>
-        <td><span class="badge ${EMP_BADGE[t.empresa]||'b-gray'}">${EMP_LABEL[t.empresa]||t.empresa}</span></td>
-        <td style="font-size:12px;color:var(--text-soft);">${t.fonte}</td>
-        <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDate(t.data):'—'}</td>
-      </tr>`;
-    }
-
-    // Use same render as buildTarefas
-    const today2 = new Date(); today2.setHours(0,0,0,0);
-
-    function colabRow(t, isArq) {
-      const prazoColor = !isArq && t.data ? (() => {
-        const diff = Math.round((new Date(t.data+'T00:00:00')-today2)/86400000);
-        return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
-      })() : 'var(--text-soft)';
-      return `<tr style="${isArq?'opacity:0.5;':''}" draggable="${!isArq}"
-        ondragstart="startDragFromList(event,this.dataset.id,this.dataset.titulo,this.dataset.empresa)"
-        data-id="${t.id}" data-titulo="${(t.titulo||'').substring(0,50).replace(/"/g,'')}" data-empresa="${t.empresa||''}">
-        <td onclick="event.stopPropagation();" style="width:32px;">
+          ${!isArq ? '<span style="cursor:grab;color:var(--text-soft);font-size:12px;padding-right:4px;">⠿</span>' : ''}
           <input type="checkbox" ${isArq?'checked':''}
             onchange="toggleColabTarefaArq('${t.id}',this.checked,'${colabKey}')"
             style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
         </td>
         <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
           ${t.titulo}
-          ${t.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===t.projetoId)||{}).nome||''}</span>`:''}
-          <button onclick="openEditEvent(${t.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
-          <button onclick="deleteEventDirect(${t.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
+          ${editBtn}${delBtn}
         </td>
         <td>
           <span class="badge ${EMP_BADGE[t.empresa]||'b-gray'}">${EMP_LABEL[t.empresa]||t.empresa}</span>
@@ -2416,7 +2494,7 @@ function buildColabTarefas() {
       if (ativas.length > 0) {
         html += `<div class="table-wrap" style="margin-bottom:1rem;"><table>
           <thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
-          <tbody>${ativas.map(t=>colabRow(t,false)).join('')}</tbody>
+          <tbody id="colab-tbody-${colabKey}">${ativas.map(t=>colabRow(t,false)).join('')}</tbody>
         </table></div>`;
       } else {
         html += '<div style="padding:0.5rem 0 1rem;font-size:13px;color:var(--text-soft);">Nenhuma tarefa pendente.</div>';
@@ -2435,6 +2513,41 @@ function buildColabTarefas() {
     }
     el.innerHTML = html;
   });
+}
+
+
+function colabTaskDragStart(event, taskId, colabKey) {
+  event.dataTransfer.setData('text/plain', JSON.stringify({taskId, colabKey}));
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function colabTaskDrop(event, targetId, colabKey) {
+  event.preventDefault();
+  try {
+    const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+    if (data.colabKey !== colabKey || data.taskId === targetId) return;
+    // Reorder colabOrdem
+    if (!colabOrdem[colabKey]) colabOrdem[colabKey] = [];
+    const ordem = colabOrdem[colabKey];
+    // Get current tasks for this colab to build full order
+    const el = document.getElementById('colab-tarefas-' + colabKey);
+    if (!el) return;
+    const rows = el.querySelectorAll('tbody tr[draggable]');
+    const ids = Array.from(rows).map(r => {
+      const cb = r.querySelector('input[type=checkbox]');
+      const onch = cb ? cb.getAttribute('onchange') : '';
+      const m = onch ? onch.match(/'([^']+)'/) : null;
+      return m ? m[1] : null;
+    }).filter(Boolean);
+    const fromIdx = ids.indexOf(data.taskId);
+    const toIdx = ids.indexOf(targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    ids.splice(fromIdx, 1);
+    ids.splice(toIdx, 0, data.taskId);
+    colabOrdem[colabKey] = ids;
+    save('gc-colab-ordem', colabOrdem);
+    buildColabTarefas();
+  } catch(e) {}
 }
 
 function toggleColabArq(colabKey) {
@@ -2614,8 +2727,197 @@ function returnFromKanban(colab, day, taskId) {
 }
 
 function initKanban() {
-  ['gisella','milena','luiggi'].forEach(c => buildKanban(c));
+  // Kanban removido das páginas de colaboradores
 }
+
+
+/* ── TIPO LIVRO ── */
+function updateLivroTipo() {
+  const tipo = document.querySelector('input[name="qa-l-tipopub"]:checked');
+  // Nenhum efeito extra necessário - os campos OS e ANO aparecem para ambos
+}
+
+function updateNlTipo() {
+  // Nenhum efeito extra - OS e ANO aparecem para ambos
+}
+
+/* ── PRIORIDADES (VISÃO GERAL) ── */
+function buildPrioridades() {
+  const el = document.getElementById('prioridades-container');
+  if (!el) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const threeDaysAgo = new Date(today); threeDaysAgo.setDate(today.getDate() - 3);
+
+  // Tarefas dos últimos 3 dias (não feitas)
+  const tarefasPrio = events.filter(e => {
+    if (e.arquivada) return false;
+    if (e.tipo === 'evento' || e.tipo === 'projeto') return false;
+    if (!e.data) return false;
+    const d = new Date(e.data + 'T00:00:00');
+    return d >= threeDaysAgo && d <= today;
+  });
+
+  // Conteúdos dos últimos 3 dias (não feitos)
+  const conteudosPrio = conteudos.filter(c => {
+    if (c.done) return false;
+    if (!c.dataPost) return false;
+    const d = new Date(c.dataPost + 'T00:00:00');
+    return d >= threeDaysAgo && d <= today;
+  });
+
+  // Tarefas arquivadas dos últimos 3 dias
+  const tarefasArq = events.filter(e => {
+    if (!e.arquivada) return false;
+    if (e.tipo === 'evento' || e.tipo === 'projeto') return false;
+    if (!e.data) return false;
+    const d = new Date(e.data + 'T00:00:00');
+    return d >= threeDaysAgo && d <= today;
+  });
+  const conteudosArq = conteudos.filter(c => {
+    if (!c.done) return false;
+    if (!c.dataPost) return false;
+    const d = new Date(c.dataPost + 'T00:00:00');
+    return d >= threeDaysAgo && d <= today;
+  });
+
+  const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
+  const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
+
+  function tarefaRowPrio(e) {
+    const prazoColor = e.data ? (() => {
+      const diff = Math.round((new Date(e.data+'T00:00:00')-today)/86400000);
+      return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : 'var(--warn)';
+    })() : 'var(--text-soft)';
+    return `<tr>
+      <td onclick="event.stopPropagation();" style="width:32px;">
+        <input type="checkbox" onchange="toggleTarefaArquivada(${e.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
+      </td>
+      <td style="font-weight:500;">
+        ${e.titulo}
+        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;">✎</button>
+        <button onclick="deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;">×</button>
+      </td>
+      <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
+    </tr>`;
+  }
+
+  function conteudoRowPrio(c) {
+    const st = ST_MAP[c.status]||{l:c.status,c:'b-gray'};
+    return `<tr onclick="openConteudo(${c.id})">
+      <td onclick="event.stopPropagation();">
+        <input type="checkbox" onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
+      </td>
+      <td style="font-weight:500;">${c.nome}
+        <span style="font-size:10px;color:var(--text-soft);display:inline-block;margin-left:4px;">✍</span>
+      </td>
+      <td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td>
+      <td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td>
+    </tr>`;
+  }
+
+  // Combinar tarefas + conteúdos, ordenar por data mais recente primeiro
+  const allItems = [
+    ...tarefasPrio.map(e => ({type:'tarefa', data:e.data, e})),
+    ...conteudosPrio.map(c => ({type:'conteudo', data:c.dataPost, c}))
+  ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+
+  if (allItems.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa ou conteúdo pendente nos últimos 3 dias.</div>';
+  } else {
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th style="width:32px;"></th><th>Item</th><th>Empresa</th><th>Data</th></tr></thead>
+      <tbody>${allItems.map(item => item.type==='tarefa' ? tarefaRowPrio(item.e) : conteudoRowPrio(item.c)).join('')}</tbody>
+    </table></div>`;
+  }
+
+  // Arquivados
+  const allArq = [
+    ...tarefasArq.map(e => ({type:'tarefa', data:e.data, e})),
+    ...conteudosArq.map(c => ({type:'conteudo', data:c.dataPost, c}))
+  ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+
+  const arqBtn = document.getElementById('prio-arq-btn');
+  const arqEl = document.getElementById('prioridades-arquivados');
+  const arqCnt = document.getElementById('prio-arq-count');
+  if (arqBtn) arqBtn.style.display = allArq.length > 0 ? 'flex' : 'none';
+  if (arqCnt) arqCnt.textContent = allArq.length;
+  if (arqEl && allArq.length > 0) {
+    arqEl.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th style="width:32px;"></th><th>Item</th><th>Empresa</th><th>Data</th></tr></thead>
+      <tbody>${allArq.map(item => {
+        if (item.type === 'tarefa') {
+          const e = item.e;
+          const EMP_BADGE2 = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
+          const EMP_LABEL2 = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
+          return `<tr style="opacity:0.5;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onchange="toggleTarefaArquivada(${e.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${e.titulo}</td><td><span class="badge ${EMP_BADGE2[e.empresa]||'b-gray'}">${EMP_LABEL2[e.empresa]||e.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDate(e.data):'—'}</td></tr>`;
+        } else {
+          const c = item.c;
+          return `<tr style="opacity:0.5;" onclick="openConteudo(${c.id})"><td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${c.nome} <span style="font-size:10px;color:var(--text-soft);">✍</span></td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`;
+        }
+      }).join('')}</tbody>
+    </table></div>`;
+  }
+}
+
+function togglePrioridadesArquivadas() {
+  const sec = document.getElementById('prioridades-arquivados');
+  const arr = document.getElementById('prio-arq-arrow');
+  if (!sec) return;
+  const open = sec.style.display === 'none';
+  sec.style.display = open ? 'block' : 'none';
+  if (arr) arr.textContent = open ? '▾' : '▸';
+}
+
+/* ── LIVROS ARQUIVADOS (100%) ── */
+function toggleLivrosArquivados() {
+  const wrap = document.getElementById('livros-arquivados-wrap');
+  const arr = document.getElementById('livros-arq-arrow');
+  if (!wrap) return;
+  const open = wrap.style.display === 'none';
+  wrap.style.display = open ? 'block' : 'none';
+  if (arr) arr.textContent = open ? '▾' : '▸';
+}
+
+function toggleLivrosArquivadosVisao() {
+  const wrap = document.getElementById('livros-visao-arquivados');
+  const arr = document.getElementById('livros-visao-arq-arrow');
+  if (!wrap) return;
+  const open = wrap.style.display === 'none';
+  wrap.style.display = open ? 'block' : 'none';
+  if (arr) arr.textContent = open ? '▾' : '▸';
+}
+
+/* ── REORDENAR LIVROS (drag) ── */
+let livrosDragSrc = null;
+
+function livrosDragStart(e, id) {
+  livrosDragSrc = id;
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function livrosDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.livro-card').forEach(c=>c.classList.remove('drag-over-livro'));
+  const card = e.currentTarget;
+  if (card) card.classList.add('drag-over-livro');
+}
+
+function livrosDrop(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('.livro-card').forEach(c=>c.classList.remove('drag-over-livro'));
+  if (!livrosDragSrc || livrosDragSrc === id) return;
+  const fromIdx = livros.findIndex(l => l.id === livrosDragSrc);
+  const toIdx = livros.findIndex(l => l.id === id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const [moved] = livros.splice(fromIdx, 1);
+  livros.splice(toIdx, 0, moved);
+  save('gc-livros', livros);
+  renderLivros();
+  livrosDragSrc = null;
+}
+
 
 /* ── INIT ── */
 initCalendars();
@@ -2625,7 +2927,8 @@ renderConteudos();
 buildTarefas();
 buildColabTarefas();
 renderProjetos();
-initKanban();
+buildPrioridades();
+buildEventosList();
 </script>
 
 <!-- CHAT BUTTON -->
