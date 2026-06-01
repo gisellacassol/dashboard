@@ -65,9 +65,9 @@
   --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
   --border: rgba(255,255,255,0.08); --border-mid: rgba(255,255,255,0.14);
   --text: #e8eaf0; --text-mid: #9da3c0; --text-soft: #6b7194;
-  --editora: #e05252; --editora-bg: rgba(224,82,82,0.12); --editora-border: rgba(224,82,82,0.3);
-  --leia: #9b59b6; --leia-bg: rgba(155,89,182,0.12); --leia-border: rgba(155,89,182,0.3);
-  --gisella: #888888; --gisella-bg: rgba(136,136,136,0.12); --gisella-border: rgba(136,136,136,0.3);
+  --editora: #DA020E; --editora-bg: rgba(218,2,14,0.10); --editora-border: rgba(218,2,14,0.3);
+  --leia: #7c3aed; --leia-bg: rgba(124,58,237,0.12); --leia-border: rgba(124,58,237,0.3);
+  --gisella: #c0396b; --gisella-bg: rgba(192,57,107,0.12); --gisella-border: rgba(192,57,107,0.3);
   --ok: #4dc98a; --ok-bg: rgba(77,201,138,0.15); --warn: #e6b34d; --warn-bg: rgba(230,179,77,0.15);
   --danger: #f07070; --danger-bg: rgba(240,112,112,0.15);
   --shadow: 0 2px 16px rgba(0,0,0,0.5);
@@ -81,9 +81,9 @@
 :root {
   --bg: #F5F2ED; --surface: #FDFCFA; --border: rgba(60,40,20,0.12); --border-mid: rgba(60,40,20,0.2);
   --text: #1C1410; --text-mid: #6B5A4E; --text-soft: #A8937F;
-  --editora: #e05252; --editora-bg: rgba(224,82,82,0.18); --editora-border: rgba(224,82,82,0.4);
-  --leia: #9b59b6; --leia-bg: rgba(155,89,182,0.18); --leia-border: rgba(155,89,182,0.4);
-  --gisella: #aaaaaa; --gisella-bg: rgba(170,170,170,0.18); --gisella-border: rgba(170,170,170,0.4);
+  --editora: #DA020E; --editora-bg: rgba(218,2,14,0.15); --editora-border: rgba(218,2,14,0.4);
+  --leia: #7c3aed; --leia-bg: rgba(124,58,237,0.18); --leia-border: rgba(124,58,237,0.4);
+  --gisella: #c0396b; --gisella-bg: rgba(192,57,107,0.18); --gisella-border: rgba(192,57,107,0.4);
   --ok: #1A6B4A; --ok-bg: #E6F5EE; --warn: #7A5200; --warn-bg: #FEF3DA;
   --danger: #8C1A1A; --danger-bg: #FCEAEA; --info: #1A3D8C; --info-bg: #EAF0FC;
   --gray: #5F5248; --gray-bg: #F0EDE8;
@@ -178,6 +178,9 @@ tr:hover td { background: var(--bg); }
 .cal-event.ev-editora { background: var(--editora-bg); color: var(--editora); }
 .cal-event.ev-leia { background: var(--leia-bg); color: var(--leia); }
 .cal-event.ev-gisella { background: var(--gisella-bg); color: var(--gisella); }
+.cal-event.ev-cont-editora { background: rgba(120,20,20,0.12); color: #7b1414; font-style: italic; }
+.cal-event.ev-cont-leia { background: rgba(60,10,80,0.12); color: #3c0a50; font-style: italic; }
+.cal-event.ev-cont-gisella { background: rgba(140,10,60,0.12); color: #8c0a3c; font-style: italic; }
 .cal-day.feriado-day { background: #FFFBF0; }
 .cal-legend { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); }
 .cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-soft); }
@@ -1374,19 +1377,7 @@ REGRAS:
 - Seja direta e objetiva
 - Para múltiplas tarefas de uma vez, use o array "itens"`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: systemPrompt,
-        messages: chatHistory.slice(-10) // últimas 10 mensagens para contexto
-      })
-    });
-
-    const data = await response.json();
-    const rawReply = (data.content || []).map(b => b.text || '').join('').trim();
+    const rawReply = await callGemini(systemPrompt, chatHistory.slice(-10).map(m => m.role + ': ' + m.content).join('\n'), 2000);
 
     // Tentar interpretar como ação
     let parsed = null;
@@ -1606,22 +1597,10 @@ A IA vai sugerir uma lista de tarefas:`);
   if (card) card.parentNode.insertBefore(loadEl, card);
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: 'Você é um assistente de gestão de projetos. Responda APENAS com JSON puro, sem markdown, sem explicações. Formato: {"tarefas": ["tarefa 1", "tarefa 2", ...]}',
-        messages: [{
-          role: 'user',
-          content: `Projeto: ${p.nome}\nDescrição: ${desc}\n\nGere uma lista de tarefas específicas e acionáveis para este projeto. Máximo 10 tarefas.`
-        }]
-      })
-    });
-    const data = await response.json();
-    const text = (data.content||[]).map(b=>b.text||'').join('');
-    const clean = text.replace(/\`\`\`json|\`\`\`/g,'').trim();
+    const _sysIa = 'Você é um assistente de gestão de projetos. Responda APENAS com JSON puro, sem markdown, sem explicações. Formato: {"tarefas": ["tarefa 1", "tarefa 2", ...]}';
+    const _msgIa = 'Projeto: ' + p.nome + '\nDescrição: ' + desc + '\n\nGere uma lista de tarefas específicas e acionáveis para este projeto. Máximo 10 tarefas.';
+    const text = await callGemini(_sysIa, _msgIa, 1000);
+    const clean = text.replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(clean);
     const tarefas = parsed.tarefas || [];
 
@@ -2162,19 +2141,7 @@ Com base nesses dados, faça uma análise completa e objetiva:
 Seja direta, use emojis com moderação, escreva em português. Máximo 400 palavras.`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        system: 'Você é a assistente estratégica do Grupo Cassol. Analise os dados fornecidos e gere um resumo executivo claro e acionável. Responda sempre em texto corrido, sem JSON.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-    const reply = (data.content || []).map(b => b.text || '').join('').trim();
+    const reply = await callGemini('Você é a assistente estratégica do Grupo Cassol. Analise os dados fornecidos e gere um resumo executivo claro e acionável. Responda sempre em texto corrido, sem JSON.', prompt, 1500);
     conteudo.textContent = reply || 'Não foi possível gerar o resumo.';
   } catch(e) {
     conteudo.textContent = 'Erro ao conectar com a IA. Verifique sua conexão.';
@@ -2383,14 +2350,30 @@ function buildVisaoConteudos() {
   }).join('');
 }
 
+
+/* ── GEMINI AI ── */
+async function callGemini(systemPrompt, userMessage, maxTokens) {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAQ.Ab8RN6IvaFDWzdpEoU7gFzNaNYPrTtclvGgcymu5NbmYZVH16w', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ parts: [{ text: userMessage }] }],
+      generationConfig: { maxOutputTokens: maxTokens || 1500, temperature: 0.7 }
+    })
+  });
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
 /* ── STORAGE ── */
 function load(key, def) {
   try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
 function save(key, val) {
-  // Salvar localmente
   localStorage.setItem(key, JSON.stringify(val));
-  // NÃO chamar fbSave automaticamente — apenas via botão manual
+  if (window.fbSave) window.fbSave(key, val);
   autoSave();
 }
 
@@ -2582,7 +2565,11 @@ function buildCalendar(id, filter) {
     }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
-    evHtml += dayConteudos.slice(0,1).map(c => `<div class="cal-event" style="background:#E8F8F8;color:#0A5F5F;cursor:pointer;" onclick="event.stopPropagation();openConteudo(${c.id})">✍ ${c.nome}</div>`).join('');
+    const contColors = {editora:{bg:'rgba(120,20,20,0.12)',color:'#7b1414'},leia:{bg:'rgba(60,10,80,0.12)',color:'#3c0a50'},gisella:{bg:'rgba(140,10,60,0.12)',color:'#8c0a3c'}};
+    evHtml += dayConteudos.slice(0,2).map(c => {
+      const cc = contColors[c.empresa||'editora']||contColors.editora;
+      return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;" onclick="event.stopPropagation();openConteudo(${c.id})">✏ ${c.nome}</div>`;
+    }).join('');
     evHtml += dayEvs.slice(0,2).map(e => {
       if (e._gcal) {
         const time = e.startTime ? `${e.startTime} ` : '';
