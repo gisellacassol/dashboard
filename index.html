@@ -7,7 +7,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyAWMu3NhnT2KAPtSfXuNYcvH8KmqAReiuY",
@@ -21,40 +21,40 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // ── Nomes das coleções/documentos
-  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
-
-  // Expor funções ao escopo global
-  window._fbReady = false;
   window._fbDb = db;
-  window._fbDoc = (key) => doc(db, 'dados', key);
+  window._fbReady = false;
 
-  // ── SAVE: escreve no Firestore
   window.fbSave = async function(key, val) {
     try {
       await setDoc(doc(db, 'dados', key), { value: JSON.stringify(val) });
-    } catch(e) { console.warn('fbSave error', key, e); }
+      console.log('fbSave OK:', key);
+      return true;
+    } catch(e) {
+      console.warn('fbSave ERRO:', key, e.code, e.message);
+      return false;
+    }
   };
 
-  // ── LOAD inicial: busca todos os documentos de uma vez
+  window.fbGet = async function(key) {
+    try {
+      const snap = await getDoc(doc(db, 'dados', key));
+      if (snap.exists()) return JSON.parse(snap.data().value);
+      return null;
+    } catch(e) { return null; }
+  };
+
   window.fbLoadAll = async function() {
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
     const results = {};
     await Promise.all(KEYS.map(async key => {
-      try {
-        const snap = await getDoc(doc(db, 'dados', key));
-        if (snap.exists()) results[key] = JSON.parse(snap.data().value);
-      } catch(e) { console.warn('fbLoad error', key, e); }
+      const val = await window.fbGet(key);
+      if (val !== null) results[key] = val;
     }));
     return results;
   };
 
-  // ── REALTIME: escuta mudanças de outros dispositivos
-  window.fbListen = function(key, callback) {
-    // Listener temporariamente desativado para evitar conflito de permissões
-    return null;
-  };
+  window.fbListen = function(key, callback) { return null; };
 
-  // ── Sinalizar que Firebase está pronto
   window._fbReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
