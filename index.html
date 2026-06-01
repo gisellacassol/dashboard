@@ -65,9 +65,9 @@
   --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
   --border: rgba(255,255,255,0.08); --border-mid: rgba(255,255,255,0.14);
   --text: #e8eaf0; --text-mid: #9da3c0; --text-soft: #6b7194;
-  --editora: #7b8ff5; --editora-bg: rgba(123,143,245,0.15); --editora-border: rgba(123,143,245,0.3);
-  --leia: #f08080; --leia-bg: rgba(240,128,128,0.15); --leia-border: rgba(240,128,128,0.3);
-  --gisella: #4dc98a; --gisella-bg: rgba(77,201,138,0.15); --gisella-border: rgba(77,201,138,0.3);
+  --editora: #e05252; --editora-bg: rgba(224,82,82,0.12); --editora-border: rgba(224,82,82,0.3);
+  --leia: #9b59b6; --leia-bg: rgba(155,89,182,0.12); --leia-border: rgba(155,89,182,0.3);
+  --gisella: #888888; --gisella-bg: rgba(136,136,136,0.12); --gisella-border: rgba(136,136,136,0.3);
   --ok: #4dc98a; --ok-bg: rgba(77,201,138,0.15); --warn: #e6b34d; --warn-bg: rgba(230,179,77,0.15);
   --danger: #f07070; --danger-bg: rgba(240,112,112,0.15);
   --shadow: 0 2px 16px rgba(0,0,0,0.5);
@@ -81,9 +81,9 @@
 :root {
   --bg: #F5F2ED; --surface: #FDFCFA; --border: rgba(60,40,20,0.12); --border-mid: rgba(60,40,20,0.2);
   --text: #1C1410; --text-mid: #6B5A4E; --text-soft: #A8937F;
-  --editora: #3D2B8C; --editora-bg: #EEEAFC; --editora-border: #B8ADEC;
-  --leia: #8C2B5A; --leia-bg: #FCEAF2; --leia-border: #EBA8C8;
-  --gisella: #1A6B4A; --gisella-bg: #E6F5EE; --gisella-border: #8ECFB0;
+  --editora: #e05252; --editora-bg: rgba(224,82,82,0.18); --editora-border: rgba(224,82,82,0.4);
+  --leia: #9b59b6; --leia-bg: rgba(155,89,182,0.18); --leia-border: rgba(155,89,182,0.4);
+  --gisella: #aaaaaa; --gisella-bg: rgba(170,170,170,0.18); --gisella-border: rgba(170,170,170,0.4);
   --ok: #1A6B4A; --ok-bg: #E6F5EE; --warn: #7A5200; --warn-bg: #FEF3DA;
   --danger: #8C1A1A; --danger-bg: #FCEAEA; --info: #1A3D8C; --info-bg: #EAF0FC;
   --gray: #5F5248; --gray-bg: #F0EDE8;
@@ -94,7 +94,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .sidebar { width: 220px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 2rem 0; position: fixed; top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; z-index: 100; overflow-y: auto; }
 .main { margin-left: 220px; flex: 1; padding: 2.5rem 2rem; max-width: 1100px; }
 .sidebar-logo { padding: 0 1.5rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-.logo-name { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); line-height: 1.2; }
+.logo-name { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--text); line-height: 1.2; cursor: pointer; }
 .logo-sub { font-size: 11px; color: var(--text-soft); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
 .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
 .nav-label { font-size: 10px; font-weight: 500; color: var(--text-soft); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 0.5rem; margin-bottom: 6px; }
@@ -361,7 +361,7 @@ tr:hover td { background: var(--bg); }
 <div class="shell">
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-name">Grupo<br>Cassol</div>
+    <div class="logo-name" onclick="showPage('visao', document.querySelector('.nav-item.active'))">Grupo Cassol</div>
     <div class="logo-sub">Central de Controle</div>
   </div>
   <div class="nav-section">
@@ -435,7 +435,7 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-visao"></div>
   </div>
   <div class="section">
-    <div class="section-title">Prioridades — últimos 3 dias</div>
+    <div class="section-title">Tarefas Prioritárias</div>
     <div id="prioridades-container"></div>
     <div style="margin-top:8px;">
       <button class="archived-toggle" id="prio-arq-btn" onclick="togglePrioridadesArquivadas()" style="display:none;"><span id="prio-arq-arrow">▸</span> Arquivados (<span id="prio-arq-count">0</span>)</button>
@@ -445,6 +445,12 @@ tr:hover td { background: var(--bg); }
 
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+  </div>
+  <div class="section">
+    <div class="section-title">Conteúdos da semana</div>
+    <div id="visao-conteudos"></div>
+  </div>
+  <div class="section">
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
       <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
     </div>
@@ -606,7 +612,16 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Lista de eventos</div>
       <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='evento';updateQaFields();},50)">+ novo evento</button>
     </div>
-    <div id="eventos-lista"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Próximos</div>
+        <div id="eventos-lista-proximos"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Passados (este mês)</div>
+        <div id="eventos-lista-passados"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -724,16 +739,22 @@ tr:hover td { background: var(--bg); }
         <!-- TAREFAS DO DIA -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas do Dia
-            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+            <span>Tarefas Fixas do Dia</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+              <button onclick="addFixedTask('gisella','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="gisella-daily-tasks"></div>
         </div>
         <!-- TAREFAS DA SEMANA -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas da Semana
-            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+            <span>Tarefas Fixas da Semana</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+              <button onclick="addFixedTask('gisella','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="gisella-weekly-tasks"></div>
         </div>
@@ -810,15 +831,21 @@ tr:hover td { background: var(--bg); }
       <div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas do Dia
-            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+            <span>Tarefas Fixas do Dia</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+              <button onclick="addFixedTask('milena','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="milena-daily-tasks"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas da Semana
-            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+            <span>Tarefas Fixas da Semana</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+              <button onclick="addFixedTask('milena','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="milena-weekly-tasks"></div>
         </div>
@@ -842,15 +869,21 @@ tr:hover td { background: var(--bg); }
       <div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas do Dia
-            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+            <span>Tarefas Fixas do Dia</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+              <button onclick="addFixedTask('luiggi','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="luiggi-daily-tasks"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            Tarefas Fixas da Semana
-            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+            <span>Tarefas Fixas da Semana</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+              <button onclick="addFixedTask('luiggi','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
+            </div>
           </div>
           <div id="luiggi-weekly-tasks"></div>
         </div>
@@ -1736,6 +1769,7 @@ async function uploadLocalToFirebase() {
 
 
 function renderGisellaFixedTasks() { renderFixedTasks('gisella'); }
+function renderColabFixedTasks(key) { renderFixedTasks(key); }
 
 function toggleGisellaFixed(key, val) { toggleFixed('gisella', key, val); }
 
@@ -2234,25 +2268,21 @@ function renderFixedTasks(colab) {
   function taskRow(t, type, prefix) {
     const checked = !!checks[prefix + t.id];
     const labelHtml = t.link
-      ? '<a href="' + t.link + '" target="_blank" style="color:var(--editora);text-decoration:underline;text-underline-offset:2px;font-size:13px;' + (checked?'text-decoration:line-through;opacity:0.5;':'') + '">' + t.label + ' ↗</a>'
-      : '<span style="font-size:13px;flex:1;' + (checked?'text-decoration:line-through;opacity:0.5;':'') + '">' + t.label + '</span>';
+      ? '<a href="' + t.link + '" target="_blank" style="color:var(--editora);text-decoration:underline;text-underline-offset:2px;font-size:13px;' + (checked ? 'opacity:0.5;' : '') + '">' + t.label + ' ↗</a>'
+      : '<span style="font-size:13px;flex:1;' + (checked ? 'text-decoration:line-through;opacity:0.5;' : '') + '">' + t.label + '</span>';
     const ds = 'fixedDragStart(event,' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')';
     const dd = 'fixedDrop(event,' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')';
-    return '<div draggable="true" data-id="' + t.id + '" data-type="' + type + '" data-colab="' + colab + '"' +
+    const onch = 'toggleFixed(' + JSON.stringify(colab) + ',' + JSON.stringify(prefix + t.id) + ',this.checked)';
+    return '<div draggable="true"' +
       ' ondragstart="' + ds + '"' +
       ' ondragover="event.preventDefault()"' +
       ' ondrop="' + dd + '"' +
       ' style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">' +
       '<span style="cursor:grab;color:var(--text-soft);font-size:11px;flex-shrink:0;">⠿</span>' +
-      '<input type="checkbox" ' + (checked?'checked':'') +
-      '<input type="checkbox" ' + (checked?'checked':'') + ' onchange="' + onch + '" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
-        ' style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
+      '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="' + onch + '" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
       '<span style="flex:1;">' + labelHtml + '</span>' +
-      '<button onclick="editFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')"' +
-        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
-        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
-      '<button onclick="deleteFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')"' +
-        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>' +
+      '<button onclick="editFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
+      '<button onclick="deleteFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>' +
       '</div>';
   }
 
@@ -2322,6 +2352,35 @@ function fixedDrop(e, colab, type, targetId) {
   arr.splice(toIdx, 0, moved);
   saveFixedData(colab, data);
   renderFixedTasks(colab);
+}
+
+
+/* ── CONTEÚDOS VISÃO GERAL ── */
+function buildVisaoConteudos() {
+  const el = document.getElementById('visao-conteudos');
+  if (!el) return;
+  const hoje = new Date().toISOString().slice(0,10);
+  const fim = new Date(); fim.setDate(fim.getDate()+7);
+  const fimStr = fim.toISOString().slice(0,10);
+  const lista = conteudos.filter(c => !c.done && c.dataPost >= hoje && c.dataPost <= fimStr);
+  lista.sort((a,b)=>(a.dataPost||'').localeCompare(b.dataPost||''));
+  if (lista.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo programado para os próximos 7 dias.</div>';
+    return;
+  }
+  const empColors = {editora:'var(--editora)',leia:'var(--leia)',gisella:'var(--gisella)'};
+  el.innerHTML = lista.map(c => {
+    const emp = c.empresa||'editora';
+    const cor = empColors[emp]||'var(--text-soft)';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="width:3px;min-height:28px;background:'+cor+';border-radius:2px;flex-shrink:0;"></div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:500;font-size:13px;">'+c.nome+'</div>' +
+        '<div style="font-size:11px;color:var(--text-soft);">'+fmtDate(c.dataPost||'')+' · '+(c.rede||'')+'</div>' +
+      '</div>' +
+      '<span class="badge b-'+emp+'" style="font-size:10px;">'+(emp==='editora'?'Editora':emp==='leia'?'Léia':'GC')+'</span>' +
+    '</div>';
+  }).join('');
 }
 
 /* ── STORAGE ── */
@@ -3652,30 +3711,42 @@ function setFilter(pageId, empresa, btn) {
 function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
 
 function buildEventosList() {
-  const el = document.getElementById('eventos-lista');
-  if (!el) return;
+  const today = new Date().toISOString().slice(0,10);
   const _ef = getFilter('eventos');
+  const proxEl = document.getElementById('eventos-lista-proximos');
+  const passEl = document.getElementById('eventos-lista-passados');
+  const el = document.getElementById('eventos-lista');
   const evList = events.filter(e => e.tipo === 'evento' && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
-  const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
-  const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
-  if (evList.length === 0) {
-    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum evento cadastrado.</div>';
+  evList.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+
+  function evRow(e) {
+    const emp = (e.empresa||'editora').split(',')[0];
+    const cor = emp==='editora'?'var(--editora)':emp==='leia'?'var(--leia)':'var(--gisella)';
+    const label = emp==='editora'?'Editora':emp==='leia'?'Léia':'GC';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<div style="width:3px;min-height:32px;background:'+cor+';border-radius:2px;flex-shrink:0;"></div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-weight:500;font-size:13px;">'+e.titulo+'</div>' +
+        '<div style="font-size:11px;color:var(--text-soft);">'+fmtDate(e.data||'')+(e.dataFim&&e.dataFim!==e.data?' – '+fmtDate(e.dataFim):'')+' · <span style="color:'+cor+';">'+label+'</span></div>' +
+      '</div>' +
+      '<button onclick="openEditEvent('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;">✎</button>' +
+      '<button onclick="deleteEventDirect('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;">×</button>' +
+    '</div>';
+  }
+
+  if (proxEl) {
+    const proximos = evList.filter(e=>(e.data||'')>=today);
+    const passados = evList.filter(e=>(e.data||'')<today).reverse().slice(0,15);
+    proxEl.innerHTML = proximos.length ? proximos.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum evento futuro.</div>';
+    if (passEl) passEl.innerHTML = passados.length ? passados.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum.</div>';
     return;
   }
-  evList.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
-  el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Evento</th><th>Empresa</th><th>Data</th><th>Horário</th></tr></thead>
-    <tbody>${evList.map(e=>`<tr>
-      <td style="font-weight:500;">${e.titulo}
-        <button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;">✎</button>
-        <button onclick="deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;">×</button>
-      </td>
-      <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
-      <td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDate(e.data):'—'}</td>
-      <td style="font-size:12px;color:var(--text-soft);">${e.horaInicio||'—'}</td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
+  if (el) {
+    if (evList.length === 0) { el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum evento cadastrado.</div>'; return; }
+    el.innerHTML = evList.map(evRow).join('');
+  }
 }
+
 
 /* ── PROJETOS ── */
 let projetos = load('gc-projetos', []);
