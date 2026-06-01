@@ -1474,10 +1474,9 @@ function load(key, def) {
   try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
 function save(key, val) {
-  // Salvar localmente (fallback)
+  // Salvar localmente
   localStorage.setItem(key, JSON.stringify(val));
-  // Salvar no Firebase
-  if (window.fbSave) window.fbSave(key, val);
+  // NÃO chamar fbSave automaticamente — apenas via botão manual
   autoSave();
 }
 
