@@ -7,7 +7,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, initializeFirestore, doc, getDoc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyAWMu3NhnT2KAPtSfXuNYcvH8KmqAReiuY",
@@ -19,7 +19,7 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db  = initializeFirestore(app, {}, 'southamerica-east1');
+  const db  = getFirestore(app);
 
   // ── Nomes das coleções/documentos
   const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
