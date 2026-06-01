@@ -50,11 +50,8 @@
 
   // ── REALTIME: escuta mudanças de outros dispositivos
   window.fbListen = function(key, callback) {
-    return onSnapshot(doc(db, 'dados', key), snap => {
-      if (snap.exists()) {
-        try { callback(JSON.parse(snap.data().value)); } catch(e) {}
-      }
-    });
+    // Listener temporariamente desativado para evitar conflito de permissões
+    return null;
   };
 
   // ── Sinalizar que Firebase está pronto
