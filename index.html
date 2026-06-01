@@ -480,7 +480,7 @@ tr:hover td { background: var(--bg); }
     </button>
   </div>
   <div class="section">
-    <div class="section-title">Calendário editorial</div>
+    <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-editora"></div>
   </div>
   <div class="section">
@@ -517,7 +517,7 @@ tr:hover td { background: var(--bg); }
     </button>
   </div>
   <div class="section">
-    <div class="section-title">Calendário de conteúdo</div>
+    <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
   <div class="section">
@@ -554,7 +554,7 @@ tr:hover td { background: var(--bg); }
     </button>
   </div>
   <div class="section">
-    <div class="section-title">Calendário de mentorias</div>
+    <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-gisella"></div>
   </div>
   <div class="section">
@@ -642,7 +642,7 @@ tr:hover td { background: var(--bg); }
   </div>
 
   <div class="section">
-    <div class="section-title">Calendário de conteúdo</div>
+    <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-conteudo"></div>
   </div>
   <div class="section">
@@ -1437,7 +1437,7 @@ REGRAS:
 
   } catch (err) {
     loadingMsg.remove();
-    appendChatMsg('assistant', 'Erro ao conectar. Verifique sua conexão.');
+    appendChatMsg('assistant', 'Erro: ' + (err.message || 'Verifique sua conexão.'));
   }
 
   sendBtn.disabled = false;
@@ -2144,7 +2144,7 @@ Seja direta, use emojis com moderação, escreva em português. Máximo 400 pala
     const reply = await callGemini('Você é a assistente estratégica do Grupo Cassol. Analise os dados fornecidos e gere um resumo executivo claro e acionável. Responda sempre em texto corrido, sem JSON.', prompt, 1500);
     conteudo.textContent = reply || 'Não foi possível gerar o resumo.';
   } catch(e) {
-    conteudo.textContent = 'Erro ao conectar com a IA. Verifique sua conexão.';
+    conteudo.textContent = 'Erro: ' + (e.message || 'Verifique sua conexão.');
   }
 
   if (btn) btn.disabled = false;
@@ -2358,13 +2358,52 @@ async function callGemini(systemPrompt, userMessage, maxTokens) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       system_instruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ parts: [{ text: userMessage }] }],
+      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
       generationConfig: { maxOutputTokens: maxTokens || 1500, temperature: 0.7 }
     })
   });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error((err.error && err.error.message) || 'Erro ' + response.status);
+  }
   const data = await response.json();
   if (data.error) throw new Error(data.error.message);
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+
+/* ── GOOGLE CALENDAR LÉIA ── */
+let gcalLeiaCache = [];
+
+async function loadGcalLeia() {
+  const rangeStart = new Date(); rangeStart.setMonth(rangeStart.getMonth() - 2); rangeStart.setDate(1);
+  const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 4); rangeEnd.setDate(1);
+
+  const url = 'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(GCAL_ID_LEIA) + '/events'
+    + '?key=' + GCAL_API_KEY
+    + '&timeMin=' + rangeStart.toISOString()
+    + '&timeMax=' + rangeEnd.toISOString()
+    + '&singleEvents=true&orderBy=startTime&maxResults=250';
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    gcalLeiaCache = (data.items || []).map(ev => ({
+      title: ev.summary || '(sem título)',
+      start: ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date,
+      end:   ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date,
+      startTime: ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null,
+      endTime:   ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null,
+      description: ev.description || '',
+      link: ev.htmlLink || '',
+      empresa: 'leia',
+    }));
+    // Injetar no calendário da Léia
+    refreshCalendars();
+  } catch(e) {
+    console.warn('loadGcalLeia erro:', e);
+  }
 }
 
 /* ── STORAGE ── */
@@ -2524,17 +2563,30 @@ function buildCalendar(id, filter) {
   const prevDays = new Date(y, m, 0).getDate();
 
   // Eventos do Google Calendar em memória (não salvos)
-  const gcalEventsNative = (window.gcalEventsCache || []).map(ev => ({
-    id: 'gcal-' + ev.start + '-' + ev.title.slice(0,10).replace(/\s/g,''),
-    titulo: ev.title,
-    empresa: 'gisella',
-    tipo: 'evento',
-    data: ev.start,
-    dataFim: ev.end || ev.start,
-    _gcal: true,
-    startTime: ev.startTime,
-    endTime: ev.endTime,
-  }));
+  const gcalEventsNative = [
+    ...(window.gcalEventsCache || []).map(ev => ({
+      id: 'gcal-' + ev.start + '-' + ev.title.slice(0,10).replace(/\s/g,''),
+      titulo: ev.title,
+      empresa: 'gisella',
+      tipo: 'evento',
+      data: ev.start,
+      dataFim: ev.end,
+      startTime: ev.startTime,
+      gcal: true,
+      link: ev.link,
+    })),
+    ...(gcalLeiaCache || []).map(ev => ({
+      id: 'gcal-leia-' + ev.start + '-' + ev.title.slice(0,10).replace(/\s/g,''),
+      titulo: ev.title,
+      empresa: 'leia',
+      tipo: 'evento',
+      data: ev.start,
+      dataFim: ev.end || ev.start,
+      gcal: true,
+      startTime: ev.startTime,
+      endTime: ev.endTime,
+    })),
+  ];
 
   let html = `<div class="cal-header"><button class="cal-nav" onclick="calNav('${id}',-1)">‹</button><div class="cal-month">${MESES[m]} ${y}</div><button class="cal-nav" onclick="calNav('${id}',1)">›</button></div><div class="cal-grid">`;
   DOWS.forEach(d => html += `<div class="cal-dow">${d}</div>`);
@@ -4522,8 +4574,9 @@ function livrosDrop(e, id) {
 
 
 /* ---- GOOGLE CALENDAR ---- */
-const GCAL_API_KEY = 'AIzaSyBSQ7t6xtS6va7yaXMVvOKchCl1pkq_Whw';
-const GCAL_ID      = 'gcestrategiasliterarias@gmail.com';
+const GCAL_API_KEY  = 'AIzaSyBSQ7t6xtS6va7yaXMVvOKchCl1pkq_Whw';
+const GCAL_ID       = 'gcestrategiasliterarias@gmail.com';
+const GCAL_ID_LEIA  = 'assessorialeiacassol@gmail.com';
 
 // Semana atual: domingo da semana corrente
 const GCAL_MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
