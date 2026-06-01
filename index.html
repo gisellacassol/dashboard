@@ -44,7 +44,7 @@
   };
 
   window.fbLoadAll = async function() {
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa'];
     const results = {};
     await Promise.all(KEYS.map(async key => {
       const val = await window.fbGet(key);
@@ -388,27 +388,47 @@ tr:hover td { background: var(--bg); }
     <button class="nav-item" onclick="showPage('colab-milena',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">M</span> Milena</button>
     <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
   </div>
+
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
   <div id="sync-indicator" style="display:none;align-items:center;gap:6px;padding:6px 1rem;font-size:11px;color:var(--gisella);">
     <span style="width:6px;height:6px;border-radius:50%;background:var(--gisella);display:inline-block;"></span>
     Sincronizado com a nuvem
   </div>
-  <div style="padding:0 1rem 4px;">
-    <button class="nav-item" id="upload-firebase-btn" onclick="uploadLocalToFirebase()" style="width:100%;justify-content:flex-start;gap:8px;font-size:12px;">
-      ☁️ <span>Enviar dados locais → nuvem</span>
-    </button>
-  </div>
-  <div style="padding:0 1rem 1rem;">
-    <button class="nav-item" onclick="toggleDarkMode()" id="dark-mode-btn" style="width:100%;justify-content:flex-start;gap:8px;">
-      <span id="dark-mode-icon">🌙</span> <span id="dark-mode-label">Modo escuro</span>
-    </button>
-  </div>
+
+
 </aside>
 <main class="main">
 
 <!-- VISÃO GERAL -->
 <div class="page active" id="page-visao">
-  <div class="page-header"><div class="page-title">Visão Geral</div><div class="page-subtitle">Pulso das três empresas</div></div>
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="page-title">Visão Geral</div>
+        <div class="page-subtitle">Pulso das três empresas</div>
+      </div>
+      <button onclick="gerarResumoSemana()" id="btn-resumo-semana" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--editora-bg),var(--gisella-bg));border:1px solid var(--border-mid);border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.2s;">
+        <span style="font-size:16px;">✦</span> Resumo da semana
+      </button>
+    </div>
+  </div>
+
+  <!-- PAINEL DE RESUMO IA -->
+  <div id="resumo-semana-panel" style="display:none;margin-bottom:0;">
+    <div class="section" style="background:linear-gradient(135deg,var(--surface),var(--surface2,var(--surface)));border:1px solid var(--border-mid);border-radius:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">✦</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;">Análise da semana</div>
+            <div id="resumo-data" style="font-size:11px;color:var(--text-soft);"></div>
+          </div>
+        </div>
+        <button onclick="document.getElementById('resumo-semana-panel').style.display='none'" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:18px;">×</button>
+      </div>
+      <div id="resumo-conteudo" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;"></div>
+    </div>
+  </div>
 
   <div class="section">
     <div class="section-title">Calendário — todas as empresas</div>
@@ -445,6 +465,11 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Editora Cassol</div>
     <div class="page-subtitle">Livros em produção · Projetos · Grandes projetos</div>
   </div>
+    <div class="section" style="padding-bottom:8px;">
+    <button onclick="openLinksModal('editora')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;color:var(--editora);cursor:pointer;">
+      🔗 Banco de Links
+    </button>
+  </div>
   <div class="section">
     <div class="section-title">Calendário editorial</div>
     <div class="cal-wrap" id="cal-editora"></div>
@@ -477,7 +502,12 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Léia Cassol</div>
     <div class="page-subtitle">Marketing · Redes sociais · Projetos de livro</div>
   </div>
- <div class="section">
+  <div class="section" style="padding-bottom:8px;">
+    <button onclick="openLinksModal('leia')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;color:var(--leia);cursor:pointer;">
+      🔗 Banco de Links
+    </button>
+  </div>
+  <div class="section">
     <div class="section-title">Calendário de conteúdo</div>
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
@@ -508,6 +538,11 @@ tr:hover td { background: var(--bg); }
     <div class="empresa-stripe" style="background:var(--gisella-bg);color:var(--gisella);border:1px solid var(--gisella-border);"><span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;"></span> GC Estratégias Literárias</div>
     <div class="page-title">GC — Estratégias Literárias</div>
     <div class="page-subtitle">Mentoria Plano Diretor · Esteira de produtos · Marketing</div>
+  </div>
+    <div class="section" style="padding-bottom:8px;">
+    <button onclick="openLinksModal('gisella')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;color:var(--gisella);cursor:pointer;">
+      🔗 Banco de Links
+    </button>
   </div>
   <div class="section">
     <div class="section-title">Calendário de mentorias</div>
@@ -683,8 +718,84 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
   <div class="section">
-    <div class="section-title">Tarefas atribuídas</div>
-    <div id="colab-tarefas-gisella"></div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start;">
+      <!-- ESQUERDA: tarefas fixas -->
+      <div>
+        <!-- TAREFAS DO DIA -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas do Dia
+            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+          </div>
+          <div id="gisella-daily-tasks"></div>
+        </div>
+        <!-- TAREFAS DA SEMANA -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas da Semana
+            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+          </div>
+          <div id="gisella-weekly-tasks"></div>
+        </div>
+      </div>
+      <!-- DIREITA: tarefas atribuídas -->
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
+        <div id="colab-tarefas-gisella"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BANCO DE LINKS -->
+<div class="page" id="page-links">
+  <div class="page-header">
+    <div class="page-title">Banco de Links</div>
+    <div class="page-subtitle">Ferramentas, docs e planilhas</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="section-title" style="margin-bottom:0;">Links salvos</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddLink()">+ adicionar link</button>
+    </div>
+    <div id="links-grid"></div>
+  </div>
+</div>
+
+<!-- MODAL LINK -->
+
+<!-- MODAL BANCO DE LINKS EMPRESA -->
+<div class="modal-overlay" id="modal-links-empresa" onclick="if(event.target===this)closeModal('modal-links-empresa')">
+  <div class="modal" style="width:560px;max-height:80vh;display:flex;flex-direction:column;">
+    <button class="modal-close" onclick="closeModal('modal-links-empresa')">×</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="modal-title" id="modal-links-emp-title" style="margin:0;">Banco de Links</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddLinkEmpresaFromModal()">+ adicionar</button>
+    </div>
+    <div id="modal-links-emp-content" style="overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-link" onclick="if(event.target===this)closeModal('modal-link')">
+  <div class="modal" style="width:420px;">
+    <button class="modal-close" onclick="closeModal('modal-link')">×</button>
+    <div class="modal-title" id="modal-link-title">Novo link</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:1rem;">
+      <div class="form-group"><label class="form-label">Nome *</label><input class="form-input" id="link-nome" type="text" placeholder="Ex: Planilha de Métricas"></div>
+      <div class="form-group"><label class="form-label">URL *</label><input class="form-input" id="link-url" type="url" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label">Categoria</label>
+        <select class="form-select" id="link-categoria">
+          <option value="ferramenta">🛠 Ferramenta</option>
+          <option value="planilha">📊 Planilha</option>
+          <option value="doc">📄 Documento</option>
+          <option value="outro">🔗 Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:1.5rem;">
+      <button class="btn" onclick="closeModal('modal-link')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLink()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -692,10 +803,31 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-milena">
   <div class="page-header">
     <div class="page-title">Milena</div>
-    <div class="page-subtitle">Tarefas atribuídas</div>
+    <div class="page-subtitle">Tarefas fixas · Tarefas atribuídas</div>
   </div>
   <div class="section">
-    <div id="colab-tarefas-milena"></div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start;">
+      <div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas do Dia
+            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+          </div>
+          <div id="milena-daily-tasks"></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas da Semana
+            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+          </div>
+          <div id="milena-weekly-tasks"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
+        <div id="colab-tarefas-milena"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -703,10 +835,31 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-luiggi">
   <div class="page-header">
     <div class="page-title">Luiggi</div>
-    <div class="page-subtitle">Tarefas atribuídas</div>
+    <div class="page-subtitle">Tarefas fixas · Tarefas atribuídas</div>
   </div>
   <div class="section">
-    <div id="colab-tarefas-luiggi"></div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start;">
+      <div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas do Dia
+            <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
+          </div>
+          <div id="luiggi-daily-tasks"></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+            Tarefas Fixas da Semana
+            <span style="font-size:9px;opacity:0.6;">reset domingo</span>
+          </div>
+          <div id="luiggi-weekly-tasks"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
+        <div id="colab-tarefas-luiggi"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -804,8 +957,6 @@ tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="qa-l-os" type="text" placeholder="Número da OS"></div>
-          <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="qa-l-ano" type="text" placeholder="Ex: 2026"></div>
           <div class="form-group"><label class="form-label">Autor</label><input class="form-input" id="qa-l-autor" type="text"></div>
           <div class="form-group"><label class="form-label">Ilustrador</label><input class="form-input" id="qa-l-ilustrador" type="text"></div>
           <div class="form-group"><label class="form-label">Público-alvo</label><input class="form-input" id="qa-l-publico" type="text"></div>
@@ -816,6 +967,8 @@ tr:hover td { background: var(--bg); }
           <div class="form-group"><label class="form-label">Formato</label><input class="form-input" id="qa-l-formato" type="text"></div>
           <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="qa-l-colecao" type="text"></div>
           <div class="form-group"><label class="form-label">Editora responsável</label><input class="form-input" id="qa-l-editora" type="text"></div>
+          <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="qa-l-os" type="text" placeholder="Número da OS"></div>
+          <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="qa-l-ano" type="text" placeholder="Ex: 2026"></div>
           <div class="form-group"><label class="form-label">Data de lançamento</label><input class="form-input" id="qa-l-lancamento" type="date"></div>
           <div class="form-group"><label class="form-label">Empresas</label>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
@@ -930,8 +1083,6 @@ tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Título *</label><input class="form-input" id="nl-titulo" type="text" placeholder="Título do livro"></div>
-        <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="nl-os" type="text" placeholder="Número da OS"></div>
-        <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="nl-ano" type="text" placeholder="Ex: 2026"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresas</label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="nl-emp-editora" value="editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
@@ -949,6 +1100,8 @@ tr:hover td { background: var(--bg); }
         <div class="form-group"><label class="form-label">Formato</label><input class="form-input" id="nl-formato" type="text"></div>
         <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="nl-colecao" type="text"></div>
         <div class="form-group"><label class="form-label">Editora responsável</label><input class="form-input" id="nl-editora" type="text"></div>
+        <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="nl-os" type="text" placeholder="Número da OS"></div>
+        <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="nl-ano" type="text" placeholder="Ex: 2026"></div>
         <div class="form-group"><label class="form-label">Data de lançamento</label><input class="form-input" id="nl-lancamento" type="date"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Sinopse</label><textarea class="notes-area" id="nl-sinopse" style="min-height:70px;"></textarea></div>
       </div>
@@ -1116,56 +1269,168 @@ function toggleChat() {
   panel.classList.toggle('open');
 }
 
+// Histórico de mensagens do chat
+let chatHistory = [];
+
 async function sendChat() {
   const input = document.getElementById('chat-input');
-  const messages = document.getElementById('chat-messages');
+  const messagesEl = document.getElementById('chat-messages');
   const sendBtn = document.getElementById('chat-send-btn');
   const text = input.value.trim();
   if (!text) return;
 
-  // Add user message
-  const userMsg = document.createElement('div');
-  userMsg.className = 'chat-msg user';
-  userMsg.textContent = text;
-  messages.appendChild(userMsg);
+  // Adicionar mensagem do usuário
+  appendChatMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
   input.value = '';
   input.style.height = 'auto';
-  messages.scrollTop = messages.scrollHeight;
-
-  // Add loading message
-  const loadingMsg = document.createElement('div');
-  loadingMsg.className = 'chat-msg assistant loading';
-  loadingMsg.textContent = 'Pensando...';
-  messages.appendChild(loadingMsg);
-  messages.scrollTop = messages.scrollHeight;
   sendBtn.disabled = true;
 
+  const loadingMsg = appendChatMsg('assistant', '✦ Pensando...');
+
   try {
-    // Build context summary
-    const ctx = `Você é um assistente integrado ao dashboard da Grupo Cassol — uma organização com três empresas: Editora Cassol, Léia Cassol e GC Estratégias. Responda de forma direta e útil, sempre em português.`;
+    // Contexto rico com dados do sistema
+    const hoje = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    const tarefasAbertas = events.filter(e => !e.arquivada && e.tipo === 'tarefa').slice(0,20)
+      .map(e => `- ${e.titulo} (${e.empresa||''}) ${e.data ? '| prazo: '+fmtDate(e.data) : ''} ${e.responsavel ? '| resp: '+e.responsavel : ''}`).join('\n');
+    const eventosProximos = events.filter(e => e.tipo === 'evento' && e.data >= new Date().toISOString().slice(0,10)).slice(0,10)
+      .map(e => `- ${e.titulo} | ${fmtDate(e.data)}`).join('\n');
+    const livrosAtivos = livros.filter(l => l.etapas && !l.etapas.every(et=>et.feito)).slice(0,10)
+      .map(l => { const done=l.etapas.filter(e=>e.feito).length; return `- ${l.titulo} (${Math.round(done/l.etapas.length*100)}%)`; }).join('\n');
+    const colaboradoras = ['Gisella','Milena','Luiggi'];
+    const mentoradasNomes = mentees.map(m=>m.name).join(', ');
+
+    const systemPrompt = `Você é a assistente de gestão do Grupo Cassol — uma organização com três empresas: Editora Cassol, Léia Cassol e GC Estratégias.
+
+Hoje é ${hoje}.
+
+DADOS ATUAIS DO SISTEMA:
+
+TAREFAS ABERTAS:
+${tarefasAbertas || 'Nenhuma'}
+
+EVENTOS PRÓXIMOS:
+${eventosProximos || 'Nenhum'}
+
+LIVROS EM PRODUÇÃO:
+${livrosAtivos || 'Nenhum'}
+
+COLABORADORAS: ${colaboradoras.join(', ')}
+MENTORADAS: ${mentoradasNomes || 'Nenhuma'}
+EMPRESAS: editora (Editora Cassol), leia (Léia Cassol), gisella (GC Estratégias)
+
+SUAS CAPACIDADES:
+Você pode executar ações no sistema. Quando o usuário pedir para criar tarefas, eventos, ou pedir resumos/prioridades, responda em JSON com o seguinte formato:
+
+Para CRIAR TAREFAS:
+{"acao": "criar_tarefas", "itens": [{"titulo": "...", "empresa": "editora|leia|gisella", "data": "YYYY-MM-DD", "responsavel": "Gisella|Milena|Luiggi|"}, ...]}
+
+Para CRIAR EVENTO:
+{"acao": "criar_evento", "titulo": "...", "empresa": "editora|leia|gisella", "data": "YYYY-MM-DD", "dataFim": "YYYY-MM-DD"}
+
+Para RESUMO ou RESPOSTA TEXTUAL:
+{"acao": "texto", "resposta": "sua resposta aqui"}
+
+Para PRIORIDADES:
+{"acao": "prioridades", "resposta": "texto com as prioridades sugeridas"}
+
+REGRAS:
+- Sempre responda em JSON válido, sem markdown, sem backticks
+- Para datas relativas (hoje, amanhã, sexta), calcule baseado em ${new Date().toISOString().slice(0,10)}
+- Se a empresa não for mencionada, tente inferir pelo contexto ou use "editora"
+- Seja direta e objetiva
+- Para múltiplas tarefas de uma vez, use o array "itens"`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: ctx,
-        messages: [{ role: 'user', content: text }]
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: chatHistory.slice(-10) // últimas 10 mensagens para contexto
       })
     });
 
     const data = await response.json();
-    const reply = (data.content || []).map(b => b.text || '').join('');
-    loadingMsg.className = 'chat-msg assistant';
-    loadingMsg.textContent = reply || 'Não consegui responder. Tente novamente.';
+    const rawReply = (data.content || []).map(b => b.text || '').join('').trim();
+
+    // Tentar interpretar como ação
+    let parsed = null;
+    try {
+      const clean = rawReply.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      // Não é JSON, tratar como texto
+      parsed = { acao: 'texto', resposta: rawReply };
+    }
+
+    loadingMsg.remove();
+
+    if (parsed.acao === 'criar_tarefas' && parsed.itens) {
+      const criadas = [];
+      parsed.itens.forEach(item => {
+        const novoEv = {
+          id: Date.now() + Math.floor(Math.random()*10000),
+          titulo: item.titulo,
+          empresa: item.empresa || 'editora',
+          tipo: 'tarefa',
+          data: item.data || '',
+          responsavel: item.responsavel || '',
+          arquivada: false,
+        };
+        events.push(novoEv);
+        criadas.push(item.titulo);
+      });
+      save('gc-events', events);
+      buildTarefas(); buildColabTarefas(); buildPrioridades();
+      const msgTxt = `✓ ${criadas.length} tarefa${criadas.length>1?'s':''} criada${criadas.length>1?'s':''}:\n${criadas.map(t=>'• '+t).join('\n')}`;
+      appendChatMsg('assistant', msgTxt);
+      chatHistory.push({ role: 'assistant', content: msgTxt });
+
+    } else if (parsed.acao === 'criar_evento') {
+      const novoEv = {
+        id: Date.now() + Math.floor(Math.random()*10000),
+        titulo: parsed.titulo,
+        empresa: parsed.empresa || 'editora',
+        tipo: 'evento',
+        data: parsed.data || '',
+        dataFim: parsed.dataFim || parsed.data || '',
+        arquivada: false,
+      };
+      events.push(novoEv);
+      save('gc-events', events);
+      refreshCalendars(); buildEventosList();
+      const msgTxt = `✓ Evento criado: ${parsed.titulo} em ${parsed.data ? fmtDate(parsed.data) : ''}`;
+      appendChatMsg('assistant', msgTxt);
+      chatHistory.push({ role: 'assistant', content: msgTxt });
+
+    } else {
+      const resposta = parsed.resposta || rawReply || 'Não consegui responder.';
+      appendChatMsg('assistant', resposta);
+      chatHistory.push({ role: 'assistant', content: resposta });
+    }
+
   } catch (err) {
-    loadingMsg.className = 'chat-msg assistant';
-    loadingMsg.textContent = 'Erro ao conectar. Verifique sua conexão.';
+    loadingMsg.remove();
+    appendChatMsg('assistant', 'Erro ao conectar. Verifique sua conexão.');
   }
 
   sendBtn.disabled = false;
-  messages.scrollTop = messages.scrollHeight;
+  const messagesEl2 = document.getElementById('chat-messages');
+  if (messagesEl2) messagesEl2.scrollTop = messagesEl2.scrollHeight;
+}
+
+function appendChatMsg(role, text) {
+  const messagesEl = document.getElementById('chat-messages');
+  if (!messagesEl) return null;
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.style.whiteSpace = 'pre-wrap';
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
 }
 
 
@@ -1433,7 +1698,7 @@ async function uploadLocalToFirebase() {
     return;
   }
 
-  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem'];
+  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa'];
 
   // Verificar se há dados no localStorage
   const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -1469,6 +1734,596 @@ async function uploadLocalToFirebase() {
   }
 }
 
+
+function renderGisellaFixedTasks() { renderFixedTasks('gisella'); }
+
+function toggleGisellaFixed(key, val) { toggleFixed('gisella', key, val); }
+
+
+/* ── BANCO DE LINKS ── */
+let links = load('gc-links', []);
+let editingLinkId = null;
+
+const LINK_ICONS = { ferramenta: '🛠', planilha: '📊', doc: '📄', outro: '🔗' };
+const LINK_LABELS = { ferramenta: 'Ferramenta', planilha: 'Planilha', doc: 'Documento', outro: 'Outro' };
+
+function renderLinks() {
+  const el = document.getElementById('links-grid');
+  if (!el) return;
+
+  if (links.length === 0) {
+    el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum link cadastrado. Use "+ adicionar link" para começar.</div>';
+    return;
+  }
+
+  // Agrupar por categoria
+  const grouped = {};
+  links.forEach(l => {
+    if (!grouped[l.categoria]) grouped[l.categoria] = [];
+    grouped[l.categoria].push(l);
+  });
+
+  let out = '';
+  Object.entries(grouped).forEach(([cat, items]) => {
+    out += `<div style="margin-bottom:1.5rem;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${LINK_ICONS[cat]||'🔗'} ${LINK_LABELS[cat]||cat}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+    items.forEach(l => {
+      out += `<div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
+        <a href="${l.url}" target="_blank" rel="noopener"
+          style="font-size:13px;font-weight:500;color:var(--editora);text-decoration:none;"
+          onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+          ${l.nome}
+        </a>
+        <button onclick="openEditLink(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;" title="Editar">✎</button>
+        <button onclick="deleteLink(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;" title="Excluir">×</button>
+      </div>`;
+    });
+    out += `</div></div>`;
+  });
+  el.innerHTML = out;
+}
+
+function openAddLink() {
+  editingLinkId = null;
+  currentEmpLink = null;
+  document.getElementById('modal-link-title').textContent = 'Novo link';
+  document.getElementById('link-nome').value = '';
+  document.getElementById('link-url').value = '';
+  document.getElementById('link-categoria').value = 'ferramenta';
+  openModal('modal-link');
+  setTimeout(() => document.getElementById('link-nome').focus(), 50);
+}
+
+function openEditLink(id) {
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  editingLinkId = id;
+  document.getElementById('modal-link-title').textContent = 'Editar link';
+  document.getElementById('link-nome').value = l.nome;
+  document.getElementById('link-url').value = l.url;
+  document.getElementById('link-categoria').value = l.categoria || 'outro';
+  openModal('modal-link');
+}
+
+function saveLink() {
+  const nome = document.getElementById('link-nome').value.trim();
+  const url  = document.getElementById('link-url').value.trim();
+  if (!nome || !url) { alert('Preencha nome e URL.'); return; }
+  const cat = document.getElementById('link-categoria').value;
+  const icons = {ferramenta:'🛠',planilha:'📊',doc:'📄',outro:'🔗'};
+  const icon = icons[cat]||'🔗';
+
+  if (currentEmpLink) {
+    // Salvar no banco da empresa
+    if (!linksEmpresa[currentEmpLink]) linksEmpresa[currentEmpLink] = [];
+    if (editingEmpLink) {
+      const i = linksEmpresa[currentEmpLink].findIndex(x => x.id === editingEmpLink);
+      if (i > -1) linksEmpresa[currentEmpLink][i] = { ...linksEmpresa[currentEmpLink][i], nome, url, categoria: cat, icon };
+    } else {
+      linksEmpresa[currentEmpLink].push({ id: Date.now(), nome, url, categoria: cat, icon });
+    }
+    save('gc-links-empresa', linksEmpresa);
+    const _emp = currentEmpLink;
+    currentEmpLink = null;
+    editingEmpLink = null;
+    closeModal('modal-link');
+    setTimeout(() => openLinksModal(_emp), 100);
+    return;
+  } else {
+    // Salvar no banco geral
+    if (editingLinkId) {
+      const i = links.findIndex(x => x.id === editingLinkId);
+      if (i > -1) links[i] = { ...links[i], nome, url, categoria: cat, icon };
+    } else {
+      links.push({ id: Date.now(), nome, url, categoria: cat, icon });
+    }
+    save('gc-links', links);
+    renderLinks();
+  }
+  closeModal('modal-link');
+}
+
+function deleteLink(id) {
+  const l = links.find(x => x.id === id);
+  if (!l) return;
+  const snap = [...links];
+  links = links.filter(x => x.id !== id);
+  save('gc-links', links);
+  renderLinks();
+  pushUndo(l.nome, () => { links = snap; save('gc-links', links); renderLinks(); });
+}
+
+
+/* ── LINKS POR EMPRESA ── */
+let linksEmpresa = load('gc-links-empresa', {editora:[], leia:[], gisella:[]});
+let editingEmpLink = null;
+let currentEmpLink = null;
+
+function toggleLinksEmpresa(emp) {
+  const el = document.getElementById('links-empresa-' + emp);
+  const arrow = document.getElementById('links-arrow-' + emp);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
+  if (open) renderLinksEmpresa(emp);
+}
+
+function renderLinksEmpresa(emp) {
+  const el = document.getElementById('links-empresa-grid-' + emp);
+  if (!el) return;
+  const items = (linksEmpresa[emp] || []);
+  if (items.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-soft);padding:4px 0;">Nenhum link. Use "+ link" para adicionar.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+    items.map(function(l) { return '<div style="display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">' +
+      '<a href="' + l.url + '" target="_blank" rel="noopener" style="font-size:13px;font-weight:500;color:var(--text);text-decoration:none;">' + (l.icon||'🔗') + ' ' + l.nome + '</a>' +
+      '<button onclick="openEditLinkEmpresa(' + JSON.stringify(emp) + ',' + l.id + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
+      '<button onclick="deleteLinkEmpresa(' + JSON.stringify(emp) + ',' + l.id + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>' +
+      '</div>'; }).join('') + '</div>';
+}
+
+function openAddLinkEmpresa(emp) {
+  editingEmpLink = null;
+  currentEmpLink = emp;
+  document.getElementById('modal-link-title').textContent = 'Novo link';
+  document.getElementById('link-nome').value = '';
+  document.getElementById('link-url').value = '';
+  document.getElementById('link-categoria').value = 'ferramenta';
+  // Abrir painel se fechado
+  const el = document.getElementById('links-empresa-' + emp);
+  if (el && el.style.display === 'none') toggleLinksEmpresa(emp);
+  openModal('modal-link');
+  setTimeout(() => document.getElementById('link-nome').focus(), 50);
+}
+
+function openEditLinkEmpresa(emp, id) {
+  const l = (linksEmpresa[emp]||[]).find(x => x.id === id);
+  if (!l) return;
+  editingEmpLink = id;
+  currentEmpLink = emp;
+  document.getElementById('modal-link-title').textContent = 'Editar link';
+  document.getElementById('link-nome').value = l.nome;
+  document.getElementById('link-url').value = l.url;
+  document.getElementById('link-categoria').value = l.categoria || 'ferramenta';
+  openModal('modal-link');
+}
+
+function deleteLinkEmpresa(emp, id) {
+  const snap = JSON.parse(JSON.stringify(linksEmpresa));
+  linksEmpresa[emp] = (linksEmpresa[emp]||[]).filter(x => x.id !== id);
+  save('gc-links-empresa', linksEmpresa);
+  renderLinksEmpresa(emp);
+  pushUndo('Link', () => { linksEmpresa = snap; save('gc-links-empresa', linksEmpresa); renderLinksEmpresa(emp); });
+}
+
+
+function openLinksModal(emp) {
+  currentEmpLink = emp;
+  const titles = {editora:'Editora Cassol', leia:'Léia Cassol', gisella:'GC Estratégias'};
+  const el = document.getElementById('modal-links-emp-title');
+  if (el) el.textContent = '🔗 ' + (titles[emp]||emp);
+  renderLinksEmpresaModal(emp);
+  openModal('modal-links-empresa');
+}
+
+function renderLinksEmpresaModal(emp) {
+  const el = document.getElementById('modal-links-emp-content');
+  if (!el) return;
+  const items = (linksEmpresa[emp] || []);
+  if (items.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum link cadastrado. Use "+ adicionar" para começar.</div>';
+    return;
+  }
+  // Agrupar por categoria
+  const grouped = {};
+  items.forEach(l => {
+    if (!grouped[l.categoria]) grouped[l.categoria] = [];
+    grouped[l.categoria].push(l);
+  });
+  const ICONS = {ferramenta:'🛠',planilha:'📊',doc:'📄',outro:'🔗'};
+  const LABELS = {ferramenta:'Ferramenta',planilha:'Planilha',doc:'Documento',outro:'Outro'};
+  let out = '';
+  Object.entries(grouped).forEach(([cat, catItems]) => {
+    out += `<div style="margin-bottom:1rem;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">${ICONS[cat]||'🔗'} ${LABELS[cat]||cat}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">`;
+    catItems.forEach(l => {
+      out += `<div style="display:flex;align-items:center;gap:6px;background:var(--surface2,var(--surface));border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
+        <a href="${l.url}" target="_blank" rel="noopener"
+          style="font-size:13px;font-weight:500;color:var(--text);text-decoration:none;"
+          onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+          ${l.icon||'🔗'} ${l.nome}
+        </a>
+        <button onclick="openEditLinkEmpresa('${emp}',${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>
+        <button onclick="deleteLinkEmpresaModal('${emp}',${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>
+      </div>`;
+    });
+    out += `</div></div>`;
+  });
+  el.innerHTML = out;
+}
+
+function openAddLinkEmpresaFromModal() {
+  const emp = currentEmpLink;
+  closeModal('modal-links-empresa');
+  setTimeout(() => openAddLinkEmpresa(emp), 100);
+}
+
+function deleteLinkEmpresaModal(emp, id) {
+  const snap = JSON.parse(JSON.stringify(linksEmpresa));
+  linksEmpresa[emp] = (linksEmpresa[emp]||[]).filter(x => x.id !== id);
+  save('gc-links-empresa', linksEmpresa);
+  renderLinksEmpresaModal(emp);
+  pushUndo('Link', () => { linksEmpresa = snap; save('gc-links-empresa', linksEmpresa); renderLinksEmpresaModal(emp); });
+}
+
+/* ── TAREFAS AUTO MENTORIA ── */
+function criarTarefasMentoria(allEvents) {
+  const mentorias = allEvents.filter(ev =>
+    ev.title && ev.title.trim().toLowerCase().startsWith('mentoria')
+  );
+  if (mentorias.length === 0) return;
+
+  let changed = false;
+
+  mentorias.forEach(ev => {
+    // Extrair nome — entre parênteses ou após "Mentoria "
+    let nomeMentee = '';
+    const matchParen = ev.title.match(/\(([^)]+)\)/);
+    if (matchParen) {
+      nomeMentee = matchParen[1].trim();
+    } else {
+      nomeMentee = ev.title.replace(/^[Mm]entoria\s*[-\u2013]?\s*/, '').trim();
+    }
+    if (!nomeMentee) return;
+
+    // Encontrar mentorada no sistema
+    const mentee = mentees.find(m =>
+      m.name && m.name.toLowerCase().includes(nomeMentee.toLowerCase().split(' ')[0])
+    );
+    const menteeId = mentee ? mentee.id : null;
+
+    // Calcular datas
+    const eventDate = new Date(ev.start + 'T12:00:00');
+    const before = new Date(eventDate); before.setDate(before.getDate() - 1);
+    const after  = new Date(eventDate); after.setDate(after.getDate() + 1);
+    const beforeStr = before.toISOString().slice(0,10);
+    const afterStr  = after.toISOString().slice(0,10);
+
+    // Chaves únicas para evitar duplicatas
+    const keyPrep = 'gcal-prep-' + ev.start + '-' + nomeMentee.replace(/\s/g,'_');
+    const keyDev  = 'gcal-dev-'  + ev.start + '-' + nomeMentee.replace(/\s/g,'_');
+
+    if (!events.some(e => e.gcalKey === keyPrep)) {
+      events.push({
+        id: Date.now() + Math.floor(Math.random()*1000),
+        titulo: 'Preparar mentoria (' + nomeMentee + ')',
+        empresa: 'gisella', tipo: 'tarefa',
+        data: beforeStr, responsavel: 'Gisella',
+        menteeId, gcalKey: keyPrep, arquivada: false,
+      });
+      changed = true;
+    }
+
+    if (!events.some(e => e.gcalKey === keyDev)) {
+      events.push({
+        id: Date.now() + Math.floor(Math.random()*1000) + 1,
+        titulo: 'Devolutiva mentoria (' + nomeMentee + ')',
+        empresa: 'gisella', tipo: 'tarefa',
+        data: afterStr, responsavel: 'Gisella',
+        menteeId, gcalKey: keyDev, arquivada: false,
+      });
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    save('gc-events', events);
+    buildTarefas();
+    buildColabTarefas();
+    buildPrioridades();
+  }
+}
+
+
+/* ── RESUMO DA SEMANA ── */
+async function gerarResumoSemana() {
+  const btn = document.getElementById('btn-resumo-semana');
+  const panel = document.getElementById('resumo-semana-panel');
+  const conteudo = document.getElementById('resumo-conteudo');
+  const dataEl = document.getElementById('resumo-data');
+
+  if (!panel || !conteudo) return;
+
+  // Mostrar painel com loading
+  panel.style.display = 'block';
+  conteudo.textContent = '✦ Analisando o quadro da semana...';
+  if (btn) btn.disabled = true;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const hoje = new Date();
+  const hojeStr = hoje.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  if (dataEl) dataEl.textContent = 'Gerado em ' + hoje.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+
+  // Montar dados completos para análise
+  const hojeISO = hoje.toISOString().slice(0,10);
+  const fimSemana = new Date(hoje); fimSemana.setDate(hoje.getDate() + (7 - hoje.getDay()));
+  const fimSemanaISO = fimSemana.toISOString().slice(0,10);
+
+  // Tarefas abertas
+  const tarefasAbertas = events.filter(e => !e.arquivada && e.tipo === 'tarefa');
+  const tarefasHoje = tarefasAbertas.filter(e => e.data === hojeISO);
+  const tarefasSemana = tarefasAbertas.filter(e => e.data > hojeISO && e.data <= fimSemanaISO);
+  const tarefasAtrasadas = tarefasAbertas.filter(e => e.data && e.data < hojeISO);
+
+  // Eventos da semana
+  const eventosSemana = events.filter(e => (e.tipo === 'evento' || !e.tipo) && e.data >= hojeISO && e.data <= fimSemanaISO);
+
+  // Livros em produção
+  const livrosAtivos = livros.filter(l => l.etapas && !l.etapas.every(et => et.feito));
+  const livrosUrgentes = livrosAtivos.filter(l => {
+    const proxEtapa = l.etapas.find(e => !e.feito);
+    return proxEtapa && proxEtapa.prazo && proxEtapa.prazo <= fimSemanaISO;
+  });
+
+  // Conteúdos pendentes
+  const conteudosSemana = conteudos.filter(c => !c.done && c.dataPost >= hojeISO && c.dataPost <= fimSemanaISO);
+
+  const prompt = `Hoje é ${hojeStr}.
+
+TAREFAS ATRASADAS (${tarefasAtrasadas.length}):
+${tarefasAtrasadas.slice(0,10).map(e => '- ' + e.titulo + ' | ' + (e.empresa||'') + ' | prazo era: ' + (e.data ? fmtDate(e.data) : 'sem data') + (e.responsavel ? ' | ' + e.responsavel : '')).join('\n') || 'Nenhuma'}
+
+TAREFAS DE HOJE (${tarefasHoje.length}):
+${tarefasHoje.map(e => '- ' + e.titulo + ' | ' + (e.empresa||'') + (e.responsavel ? ' | ' + e.responsavel : '')).join('\n') || 'Nenhuma'}
+
+TAREFAS DA SEMANA (${tarefasSemana.length}):
+${tarefasSemana.slice(0,15).map(e => '- ' + e.titulo + ' | ' + (e.data ? fmtDate(e.data) : '') + ' | ' + (e.empresa||'') + (e.responsavel ? ' | ' + e.responsavel : '')).join('\n') || 'Nenhuma'}
+
+EVENTOS DA SEMANA (${eventosSemana.length}):
+${eventosSemana.map(e => '- ' + e.titulo + ' | ' + (e.data ? fmtDate(e.data) : '')).join('\n') || 'Nenhum'}
+
+LIVROS EM PRODUÇÃO (${livrosAtivos.length} ativos, ${livrosUrgentes.length} com etapa urgente):
+${livrosAtivos.slice(0,8).map(l => {
+  const done = l.etapas.filter(e=>e.feito).length;
+  const prox = l.etapas.find(e=>!e.feito);
+  return '- ' + l.titulo + ' (' + Math.round(done/l.etapas.length*100) + '%) próxima etapa: ' + (prox ? prox.nome : 'concluído') + (prox && prox.prazo ? ' | prazo: ' + fmtDate(prox.prazo) : '');
+}).join('\n') || 'Nenhum'}
+
+CONTEÚDOS A POSTAR ESSA SEMANA (${conteudosSemana.length}):
+${conteudosSemana.slice(0,8).map(c => '- ' + c.nome + ' | ' + (c.dataPost ? fmtDate(c.dataPost) : '') + ' | ' + (c.empresa||'')).join('\n') || 'Nenhum'}
+
+Com base nesses dados, faça uma análise completa e objetiva:
+
+1. **URGÊNCIAS** — O que precisa de atenção imediata hoje
+2. **PRIORIDADES DA SEMANA** — Top 5 coisas mais importantes
+3. **LIVROS EM ATENÇÃO** — Livros com etapas críticas essa semana
+4. **EVENTOS IMPORTANTES** — O que está por vir
+5. **RECOMENDAÇÕES** — Sugestões práticas para a semana
+
+Seja direta, use emojis com moderação, escreva em português. Máximo 400 palavras.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: 'Você é a assistente estratégica do Grupo Cassol. Analise os dados fornecidos e gere um resumo executivo claro e acionável. Responda sempre em texto corrido, sem JSON.',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const reply = (data.content || []).map(b => b.text || '').join('').trim();
+    conteudo.textContent = reply || 'Não foi possível gerar o resumo.';
+  } catch(e) {
+    conteudo.textContent = 'Erro ao conectar com a IA. Verifique sua conexão.';
+  }
+
+  if (btn) btn.disabled = false;
+}
+
+
+function toggleColabFixed(key, taskKey, val) { toggleFixed(key, taskKey, val); }
+
+
+/* ── TAREFAS FIXAS EDITÁVEIS ── */
+
+// Dados padrão iniciais
+const FIXED_DEFAULTS = {
+  gisella: {
+    daily:  [{id:'g-d-1', label:'Whats'}, {id:'g-d-2', label:'Email'}, {id:'g-d-3', label:'Direct'}],
+    weekly: [
+      {id:'g-w-1', label:'Avisos da semana Plano Diretor'},
+      {id:'g-w-2', label:'Links da semana Plano Diretor'},
+      {id:'g-w-3', label:'Analisar planilha de métricas', link:'https://docs.google.com/spreadsheets/d/1ROG9DTW7jQemiMf8mwfDEvC2oOTrTP4TwDCxMN3KlKI/edit?gid=0#gid=0'},
+      {id:'g-w-4', label:'Rodar novos anúncios'},
+      {id:'g-w-5', label:'Resumo da semana Plano Diretor'},
+      {id:'g-w-6', label:'Checkout da semana'},
+    ]
+  },
+  milena: { daily: [], weekly: [] },
+  luiggi: { daily: [], weekly: [] },
+};
+
+function getFixedData(colab) {
+  const key = 'gc-fixed-' + colab;
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  } catch(e) {}
+  // Primeira vez: usar defaults
+  const def = JSON.parse(JSON.stringify(FIXED_DEFAULTS[colab] || {daily:[], weekly:[]}));
+  localStorage.setItem(key, JSON.stringify(def));
+  return def;
+}
+
+function saveFixedData(colab, data) {
+  const key = 'gc-fixed-' + colab;
+  localStorage.setItem(key, JSON.stringify(data));
+  if (window.fbSave) window.fbSave(key, data);
+}
+
+function getFixedChecks(colab) {
+  try { return JSON.parse(localStorage.getItem('gc-fixed-checks-' + colab) || '{}'); } catch(e) { return {}; }
+}
+function saveFixedChecks(colab, obj) {
+  localStorage.setItem('gc-fixed-checks-' + colab, JSON.stringify(obj));
+  if (window.fbSave) window.fbSave('gc-fixed-checks-' + colab, obj);
+}
+
+function resetFixedChecks(colab) {
+  let checks = getFixedChecks(colab);
+  const data = getFixedData(colab);
+  const today = new Date().toISOString().slice(0,10);
+  const weekKey = Math.floor(Date.now() / (7*24*60*60*1000)).toString();
+  let changed = false;
+
+  if (localStorage.getItem('gc-fixed-day-' + colab) !== today) {
+    data.daily.forEach(t => { checks['d-'+t.id] = false; });
+    localStorage.setItem('gc-fixed-day-' + colab, today);
+    changed = true;
+  }
+  if (localStorage.getItem('gc-fixed-week-' + colab) !== weekKey) {
+    data.weekly.forEach(t => { checks['w-'+t.id] = false; });
+    localStorage.setItem('gc-fixed-week-' + colab, weekKey);
+    changed = true;
+  }
+  if (changed) saveFixedChecks(colab, checks);
+  return checks;
+}
+
+let fixedDragSrc = null;
+let fixedDragColab = null;
+let fixedDragType = null;
+
+function renderFixedTasks(colab) {
+  const dailyEl  = document.getElementById(colab + '-daily-tasks');
+  const weeklyEl = document.getElementById(colab + '-weekly-tasks');
+  if (!dailyEl || !weeklyEl) return;
+
+  const data = getFixedData(colab);
+  const checks = resetFixedChecks(colab);
+
+  function taskRow(t, type, prefix) {
+    const checked = !!checks[prefix + t.id];
+    const labelHtml = t.link
+      ? '<a href="' + t.link + '" target="_blank" style="color:var(--editora);text-decoration:underline;text-underline-offset:2px;font-size:13px;' + (checked?'text-decoration:line-through;opacity:0.5;':'') + '">' + t.label + ' ↗</a>'
+      : '<span style="font-size:13px;flex:1;' + (checked?'text-decoration:line-through;opacity:0.5;':'') + '">' + t.label + '</span>';
+    const ds = 'fixedDragStart(event,' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')';
+    const dd = 'fixedDrop(event,' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')';
+    return '<div draggable="true" data-id="' + t.id + '" data-type="' + type + '" data-colab="' + colab + '"' +
+      ' ondragstart="' + ds + '"' +
+      ' ondragover="event.preventDefault()"' +
+      ' ondrop="' + dd + '"' +
+      ' style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">' +
+      '<span style="cursor:grab;color:var(--text-soft);font-size:11px;flex-shrink:0;">⠿</span>' +
+      '<input type="checkbox" ' + (checked?'checked':'') +
+      '<input type="checkbox" ' + (checked?'checked':'') + ' onchange="' + onch + '" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
+        ' style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
+      '<span style="flex:1;">' + labelHtml + '</span>' +
+      '<button onclick="editFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')"' +
+        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
+        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
+      '<button onclick="deleteFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')"' +
+        ' style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>' +
+      '</div>';
+  }
+
+  dailyEl.innerHTML  = data.daily.map(t => taskRow(t,'daily','d-')).join('') +
+    '<button onclick="addFixedTask(' + JSON.stringify(colab) + ',\'daily\')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ adicionar</button>';
+
+  weeklyEl.innerHTML = data.weekly.map(t => taskRow(t,'weekly','w-')).join('') +
+    '<button onclick="addFixedTask(' + JSON.stringify(colab) + ',\'weekly\')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ adicionar</button>';
+}
+
+function toggleFixed(colab, key, val) {
+  const checks = getFixedChecks(colab);
+  checks[key] = val;
+  saveFixedChecks(colab, checks);
+  renderFixedTasks(colab);
+}
+
+function addFixedTask(colab, type) {
+  const label = prompt('Nome da tarefa:');
+  if (!label || !label.trim()) return;
+  const link = prompt('Link (opcional, deixe vazio se não tiver):') || '';
+  const data = getFixedData(colab);
+  const id = colab[0] + '-' + type[0] + '-' + Date.now();
+  data[type].push({id, label: label.trim(), link: link.trim()||undefined});
+  saveFixedData(colab, data);
+  renderFixedTasks(colab);
+}
+
+function editFixedTask(colab, type, id) {
+  const data = getFixedData(colab);
+  const t = data[type].find(x => x.id === id);
+  if (!t) return;
+  const newLabel = prompt('Nome da tarefa:', t.label);
+  if (!newLabel || !newLabel.trim()) return;
+  const newLink = prompt('Link (deixe vazio para remover):', t.link||'');
+  t.label = newLabel.trim();
+  t.link = newLink.trim() || undefined;
+  saveFixedData(colab, data);
+  renderFixedTasks(colab);
+}
+
+function deleteFixedTask(colab, type, id) {
+  const data = getFixedData(colab);
+  const snap = JSON.parse(JSON.stringify(data));
+  data[type] = data[type].filter(x => x.id !== id);
+  saveFixedData(colab, data);
+  renderFixedTasks(colab);
+  pushUndo('Tarefa fixa', () => { saveFixedData(colab, snap); renderFixedTasks(colab); });
+}
+
+function fixedDragStart(e, colab, type, id) {
+  fixedDragSrc = id;
+  fixedDragColab = colab;
+  fixedDragType = type;
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function fixedDrop(e, colab, type, targetId) {
+  e.preventDefault();
+  if (fixedDragColab !== colab || fixedDragType !== type || fixedDragSrc === targetId) return;
+  const data = getFixedData(colab);
+  const arr = data[type];
+  const fromIdx = arr.findIndex(x => x.id === fixedDragSrc);
+  const toIdx   = arr.findIndex(x => x.id === targetId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const [moved] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, moved);
+  saveFixedData(colab, data);
+  renderFixedTasks(colab);
+}
+
 /* ── STORAGE ── */
 function load(key, def) {
   try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
@@ -1481,7 +2336,7 @@ function save(key, val) {
 }
 
 /* ── DATA ── */
-let events = load('gc-events', []);
+let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
 let mentees = load('gc-mentees', [
   {id:1,name:'Ana C.',status:'ok',notes:'',sessions:[],tasks:[]},
   {id:2,name:'Bianca M.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
@@ -1553,11 +2408,15 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
   if (id === 'visao') { buildPrioridades(); }
-  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); }
-  if (id === 'colab-milena') { buildColabTarefas(); }
-  if (id === 'colab-luiggi') { buildColabTarefas(); }
+  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks();
+renderColabFixedTasks('milena');
+renderColabFixedTasks('luiggi');
+renderLinks(); }
+  if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); }
+  if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); }
   if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
   if (id === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
+  if (id === 'links') { renderLinks(); }
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1657,10 +2516,10 @@ function buildCalendar(id, filter) {
       if (!eStart) return false;
       const inRange = ds >= eStart && ds <= eEnd;
       if (!inRange) return false;
-      if (id === 'cal-eventos') return e.tipo === 'evento' || !e.tipo;
-      if (id === 'cal-visao') return e.tipo === 'evento' || !e.tipo;
+      if (id === 'cal-eventos') return e.tipo === 'evento';
+      if (id === 'cal-visao') return e.tipo === 'evento';
       if (filter !== 'all' && !(e.empresa||'').split(',').includes(filter)) return false;
-      return e.tipo === 'evento' || !e.tipo;
+      return e.tipo === 'evento';
     }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
@@ -2180,9 +3039,28 @@ function renderLivros() {
     const el = document.getElementById('livros-' + emp);
     if (!el) return;
     const lista = livros.filter(l => (l.empresa||'').split(',').includes(emp));
-    if (lista.length === 0) { el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção. Use "+ novo livro" para adicionar.</div>'; return; }
-    el.innerHTML = lista.map(l => livroCardHtml(l, false)).join('');
+    const ativos = lista.filter(l => !isPct100(l));
+    const arq    = lista.filter(l => isPct100(l));
+    if (ativos.length === 0 && arq.length === 0) {
+      el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro em produção. Use "+ novo livro" para adicionar.</div>';
+      return;
+    }
+    let out = ativos.map(l => livroCardHtml(l, true)).join('');
+    if (arq.length > 0) {
+      out += `<button class="archived-toggle" onclick="toggleArqEmpresa('${emp}')" style="margin-top:8px;"><span id="arq-emp-arrow-${emp}">▸</span> Arquivados (${arq.length})</button>
+      <div id="arq-emp-${emp}" style="display:none;margin-top:8px;">${arq.map(l => livroCardHtml(l, true)).join('')}</div>`;
+    }
+    el.innerHTML = out;
   });
+}
+
+function toggleArqEmpresa(emp) {
+  const el = document.getElementById('arq-emp-' + emp);
+  const arrow = document.getElementById('arq-emp-arrow-' + emp);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
 }
 
 function toggleLivro(id) { const l = livros.find(x => x.id===id); if(l) { l.expandido=!l.expandido; save('gc-livros',livros); renderLivros(); } }
@@ -2618,11 +3496,11 @@ function buildTarefas() {
     });
   });
   const ativas = [
-    ...events.filter(e=>!e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
+    ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
     ...etapaEvents.filter(e=>!e.arquivada)
   ];
   const arquivadas = [
-    ...events.filter(e=>e.arquivada && e.tipo !== 'evento' && e.tipo !== 'projeto' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
+    ...events.filter(e=>e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
     ...etapaEvents.filter(e=>e.arquivada)
   ];
 
@@ -2777,7 +3655,7 @@ function buildEventosList() {
   const el = document.getElementById('eventos-lista');
   if (!el) return;
   const _ef = getFilter('eventos');
-  const evList = events.filter(e => (e.tipo === 'evento' || !e.tipo) && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
+  const evList = events.filter(e => e.tipo === 'evento' && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
   const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
   if (evList.length === 0) {
@@ -3416,7 +4294,7 @@ function buildPrioridades() {
   // Tarefas dos últimos 3 dias (não feitas)
   const tarefasPrio = events.filter(e => {
     if (e.arquivada) return false;
-    if (e.tipo === 'evento' || e.tipo === 'projeto') return false;
+    if (e.tipo !== 'tarefa') return false;
     if (!e.data) return false;
     const d = new Date(e.data + 'T00:00:00');
     return d >= threeDaysAgo && d <= today;
@@ -3638,6 +4516,9 @@ async function loadGcal() {
     window.gcalEventsCache = mapped;
     gcalEvents = mapped.filter(ev => ev.start >= gcalWeekStart.toISOString().slice(0,10)
       && ev.start <= weekEnd.toISOString().slice(0,10));
+
+    // Detectar eventos de mentoria e criar tarefas automaticamente
+    criarTarefasMentoria(mapped);
 
     // Atualizar todos os calendários da GC em tempo real
     refreshCalendars();
@@ -3881,7 +4762,7 @@ window.gcalEventsCache = [];
 function initApp(cloudData) {
   // Se vieram dados da nuvem, sobrescrever variáveis locais
   if (cloudData) {
-    if (cloudData['gc-events'])      { events     = cloudData['gc-events'];      localStorage.setItem('gc-events',      JSON.stringify(events)); }
+    if (cloudData['gc-events'])      { events     = cloudData['gc-events'].map(e => ({...e, tipo: e.tipo || 'tarefa'}));      localStorage.setItem('gc-events',      JSON.stringify(events)); }
     if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
     if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
     if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
