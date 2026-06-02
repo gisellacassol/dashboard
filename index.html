@@ -358,10 +358,71 @@ tr:hover td { background: var(--bg); }
   font-size: 12px; cursor: pointer; font-weight: 600;
 }
 #undo-toast button:hover { background: rgba(255,255,255,0.15); }
+
+/* ── LOGIN ── */
+#login-screen {
+  position:fixed;inset:0;background:var(--bg);z-index:99999;
+  display:flex;align-items:center;justify-content:center;
+}
+.login-box {
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:2.5rem 2rem;width:340px;max-width:92vw;
+  box-shadow:0 8px 40px rgba(28,20,16,0.12);
+}
+.login-logo { font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);margin-bottom:4px; }
+.login-sub  { font-size:12px;color:var(--text-soft);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2rem; }
+.login-users { display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem; }
+.login-user-btn {
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;border:1px solid var(--border);background:var(--bg);
+  cursor:pointer;font-size:14px;font-weight:500;color:var(--text);
+  transition:all 0.15s;width:100%;text-align:left;
+}
+.login-user-btn:hover { border-color:var(--gisella);background:var(--gisella-bg); }
+.login-user-btn.selected { border-color:var(--gisella);background:var(--gisella-bg);color:var(--gisella); }
+.login-avatar {
+  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;
+}
+.login-pass-wrap { margin-bottom:1.2rem; }
+.login-pass-label { font-size:11px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px; }
+.login-pass-input {
+  width:100%;padding:10px 12px;border:1px solid var(--border-mid);border-radius:8px;
+  font-size:14px;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
+  outline:none;transition:border 0.15s;
+}
+.login-pass-input:focus { border-color:var(--gisella); }
+.login-btn {
+  width:100%;padding:11px;border-radius:10px;border:none;
+  background:var(--text);color:var(--surface);font-size:14px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity 0.15s;
+}
+.login-btn:hover { opacity:0.85; }
+.login-error { font-size:12px;color:var(--danger);margin-top:8px;min-height:16px;text-align:center; }
 </style>
 </head>
 <body>
-<div class="shell">
+
+<div id="login-screen" style="display:none;">
+  <div class="login-box">
+    <div class="login-logo">Grupo Cassol</div>
+    <div class="login-sub">Central de Controle</div>
+    <div class="login-pass-wrap">
+      <div class="login-pass-label">Nome</div>
+      <input class="login-pass-input" id="login-name" type="text" placeholder="Seu nome"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    </div>
+    <div class="login-pass-wrap">
+      <div class="login-pass-label">Senha</div>
+      <input class="login-pass-input" id="login-pass" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div class="shell" id="app-shell" style="display:none;">
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-name" onclick="showPage('visao', document.querySelector('.nav-item.active'))">Grupo Cassol</div>
@@ -2253,7 +2314,6 @@ async function loadGcalLeia() {
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
-    console.log('LEIA GCAL raw items:', JSON.stringify((data.items||[]).slice(0,3)));
     gcalLeiaCache = (data.items || []).map(ev => {
       const title = (ev.summary && ev.summary.trim()) ? ev.summary.trim() : (ev.description ? ev.description.slice(0,30) : '(evento)');
       const start = ev.start ? (ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date) : '';
@@ -5529,6 +5589,75 @@ setTimeout(() => {
   const ov = document.getElementById('loading-overlay');
   if (ov) { ov.remove(); initApp(null); }
 }, 6000);
+
+
+/* ── LOGIN ── */
+const LOGIN_USERS = {
+  gisella: { name: 'Gisella', color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'G' },
+  milena:  { name: 'Milena',  color: 'var(--leia)',    bg: 'var(--leia-bg)',    initial: 'M' },
+  luiggi:  { name: 'Luiggi',  color: 'var(--editora)', bg: 'var(--editora-bg)', initial: 'L' },
+};
+// Permissões por usuário — 'all' = acesso total
+// No futuro, substituir por array de pageIds permitidos
+const LOGIN_PERMS = {
+  gisella: 'all',
+  milena:  'all',
+  luiggi:  'all',
+};
+const LOGIN_PASS = 'KsolLCgc';
+function doLogin() {
+  const name = (document.getElementById('login-name').value || '').trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  if (!name) { errEl.textContent = 'Digite seu nome.'; document.getElementById('login-name').focus(); return; }
+  if (pass !== LOGIN_PASS) { errEl.textContent = 'Senha incorreta.'; document.getElementById('login-pass').focus(); return; }
+  // Mapear nome para usuário conhecido (case insensitive)
+  const nameLower = name.toLowerCase();
+  const matchedUser = Object.keys(LOGIN_USERS).find(u => u === nameLower || LOGIN_USERS[u].name.toLowerCase() === nameLower) || nameLower;
+  const today = new Date().toDateString();
+  localStorage.setItem('gc-session-user', matchedUser);
+  localStorage.setItem('gc-session-name', name);
+  localStorage.setItem('gc-session-date', today);
+  errEl.textContent = '';
+  showApp(matchedUser, name);
+}
+
+function checkSession() {
+  const savedUser = localStorage.getItem('gc-session-user');
+  const savedDate = localStorage.getItem('gc-session-date');
+  const today = new Date().toDateString();
+  if (savedUser && savedDate === today && LOGIN_USERS[savedUser]) {
+    showApp(savedUser, localStorage.getItem('gc-session-name') || savedUser);
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+}
+
+function showApp(user, displayName) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  // Mostrar nome do usuário logado no footer
+  const footer = document.querySelector('.sidebar-footer');
+  if (footer) {
+    const u = LOGIN_USERS[user] || { name: displayName || user, color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: (displayName||user)[0].toUpperCase() };
+    footer.insertAdjacentHTML('afterbegin',
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="width:26px;height:26px;border-radius:50%;background:${u.bg};color:${u.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${u.initial}</div>
+        <span style="font-size:13px;font-weight:500;color:var(--text);">${u.name}</span>
+        <button onclick="doLogout()" style="margin-left:auto;background:none;border:none;font-size:11px;color:var(--text-soft);cursor:pointer;padding:0;" title="Sair">↩ sair</button>
+      </div>`
+    );
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('gc-session-user');
+  localStorage.removeItem('gc-session-date');
+  location.reload();
+}
+
+// Verificar sessão ao carregar
+checkSession();
 
 if (window._fbReady) {
   startWithFirebase();
