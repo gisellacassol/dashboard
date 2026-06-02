@@ -799,7 +799,13 @@ tr:hover td { background: var(--bg); }
 
 <!-- TAREFAS -->
 <div class="page" id="page-tarefas">
-  <div class="page-header"><div class="page-title">Tarefas pendentes</div><div class="page-subtitle">Tudo aberto nas três empresas, ordenado por prazo</div></div>
+  <div class="page-header"><div class="page-title">Tarefas</div><div class="page-subtitle">Todas as tarefas abertas, ordenadas por prazo</div></div>
+  <div class="filter-bar" id="filter-bar-tarefas">
+    <button class="filter-btn active" onclick="setFilter('tarefas','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('tarefas','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('tarefas','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('tarefas','gisella',this)">GC Estratégias</button>
+  </div>
   <div id="tarefas-container"></div>
 </div>
 
@@ -1386,6 +1392,38 @@ tr:hover td { background: var(--bg); }
       <div class="modal-title" id="gcal-modal-title" style="margin:0;"></div>
     </div>
     <div id="gcal-modal-body" style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text);">
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COMENTÁRIOS TAREFA -->
+<div class="modal-overlay" id="modal-comentarios-tarefa" onclick="if(event.target===this)closeModal('modal-comentarios-tarefa')">
+  <div class="modal" style="width:460px;max-height:80vh;display:flex;flex-direction:column;">
+    <button class="modal-close" onclick="closeModal('modal-comentarios-tarefa')">×</button>
+    <div class="modal-title" id="modal-com-titulo" style="margin-bottom:1rem;font-size:16px;"></div>
+    <div id="modal-com-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;min-height:40px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:12px;">
+      <select class="form-select" id="modal-com-autor" style="margin-bottom:8px;font-size:12px;">
+        <option value="Gisella">Gisella</option>
+        <option value="Milena">Milena</option>
+        <option value="Luiggi">Luiggi</option>
+      </select>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <textarea class="notes-area" id="modal-com-texto" placeholder="Escreva um comentário..." style="flex:1;min-height:48px;font-size:13px;resize:none;"></textarea>
+        <button onclick="submitComentarioModal()" style="background:var(--text);color:var(--surface);border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;height:48px;font-family:'DM Sans',sans-serif;">Enviar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIA DO CALENDÁRIO -->
+<div class="modal-overlay" id="modal-dia-cal" onclick="if(event.target===this)closeModal('modal-dia-cal')">
+  <div class="modal" style="width:420px;max-height:80vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeModal('modal-dia-cal')">×</button>
+    <div class="modal-title" id="modal-dia-title" style="margin-bottom:1rem;"></div>
+    <div id="modal-dia-body" style="display:flex;flex-direction:column;gap:8px;font-size:13px;"></div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+      <button onclick="closeModal('modal-dia-cal');quickAddDate(window._modalDiaDate)" style="background:none;border:1px dashed var(--border-mid);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--text-soft);cursor:pointer;width:100%;">+ adicionar evento neste dia</button>
     </div>
   </div>
 </div>
@@ -2333,6 +2371,7 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
   if (id === 'visao') { buildPrioridades(); window.scrollTo({top:0,behavior:'instant'}); }
+  if (id === 'tarefas') { buildTarefas(); }
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
   if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks();
@@ -2431,8 +2470,8 @@ function buildCalendar(id, filter) {
       link: ev.link,
     })),
     ...(gcalLeiaCache || []).map(ev => ({
-      id: 'gcal-leia-' + ev.start + '-' + ev.title.slice(0,10).replace(/\s/g,''),
-      titulo: ev.title,
+      id: 'gcal-leia-' + ev.start + '-' + (ev.title||'x').slice(0,10).replace(/\s/g,''),
+      titulo: ev.title || ev.summary || '(sem título)',
       empresa: 'leia',
       tipo: 'evento',
       data: ev.start,
@@ -2486,7 +2525,13 @@ function buildCalendar(id, filter) {
       return `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`;
     }).join('');
     const total = dayConteudos.length + dayEvs.length;
-    if (total > 3) evHtml += `<div style="font-size:10px;color:var(--text-soft);padding-left:4px;">+${total-3}</div>`;
+    // Collect ALL events for this day for modal
+    const allDayEvs = [...dayConteudos.map(c=>({type:'conteudo',c})), ...dayEvs.map(e=>({type:'evento',e}))];
+    const moreCount = allDayEvs.length - 2;
+    // Store day data in global cache keyed by calId+date
+    if (!window._calDayCache) window._calDayCache = {};
+    window._calDayCache[id+'_'+ds] = allDayEvs;
+    if (moreCount > 0) evHtml += `<div onclick="event.stopPropagation();openDayModalFromCache('${id}','${ds}')" style="font-size:10px;color:var(--text-soft);padding:1px 4px;cursor:pointer;border-radius:4px;background:var(--bg);">+${moreCount} mais</div>`;
     html += `<div class="cal-day${isToday?' today':''}${feriadoNome?' feriado-day':''}" onclick="quickAddDate('${ds}')" title="${feriadoNome||''}"><div class="cal-num">${d}</div>${evHtml}</div>`;
   }
   const rem = (first + days) % 7;
@@ -3528,11 +3573,14 @@ function buildTarefas() {
     const isEtapa = e._livroId !== undefined;
     const toggleFn = isEtapa ? `toggleEtapa(${isEtapa?'e._livroId':'0'},${isEtapa?'e._etapaIdx':'0'})` : `toggleTarefaArquivada(${isEtapa?0:'e.id'})`;
     return `<tr style="${isArquivada?'opacity:0.5;':''}">
-      <td onclick="event.stopPropagation();" style="width:32px;">
-        <input type="checkbox" ${isArquivada?'checked':''}
-          onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
-          style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"
-          title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
+      <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
+        <label style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:3px;">
+          <input type="checkbox" ${isArquivada?'checked':''}
+            onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
+            style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;"
+            title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
+          ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
+        </label>
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
         <span>${e.titulo}</span>
@@ -3554,47 +3602,92 @@ function buildTarefas() {
     return;
   }
 
-  ativas.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  ativas.sort((a,b)=>(a.data||'9').localeCompare(b.data||'9'));
   arquivadas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  const groups = {atrasado:[],hoje:[],semana:[],proximas:[],semData:[]};
+
+  const fimSemAtual = new Date(today); fimSemAtual.setDate(today.getDate() + (6 - today.getDay()) + 1);
+  const fimSemAtualStr = fimSemAtual.toISOString().slice(0,10);
+  const fimProxSem = new Date(fimSemAtual); fimProxSem.setDate(fimSemAtual.getDate() + 7);
+  const fimProxSemStr = fimProxSem.toISOString().slice(0,10);
+  const todayStr2 = today.toISOString().slice(0,10);
+
+  const groups = {atrasado:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
   ativas.forEach(t=>{
-    if (!t.data) { groups.semData.push(t); return; }
+    if (!t.data) { groups.proximas.push(t); return; } // sem data vai em proximas
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
-    if (diff<0) groups.atrasado.push(t);
-    else if (diff===0) groups.hoje.push(t);
-    else if (diff<=7) groups.semana.push(t);
-    else groups.proximas.push(t);
+    if (diff < 0)                     groups.atrasado.push(t);
+    else if (diff === 0)              groups.hoje.push(t);
+    else if (t.data < fimSemAtualStr) groups.semana.push(t);
+    else if (t.data < fimProxSemStr)  groups.proxSemana.push(t);
+    else                              groups.proximas.push(t);
   });
 
-  function renderGroup(label, items, color) {
-    if (!items.length) return '';
-    return `<div style="margin-bottom:1.5rem;">
-      <div style="font-size:11px;font-weight:500;color:${color};text-transform:uppercase;letter-spacing:0.09em;margin-bottom:8px;">${label} · ${items.length}</div>
-      <div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
-      <tbody>${items.map(t=>tarefaRow(t,false)).join('')}</tbody></table></div></div>`;
+  // Arquivadas por grupo (mesmo critério de data)
+  const arqGroups = {atrasado:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
+  arquivadas.forEach(t=>{
+    if (!t.data) { arqGroups.proximas.push(t); return; }
+    const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
+    if (diff < 0)                     arqGroups.atrasado.push(t);
+    else if (diff === 0)              arqGroups.hoje.push(t);
+    else if (t.data < fimSemAtualStr) arqGroups.semana.push(t);
+    else if (t.data < fimProxSemStr)  arqGroups.proxSemana.push(t);
+    else                              arqGroups.proximas.push(t);
+  });
+
+  function tableHtml(items, isArq) {
+    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+    <tbody>${items.map(t=>tarefaRow(t,isArq||false)).join('')}</tbody></table></div>`;
   }
 
-  let html = renderGroup('Atrasadas',groups.atrasado,'var(--danger)')
-    + renderGroup('Hoje',groups.hoje,'var(--gisella)')
-    + renderGroup('Esta semana',groups.semana,'var(--warn)')
-    + renderGroup('Próximas',groups.proximas,'var(--text-soft)')
-    + renderGroup('Sem data',groups.semData,'var(--text-soft)');
+  function arqToggle(key, items) {
+    if (!items.length) return '';
+    return `<div style="margin-top:6px;">
+      <button class="archived-toggle" onclick="toggleTarefaGroup('arq-${key}')"><span id="tgrp-arrow-arq-${key}">▸</span> Concluídas (${items.length})</button>
+      <div id="tgrp-arq-${key}" style="display:none;margin-top:6px;">${tableHtml(items,true)}</div>
+    </div>`;
+  }
 
-  ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
-  // Arquivadas section
-  if (arquivadas.length > 0) {
-    html += `<div style="margin-top:1.5rem;">
-      <button class="archived-toggle" onclick="toggleTarefasArquivadas()">
-        <span id="tarq-arrow">▸</span> Arquivadas (${arquivadas.length})
+  function renderGroup(label, items, color, key) {
+    const total = items.length + (arqGroups[key]||[]).length;
+    if (total === 0) return '';
+    return `<div style="margin-bottom:1.5rem;">
+      <div style="font-size:11px;font-weight:500;color:${color};text-transform:uppercase;letter-spacing:0.09em;margin-bottom:8px;">${label}${items.length ? ' · ' + items.length : ''}</div>
+      ${items.length ? tableHtml(items,false) : ''}
+      ${arqToggle(key, arqGroups[key]||[])}</div>`;
+  }
+
+  function renderGroupCollapsible(label, items, color, key) {
+    const total = items.length + (arqGroups[key]||[]).length;
+    if (total === 0) return '';
+    return `<div style="margin-bottom:1.5rem;">
+      <button class="archived-toggle" style="color:${color};font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.09em;" onclick="toggleTarefaGroup('${key}')">
+        <span id="tgrp-arrow-${key}">▸</span> ${label}${items.length ? ' · ' + items.length : ''}
       </button>
-      <div id="tarq-section" style="display:none;margin-top:8px;">
-        <div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
-        <tbody>${arquivadas.map(t=>tarefaRow(t,true)).join('')}</tbody></table></div>
+      <div id="tgrp-${key}" style="display:none;margin-top:8px;">
+        ${items.length ? tableHtml(items,false) : ''}
+        ${arqToggle(key, arqGroups[key]||[])}
       </div>
     </div>`;
   }
 
+  let html = renderGroup('Atrasadas', groups.atrasado, 'var(--danger)', 'atrasado')
+    + renderGroup('Hoje', groups.hoje, 'var(--gisella)', 'hoje')
+    + renderGroup('Esta semana', groups.semana, 'var(--warn)', 'semana')
+    + renderGroupCollapsible('Próxima semana', groups.proxSemana, 'var(--text-mid)', 'proxSemana')
+    + renderGroupCollapsible('Próximas', groups.proximas, 'var(--text-soft)', 'proximas');
+
+  ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
+
   el.innerHTML = html;
+}
+
+function toggleTarefaGroup(key) {
+  const el = document.getElementById('tgrp-' + key);
+  const arrow = document.getElementById('tgrp-arrow-' + key);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
 }
 
 function toggleTarefaArquivada(id) {
@@ -4835,13 +4928,17 @@ function buildTarefasEmpresa(emp) {
     });
   });
 
-  // Só mostra: atrasadas + esta semana (até 7 dias) COM data. Sem data e futuras ficam só na aba Tarefas.
+  // Só mostra: atrasadas + esta semana (COM data). Sem data e futuras ficam só na aba Tarefas.
   const todasAtivas = [
     ...events.filter(e => !e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
     ...etapaEvents.filter(e => !e.arquivada)
-  ].filter(e => e.data && e.data <= fimSemanaStr); // apenas com data + esta semana
+  ].filter(e => e.data && e.data <= fimSemanaStr);
 
-  // Ordenar por prazo (sem data vai pro fim)
+  const todasArquivadas = [
+    ...events.filter(e => e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
+    ...etapaEvents.filter(e => e.arquivada)
+  ].filter(e => e.data && e.data <= fimSemanaStr);
+
   todasAtivas.sort((a,b) => {
     if (!a.data && !b.data) return 0;
     if (!a.data) return 1;
@@ -4857,10 +4954,13 @@ function buildTarefasEmpresa(emp) {
       return diff<0 ? 'var(--danger)' : diff===0 ? cor : diff<=7 ? 'var(--warn)' : 'var(--text-soft)';
     })() : 'var(--text-soft)';
     return `<tr style="${isArq?'opacity:0.5;':''}">
-      <td style="width:32px;" onclick="event.stopPropagation();">
-        <input type="checkbox" ${isArq?'checked':''}
-          onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
-          style="accent-color:${cor};width:14px;height:14px;cursor:pointer;">
+      <td style="width:44px;text-align:center;" onclick="event.stopPropagation();">
+        <label style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:3px;">
+          <input type="checkbox" ${isArq?'checked':''}
+            onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
+            style="accent-color:${cor};width:18px;height:18px;cursor:pointer;">
+          ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
+        </label>
       </td>
       <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
         ${e.titulo}
@@ -4892,6 +4992,13 @@ function buildTarefasEmpresa(emp) {
       <span id="tarq-emp-extras-arrow-${emp}">▸</span> Ver mais esta semana (${extras.length})
     </button>
     <div id="tarq-emp-extras-${emp}" style="display:none;margin-top:6px;">${tabelaHtml(extras)}</div>`;
+  }
+
+  if (todasArquivadas.length > 0) {
+    html += `<div style="margin-top:6px;">
+      <button class="archived-toggle" onclick="toggleTarefasEmpArq('${emp}')"><span id="tarq-emp-arrow-${emp}">▸</span> Concluídas (${todasArquivadas.length})</button>
+      <div id="tarq-emp-arq-${emp}" style="display:none;margin-top:6px;">${tabelaHtml(todasArquivadas)}</div>
+    </div>`;
   }
 
   el.innerHTML = html;
@@ -5099,6 +5206,138 @@ function pomToggleWidget() {
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); pomDrawRing(); });
+
+/* ── MODAL COMENTÁRIOS RÁPIDO ── */
+let _comModalEventId = null;
+
+function openComentariosModal(eventId) {
+  _comModalEventId = eventId;
+  const ev = events.find(x => x.id === eventId);
+  if (!ev) return;
+  document.getElementById('modal-com-titulo').textContent = ev.titulo;
+  document.getElementById('modal-com-texto').value = '';
+  renderComentariosModal(ev);
+  openModal('modal-comentarios-tarefa');
+  setTimeout(() => document.getElementById('modal-com-texto').focus(), 100);
+}
+
+function renderComentariosModal(ev) {
+  const lista = document.getElementById('modal-com-lista');
+  if (!lista) return;
+  const comentarios = ev.comentarios || [];
+  if (comentarios.length === 0) {
+    lista.innerHTML = '<div style="font-size:12px;color:var(--text-soft);text-align:center;padding:8px 0;">Nenhum comentário ainda.</div>';
+    return;
+  }
+  const cores = { Gisella: 'var(--gisella)', Milena: 'var(--leia)', Luiggi: 'var(--editora)' };
+  lista.innerHTML = comentarios.map((c, i) => `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:600;color:${cores[c.autor]||'var(--text-mid)'};">${c.autor}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--text-soft);">${c.data}</span>
+          <button onclick="deleteComModal(${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0;line-height:1;">×</button>
+        </div>
+      </div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.5;">${c.texto}</div>
+    </div>`).join('');
+  lista.scrollTop = lista.scrollHeight;
+}
+
+function submitComentarioModal() {
+  if (!_comModalEventId) return;
+  const ev = events.find(x => x.id === _comModalEventId);
+  if (!ev) return;
+  const texto = (document.getElementById('modal-com-texto').value || '').trim();
+  if (!texto) { document.getElementById('modal-com-texto').focus(); return; }
+  const autor = document.getElementById('modal-com-autor').value || 'Gisella';
+  const agora = new Date();
+  const data = agora.getDate().toString().padStart(2,'0') + '/' + (agora.getMonth()+1).toString().padStart(2,'0') + ' ' + agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+  if (!ev.comentarios) ev.comentarios = [];
+  ev.comentarios.push({ autor, texto, data });
+  save('gc-events', events);
+  document.getElementById('modal-com-texto').value = '';
+  renderComentariosModal(ev);
+  // Update bubble icon count on all rows
+  document.querySelectorAll(`[data-com-id="${_comModalEventId}"]`).forEach(el => {
+    const cnt = ev.comentarios.length;
+    el.innerHTML = cnt > 0 ? bubbleIconHtml(cnt, true) : bubbleIconHtml(0, false);
+  });
+}
+
+function deleteComModal(idx) {
+  if (!_comModalEventId) return;
+  const ev = events.find(x => x.id === _comModalEventId);
+  if (!ev || !ev.comentarios) return;
+  ev.comentarios.splice(idx, 1);
+  save('gc-events', events);
+  renderComentariosModal(ev);
+  document.querySelectorAll(`[data-com-id="${_comModalEventId}"]`).forEach(el => {
+    const cnt = ev.comentarios.length;
+    el.innerHTML = cnt > 0 ? bubbleIconHtml(cnt, true) : bubbleIconHtml(0, false);
+  });
+}
+
+function bubbleIconHtml(count, hasComments) {
+  const color = hasComments ? 'var(--gisella)' : 'var(--text-soft)';
+  const bg = hasComments ? 'var(--gisella-bg)' : 'transparent';
+  return `<svg width="14" height="14" viewBox="0 0 24 24" fill="${hasComments?'var(--gisella)':'none'}" stroke="${color}" stroke-width="2" style="display:inline;vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>${hasComments?`<span style="font-size:9px;color:${color};font-weight:600;margin-left:1px;">${count}</span>`:''}`;
+}
+
+function comentarioBubble(eventId, comentarios) {
+  const count = (comentarios||[]).length;
+  return `<button data-com-id="${eventId}" onclick="event.stopPropagation();openComentariosModal(${eventId})" style="background:none;border:none;cursor:pointer;padding:1px 3px;opacity:${count>0?1:0.4};display:inline-flex;align-items:center;gap:2px;" title="${count>0?count+' comentário(s)':'Comentar'}">${bubbleIconHtml(count, count>0)}</button>`;
+}
+
+/* ── MODAL DIA CALENDÁRIO ── */
+function openDayModalFromCache(calId, ds) {
+  const items = (window._calDayCache && window._calDayCache[calId+'_'+ds]) || [];
+  openDayModal(ds, items);
+}
+
+function openDayModal(ds, items) {
+  window._modalDiaDate = ds;
+  const MS2 = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const [y,mo,d] = ds.split('-').map(Number);
+  const dow = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][new Date(y,mo-1,d).getDay()];
+  document.getElementById('modal-dia-title').textContent = `${dow}, ${d} de ${MS2[mo-1]} de ${y}`;
+
+  const EMP_COR = {editora:'var(--editora)',leia:'var(--leia)',gisella:'var(--gisella)'};
+  const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
+  const contColors = {editora:'#7b1414',leia:'#3c0a50',gisella:'#8c0a3c'};
+
+  const rows = items.map(item => {
+    if (item.type === 'conteudo') {
+      const c = item.c;
+      const cor = contColors[c.empresa||'editora'];
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px;background:var(--bg);border-radius:8px;cursor:pointer;" onclick="closeModal('modal-dia-cal');openConteudo(${c.id})">
+        <span style="font-size:14px;flex-shrink:0;">✍</span>
+        <div style="flex:1;">
+          <div style="font-weight:500;">${c.nome}</div>
+          <div style="font-size:11px;color:${cor};margin-top:2px;">${EMP_LABEL[c.empresa]||c.empresa} · conteúdo</div>
+        </div>
+      </div>`;
+    } else {
+      const e = item.e;
+      const cor = EMP_COR[e.empresa||'editora'] || 'var(--text-soft)';
+      const time = e.startTime ? `<span style="font-size:11px;color:var(--text-soft);">${e.startTime}</span> ` : '';
+      const gcalBadge = e.gcal ? '<span style="font-size:9px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-soft);margin-left:6px;">Google Cal</span>' : '';
+      const editBtn = !e.gcal ? `<button onclick="event.stopPropagation();closeModal('modal-dia-cal');openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0;">✎</button>` : '';
+      const linkBtn = e.gcal && e.link ? `<a href="${e.link}" target="_blank" onclick="event.stopPropagation();" style="color:var(--text-soft);font-size:11px;text-decoration:none;">↗</a>` : '';
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px;background:var(--bg);border-radius:8px;">
+        <div style="width:3px;min-height:32px;background:${cor};border-radius:2px;flex-shrink:0;margin-top:2px;"></div>
+        <div style="flex:1;">
+          <div style="font-weight:500;">${time}${e.titulo}${gcalBadge}</div>
+          <div style="font-size:11px;color:${cor};margin-top:2px;">${EMP_LABEL[e.empresa||'editora']||e.empresa}</div>
+        </div>
+        ${editBtn}${linkBtn}
+      </div>`;
+    }
+  }).join('');
+
+  document.getElementById('modal-dia-body').innerHTML = rows || '<div style="color:var(--text-soft);">Nenhum evento neste dia.</div>';
+  openModal('modal-dia-cal');
+}
 
 /* ── HOME CARDS ── */
 function buildHomeCards() {
