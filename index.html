@@ -1163,8 +1163,8 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:2rem;right:6.5rem;width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:18px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;">✏️</button>
 <button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
+<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:6.5rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -1540,6 +1540,10 @@ tr:hover td { background: var(--bg); }
       </div>
     </div>
   </div>
+</div>
+
+<!-- MODAL TAREFA FIXA -->
+<div class="modal-overlay" id="modal-fixed-task" onclick="if(event.target===this)closeModal('modal-fixed-task')">
 </div>
 
 <!-- MODAL PRAZOS ETAPAS LIVRO -->
@@ -2305,18 +2309,11 @@ function openFixedTaskModal(colab, type, existingId) {
   const label = existing ? existing.label : '';
   const link  = existing ? (existing.link||'') : '';
 
-  // Create inline modal
-  let overlay = document.getElementById('modal-fixed-task');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'modal-fixed-task';
-    overlay.className = 'modal-overlay';
-    overlay.onclick = function(e) { if(e.target===this) this.remove(); };
-    document.body.appendChild(overlay);
-  }
+  openModal('modal-fixed-task');
+  const overlay = document.getElementById('modal-fixed-task');
   overlay.innerHTML = `
     <div class="modal" style="width:360px;">
-      <button class="modal-close" onclick="document.getElementById('modal-fixed-task').remove()">×</button>
+      <button class="modal-close" onclick="closeModal('modal-fixed-task')">×</button>
       <div class="modal-title">${title}</div>
       <div class="form-group"><label class="form-label">Nome da tarefa</label>
         <input class="form-input" id="fxt-label" value="${label.replace(/"/g,'&quot;')}" placeholder="Nome..." autofocus
@@ -2327,11 +2324,10 @@ function openFixedTaskModal(colab, type, existingId) {
           onkeydown="if(event.key==='Enter')saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">
       </div>
       <div class="btn-row">
-        <button class="btn" onclick="document.getElementById('modal-fixed-task').remove()">Cancelar</button>
+        <button class="btn" onclick="closeModal('modal-fixed-task')">Cancelar</button>
         <button class="btn btn-primary" onclick="saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">Salvar</button>
       </div>
     </div>`;
-  overlay.classList.add('open');
   setTimeout(() => document.getElementById('fxt-label')?.focus(), 50);
 }
 
@@ -2353,7 +2349,7 @@ function saveFixedTaskModal(colab, type, existingId) {
   }
   saveFixedData(colab, data);
   renderFixedTasks(colab);
-  document.getElementById('modal-fixed-task')?.remove();
+  closeModal('modal-fixed-task');
 }
 
 function editFixedTask(colab, type, id) {
@@ -3174,8 +3170,9 @@ function submitAddLivro() {
   save('gc-livros', livros);
   renderLivros();
   buildPrioridades();
+  const _newLivroId = !_wasEditing ? livro.id : null;
   closeModal('modal-livro');
-  if (!_wasEditing) setTimeout(() => openEtapasPrazos(livro.id), 250);
+  if (_newLivroId) setTimeout(() => openEtapasPrazos(_newLivroId), 500);
   // Reset modal
   document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
   document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
