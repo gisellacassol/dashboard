@@ -2309,14 +2309,13 @@ function openFixedTaskModal(colab, type, existingId) {
   const label = existing ? existing.label : '';
   const link  = existing ? (existing.link||'') : '';
 
-  openModal('modal-fixed-task');
   const overlay = document.getElementById('modal-fixed-task');
   overlay.innerHTML = `
     <div class="modal" style="width:360px;">
       <button class="modal-close" onclick="closeModal('modal-fixed-task')">×</button>
       <div class="modal-title">${title}</div>
       <div class="form-group"><label class="form-label">Nome da tarefa</label>
-        <input class="form-input" id="fxt-label" value="${label.replace(/"/g,'&quot;')}" placeholder="Nome..." autofocus
+        <input class="form-input" id="fxt-label" value="${label.replace(/"/g,'&quot;')}" placeholder="Nome..."
           onkeydown="if(event.key==='Enter')saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">
       </div>
       <div class="form-group"><label class="form-label">Link (opcional)</label>
@@ -2328,6 +2327,7 @@ function openFixedTaskModal(colab, type, existingId) {
         <button class="btn btn-primary" onclick="saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">Salvar</button>
       </div>
     </div>`;
+  openModal('modal-fixed-task');
   setTimeout(() => document.getElementById('fxt-label')?.focus(), 50);
 }
 
@@ -3123,7 +3123,7 @@ function submitAddLivro() {
   const menteeOpt = document.querySelector('input[name="nl-mentee-opt"]:checked')?.value;
   const menteeIdSel = menteeOpt === 'sim' ? parseInt(document.getElementById('nl-mentee-id')?.value||'0')||null : null;
   const livro = {
-    id: editingLivroId || Date.now(), titulo, empresa: empresaStr, expandido: true,
+    id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
     tipopub, menteeId: menteeIdSel,
     info: {
       autor: document.getElementById('nl-autor').value.trim(),
@@ -3144,14 +3144,16 @@ function submitAddLivro() {
     etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : etapasUsar.map(nome => ({nome, feito: false, prazo: ''}))
   };
   const _wasEditing = !!editingLivroId;
+  let _newLivroId = null;
   if (editingLivroId) {
     const i = livros.findIndex(x=>x.id===editingLivroId);
     if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; livros[i].tipopub = tipopub; }
     editingLivroId = null;
   } else {
     livro.id = Date.now();
+    _newLivroId = livro.id;
     livros.push(livro);
-    // Criar evento de lançamento automaticamente se tiver data
+    console.log('Novo livro criado, id:', livro.id, '_newLivroId:', _newLivroId);
     if (lancamentoDate) {
       const primeiraEmp = empresaStr.split(',')[0] || 'editora';
       events.push({
@@ -3170,7 +3172,6 @@ function submitAddLivro() {
   save('gc-livros', livros);
   renderLivros();
   buildPrioridades();
-  const _newLivroId = !_wasEditing ? livro.id : null;
   closeModal('modal-livro');
   if (_newLivroId) setTimeout(() => openEtapasPrazos(_newLivroId), 500);
   // Reset modal
@@ -4701,7 +4702,7 @@ function buildPrioridades() {
   const allItems = [
     ...tarefasPrio.map(e => ({type:'tarefa', data:e.data, e})),
     ...conteudosPrio.map(c => ({type:'conteudo', data:c.dataProd, c}))
-  ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+  ].sort((a,b) => (a.data||'9999').localeCompare(b.data||'9999'));
 
   if (allItems.length === 0) {
     el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">✓ Nenhuma prioridade para hoje ou amanhã.</div>';
@@ -4716,7 +4717,7 @@ function buildPrioridades() {
   const allArq = [
     ...tarefasArq.map(e => ({type:'tarefa', data:e.data, e})),
     ...conteudosArq.map(c => ({type:'conteudo', data:c.dataProd, c}))
-  ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
+  ].sort((a,b) => (a.data||'9999').localeCompare(b.data||'9999'));
 
   const arqBtn = document.getElementById('prio-arq-btn');
   const arqEl = document.getElementById('prioridades-arquivados');
