@@ -5779,6 +5779,8 @@ function openDayModal(ds, items) {
 function countMentoriasmes() {
   const el = document.getElementById('mentorias-mes-gc');
   if (!el) return;
+  // Debug: log first 5 events with their descriptions
+  console.log('gcalEventsCache sample:', (window.gcalEventsCache||[]).slice(0,5).map(ev => ({title: ev.title, description: ev.description, start: ev.start})));
   const agora = new Date();
   const mes = agora.getMonth();
   const ano = agora.getFullYear();
