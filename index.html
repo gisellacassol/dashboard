@@ -2332,7 +2332,7 @@ function showPage(id, btn) {
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
-  if (id === 'visao') { buildPrioridades(); }
+  if (id === 'visao') { buildPrioridades(); window.scrollTo({top:0,behavior:'instant'}); }
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
   if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks();
@@ -5127,7 +5127,7 @@ function buildHomeCards() {
     // Tarefas desta semana COM data (atrasadas + até 7 dias)
     const tarefasEmp = (events||[]).filter(e =>
       (e.empresa||'').split(',').includes(emp) &&
-      !e.arquivada && e.tipo === 'tarefa' &&
+      !e.arquivada && !e.done && e.tipo === 'tarefa' &&
       e.data && e.data <= fimSemanaStr
     );
     // Mentoradas (só gisella)
