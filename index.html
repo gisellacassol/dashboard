@@ -5776,6 +5776,46 @@ function openDayModal(ds, items) {
   openModal('modal-dia-cal');
 }
 
+/* ── CONTADOR MENTORIAS ── */
+function countMentoriasmes() {
+  const el = document.getElementById('mentorias-mes-gc');
+  if (!el) return;
+  const agora = new Date();
+  const mes = agora.getMonth();
+  const ano = agora.getFullYear();
+  const meses = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const gcal = (window.gcalEventsCache||[]).filter(ev =>
+    (ev.title||'').toLowerCase().includes('mentoria') && ev.start &&
+    new Date(ev.start+'T00:00:00').getMonth()===mes && new Date(ev.start+'T00:00:00').getFullYear()===ano
+  );
+  const locais = (events||[]).filter(e =>
+    (e.titulo||'').toLowerCase().includes('mentoria') && e.data &&
+    new Date(e.data+'T00:00:00').getMonth()===mes && new Date(e.data+'T00:00:00').getFullYear()===ano &&
+    (e.empresa||'').includes('gisella')
+  );
+  const total = gcal.length + locais.length;
+  el.innerHTML = '<span style="font-weight:600;color:var(--gisella);">Mentorias em ' + meses[mes] + ': ' + total + '</span>';
+}
+
+function countMentoriasSemana() {
+  const el = document.getElementById('mentorias-semana-colab');
+  if (!el) return;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const ini = new Date(hoje); ini.setDate(hoje.getDate() - hoje.getDay());
+  const fim = new Date(ini); fim.setDate(ini.getDate() + 6);
+  const iniStr = ini.toISOString().slice(0,10);
+  const fimStr = fim.toISOString().slice(0,10);
+  const gcal = (window.gcalEventsCache||[]).filter(ev =>
+    (ev.title||'').toLowerCase().includes('mentoria') && ev.start >= iniStr && ev.start <= fimStr
+  );
+  const locais = (events||[]).filter(e =>
+    (e.titulo||'').toLowerCase().includes('mentoria') && e.data >= iniStr && e.data <= fimStr &&
+    (e.empresa||'').includes('gisella')
+  );
+  const total = gcal.length + locais.length;
+  el.innerHTML = '<span style="font-weight:600;color:var(--gisella);">Mentorias desta semana: ' + total + '</span>';
+}
+
 /* ── HOME CARDS ── */
 function buildHomeCards() {
   // Data de hoje
