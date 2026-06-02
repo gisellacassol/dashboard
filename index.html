@@ -2600,10 +2600,7 @@ function showPage(id, btn) {
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(countMentoriasmes, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(countMentoriasSemana, 800);
-renderColabFixedTasks('milena');
-renderColabFixedTasks('luiggi');
-renderLinks(); }
+  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
   if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); }
   if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); renderNotas('luiggi'); }
   if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
