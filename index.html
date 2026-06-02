@@ -440,8 +440,8 @@ tr:hover td { background: var(--bg); }
             <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-conteudos">—</div>
           </div>
-          <div onclick="event.stopPropagation();showPage('tarefas', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('tarefas')))" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+          <div onclick="event.stopPropagation();showPageSection('editora','section-tarefas-editora')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-tarefas">—</div>
           </div>
         </div>
@@ -473,8 +473,8 @@ tr:hover td { background: var(--bg); }
             <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-conteudos">—</div>
           </div>
-          <div onclick="event.stopPropagation();showPage('tarefas', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('tarefas')))" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+          <div onclick="event.stopPropagation();showPageSection('leia','section-tarefas-leia')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-tarefas">—</div>
           </div>
         </div>
@@ -506,8 +506,8 @@ tr:hover td { background: var(--bg); }
             <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-conteudos">—</div>
           </div>
-          <div onclick="event.stopPropagation();showPage('tarefas', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('tarefas')))" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+          <div onclick="event.stopPropagation();showPageSection('gisella','section-tarefas-gisella')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
             <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-tarefas">—</div>
           </div>
         </div>
@@ -854,10 +854,7 @@ tr:hover td { background: var(--bg); }
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas do Dia</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-              <button onclick="addFixedTask('gisella','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
           </div>
           <div id="gisella-daily-tasks"></div>
         </div>
@@ -865,10 +862,7 @@ tr:hover td { background: var(--bg); }
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas da Semana</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
-              <button onclick="addFixedTask('gisella','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset domingo</span>
           </div>
           <div id="gisella-weekly-tasks"></div>
         </div>
@@ -946,20 +940,14 @@ tr:hover td { background: var(--bg); }
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas do Dia</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-              <button onclick="addFixedTask('milena','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
           </div>
           <div id="milena-daily-tasks"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas da Semana</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
-              <button onclick="addFixedTask('milena','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset domingo</span>
           </div>
           <div id="milena-weekly-tasks"></div>
         </div>
@@ -984,20 +972,14 @@ tr:hover td { background: var(--bg); }
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas do Dia</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-              <button onclick="addFixedTask('luiggi','daily')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
           </div>
           <div id="luiggi-daily-tasks"></div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
           <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
             <span>Tarefas Fixas da Semana</span>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:9px;opacity:0.6;">reset domingo</span>
-              <button onclick="addFixedTask('luiggi','weekly')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;color:var(--text-soft);cursor:pointer;">+ nova</button>
-            </div>
+<span style="font-size:9px;opacity:0.6;">reset domingo</span>
           </div>
           <div id="luiggi-weekly-tasks"></div>
         </div>
@@ -2245,6 +2227,7 @@ async function loadGcalLeia() {
     }));
     // Injetar no calendário da Léia
     refreshCalendars();
+    buildEventosList();
   } catch(e) {
     console.warn('loadGcalLeia erro:', e);
   }
@@ -2262,12 +2245,12 @@ function save(key, val) {
 
 /* ── DATA ── */
 let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
-let mentees = load('gc-mentees', [
+const MENTEES_DEFAULT = [
   {id:1,  name:'Dionysio Ofra',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1SGsDhwGmimnuiQk06NQqiS6bvi2HRwE3_VDAm85VAYc/edit?usp=sharing'},
   {id:2,  name:'Ângela Basso',            status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1VpQVSkAmtufEFSTwG9mkHe9jsUfi0KEAGqDR9NmyGkU/edit?usp=sharing'},
   {id:3,  name:'Hellen Quinta',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/10dKwyQVmCXfHBhlvB2uMSOPuW77mHDuyggP0sGypBXU/edit?usp=sharing'},
   {id:4,  name:'Jacqueline Gisler',       status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1uHaDvfzAGTSUFSdT-sd4ptbL2kUQ0TffaBTMpSe2IDA/edit?usp=sharing'},
-  {id:5,  name:'Jessica Colvara Chacon', status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://drive.google.com/drive/folders/1VaNQTaLbvkg32k-oAQc2vI7BzUJzgvua?usp=sharing'},
+  {id:5,  name:'Jessica Colvara Chacon',  status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://drive.google.com/drive/folders/1VaNQTaLbvkg32k-oAQc2vI7BzUJzgvua?usp=sharing'},
   {id:6,  name:'Juh Araujo',              status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/18QsOg5rRUF-uYampX0ZwhHArmENBtKQKYV_KX-RyeNc/edit?usp=sharing'},
   {id:7,  name:'Lauren Vargas',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1wSn_Nb2P_6xHOXW4dDVMgKDizRFwGBzTN_wxDNSn5X4/edit?usp=sharing'},
   {id:8,  name:'Liliana Madril',          status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1TeRxlkedAOhZTLTFiilRvEAL5Taa35zscKkWa5MJsA4/edit?usp=sharing'},
@@ -2277,8 +2260,29 @@ let mentees = load('gc-mentees', [
   {id:12, name:'Nathiele Fagundes',       status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1p3_DLCevkLsYHTMmaJ7O90G0crY_v9sTdE9Mbn1i6iA/edit?usp=sharing'},
   {id:13, name:'Priscila Cunha',          status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1UzZ4a9OQphe0hA62QZyfqQASbBYDv4UzYl_k-IL99wI/edit?usp=sharing'},
   {id:14, name:'Regina Vieira',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/17DxYV8MinQJ5SYx1EoD8qqPvTK8C2Z2xuTBxrHX0hJI/edit?usp=sharing'},
-  {id:15, name:'Tetê Amodeo',             status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/17btvt710XxKuOQx4Ezk1ocyZM5CHFJKzqXdS3mMrXfY/edit?usp=sharing'}
-]);
+  {id:15, name:'Tetê Amodeo',             status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/17btvt710XxKuOQx4Ezk1ocyZM5CHFJKzqXdS3mMrXfY/edit?usp=sharing'},
+  {id:16, name:'Ana Elisa Coelho Pinho',  status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1cnHtrvLdCLgnw3qvkhBcfW2XhjqOhRQ5-vnSrXEULWc/edit?usp=drive_link'},
+  {id:17, name:'Gabi Prado',              status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1KtdxNtXgChIMfGdMfC5Gy9MaQTGsiotBsimoLwCxzNA/edit?usp=drive_link'},
+  {id:18, name:'Ni Cordeiro',             status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1tTEuRTAruDtkOMW-KMOv5OlH7u-YSpV29ggygzXJO2E/edit?usp=drive_link'},
+  {id:19, name:'Patrícia Lima',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1CZDs8GCY7tDRfNmmY5W8m4YdfYhWk0H1NV2wpqiI0SE/edit?usp=drive_link'}
+];
+
+// Mesclar com dados salvos: preserva notas/sessões/tarefas existentes, garante que todos os 19 estejam presentes
+function mergeMentees(saved) {
+  const result = MENTEES_DEFAULT.map(def => {
+    const existing = saved.find(s => s.name === def.name);
+    return existing ? {...def, notes: existing.notes||'', sessions: existing.sessions||[], tasks: existing.tasks||[], status: existing.status||'ok'} : def;
+  });
+  // Adicionar quaisquer extras cadastrados manualmente que não estejam na lista default
+  saved.forEach(s => {
+    if (!result.find(r => r.name === s.name)) {
+      result.push(s);
+    }
+  });
+  return result;
+}
+
+let mentees = MENTEES_DEFAULT;
 let livros = load('gc-livros', []);
 let conteudos = load('gc-conteudos', []);
 let steiraData = load('gc-steira', {});
@@ -2474,9 +2478,10 @@ function buildCalendar(id, filter) {
       return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;" onclick="event.stopPropagation();openConteudo(${c.id})">✏ ${c.nome}</div>`;
     }).join('');
     evHtml += dayEvs.slice(0,2).map(e => {
-      if (e._gcal) {
+      if (e._gcal || e.gcal) {
         const time = e.startTime ? `${e.startTime} ` : '';
-        return `<div class="cal-event" style="background:var(--gisella-bg);color:var(--gisella);cursor:default;border-left:2px solid var(--gisella);" title="${e.titulo} (Google Calendar)">${time}${e.titulo}</div>`;
+        const gcalColor = e.empresa === 'leia' ? 'var(--leia-bg);color:var(--leia);border-left:2px solid var(--leia)' : 'var(--gisella-bg);color:var(--gisella);border-left:2px solid var(--gisella)';
+        return `<div class="cal-event" style="background:${gcalColor};cursor:default;" title="${e.titulo} (Google Calendar)">${time}${e.titulo}</div>`;
       }
       return `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`;
     }).join('');
@@ -3663,30 +3668,56 @@ function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
 function buildEventosList() {
   const today = new Date().toISOString().slice(0,10);
   const _ef = getFilter('eventos');
+
+  // Eventos cadastrados no dash
+  const evDash = events.filter(e => e.tipo === 'evento' && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
+
+  // Eventos do Google Calendar (Gisella + Léia)
+  const gcalAll = [
+    ...(window.gcalEventsCache||[]).map(ev => ({
+      id: 'gcal-g-'+ev.start+'-'+(ev.title||'').slice(0,8).replace(/\s/g,''),
+      titulo: ev.title||'(sem título)', empresa: 'gisella',
+      data: ev.start, dataFim: ev.end||ev.start,
+      startTime: ev.startTime, gcal: true, link: ev.link||''
+    })),
+    ...(gcalLeiaCache||[]).map(ev => ({
+      id: 'gcal-l-'+ev.start+'-'+(ev.title||'').slice(0,8).replace(/\s/g,''),
+      titulo: ev.title||'(sem título)', empresa: 'leia',
+      data: ev.start, dataFim: ev.end||ev.start,
+      startTime: ev.startTime, gcal: true, link: ev.link||''
+    }))
+  ].filter(e => _ef==='all' || e.empresa===_ef);
+
+  // Merge e ordenar
+  const evList = [...evDash, ...gcalAll];
+  evList.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+
   const proxEl = document.getElementById('eventos-lista-proximos');
   const passEl = document.getElementById('eventos-lista-passados');
   const el = document.getElementById('eventos-lista');
-  const evList = events.filter(e => e.tipo === 'evento' && (_ef==='all'||(e.empresa||'').split(',').includes(_ef)));
-  evList.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
 
   function evRow(e) {
     const emp = (e.empresa||'editora').split(',')[0];
     const cor = emp==='editora'?'var(--editora)':emp==='leia'?'var(--leia)':'var(--gisella)';
     const label = emp==='editora'?'Editora':emp==='leia'?'Léia':'GC';
+    const gcalBadge = e.gcal ? '<span style="font-size:9px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--text-soft);margin-left:4px;">Google Cal</span>' : '';
+    const time = e.startTime ? ' · '+e.startTime : '';
+    const actions = e.gcal
+      ? (e.link ? '<a href="'+e.link+'" target="_blank" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;text-decoration:none;padding:0 4px;">↗</a>' : '')
+      : '<button onclick="openEditEvent('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;">✎</button><button onclick="deleteEventDirect('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;">×</button>';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">' +
-      '<div style="width:3px;min-height:32px;background:'+cor+';border-radius:2px;flex-shrink:0;"></div>' +
+      '<div style="width:3px;min-height:32px;background:'+cor+';border-radius:2px;flex-shrink:0;'+(e.gcal?'opacity:0.6;':'')+'"></div>' +
       '<div style="flex:1;min-width:0;">' +
-        '<div style="font-weight:500;font-size:13px;">'+e.titulo+'</div>' +
-        '<div style="font-size:11px;color:var(--text-soft);">'+fmtDate(e.data||'')+(e.dataFim&&e.dataFim!==e.data?' – '+fmtDate(e.dataFim):'')+' · <span style="color:'+cor+';">'+label+'</span></div>' +
+        '<div style="font-weight:500;font-size:13px;">'+e.titulo+gcalBadge+'</div>' +
+        '<div style="font-size:11px;color:var(--text-soft);">'+fmtDate(e.data||'')+(e.dataFim&&e.dataFim!==e.data?' – '+fmtDate(e.dataFim):'')+time+' · <span style="color:'+cor+';">'+label+'</span></div>' +
       '</div>' +
-      '<button onclick="openEditEvent('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;">✎</button>' +
-      '<button onclick="deleteEventDirect('+e.id+')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;">×</button>' +
+      actions +
     '</div>';
   }
 
   if (proxEl) {
     const proximos = evList.filter(e=>(e.data||'')>=today);
-    const passados = evList.filter(e=>(e.data||'')<today).reverse().slice(0,15);
+    const passados = evList.filter(e=>(e.data||'')<today).reverse().slice(0,20);
     proxEl.innerHTML = proximos.length ? proximos.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum evento futuro.</div>';
     if (passEl) passEl.innerHTML = passados.length ? passados.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum.</div>';
     return;
@@ -4804,11 +4835,11 @@ function buildTarefasEmpresa(emp) {
     });
   });
 
-  // Só mostra: atrasadas + esta semana (até 7 dias). Futuras ficam só na aba Tarefas.
+  // Só mostra: atrasadas + esta semana (até 7 dias) COM data. Sem data e futuras ficam só na aba Tarefas.
   const todasAtivas = [
     ...events.filter(e => !e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
     ...etapaEvents.filter(e => !e.arquivada)
-  ].filter(e => !e.data || e.data <= fimSemanaStr); // atrasadas + esta semana
+  ].filter(e => e.data && e.data <= fimSemanaStr); // apenas com data + esta semana
 
   // Ordenar por prazo (sem data vai pro fim)
   todasAtivas.sort((a,b) => {
@@ -5073,6 +5104,8 @@ document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); pomDrawRing
 function buildHomeCards() {
   // Data de hoje
   const hoje = new Date();
+  const fimSemana7 = new Date(hoje.getTime() + 7*24*60*60*1000);
+  const fimSemanaStr = fimSemana7.toISOString().slice(0,10);
   const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const dataEl = document.getElementById('visao-data-hoje');
@@ -5091,8 +5124,12 @@ function buildHomeCards() {
     const projetosEmp = (projetos||[]).filter(p => (p.empresa||'')=== emp && p.status !== 'finalizado');
     // Conteudos ativos
     const conteudosEmp = (conteudos||[]).filter(c => (c.empresa||'')=== emp && !c.archived && c.status !== 'postado');
-    // Tarefas abertas (eventos do tipo tarefa)
-    const tarefasEmp = (events||[]).filter(e => (e.empresa||'')=== emp && !e.done && e.tipo !== 'evento');
+    // Tarefas desta semana COM data (atrasadas + até 7 dias)
+    const tarefasEmp = (events||[]).filter(e =>
+      (e.empresa||'').split(',').includes(emp) &&
+      !e.arquivada && e.tipo === 'tarefa' &&
+      e.data && e.data <= fimSemanaStr
+    );
     // Mentoradas (só gisella)
     const menteesCount = (mentees||[]).length;
 
@@ -5161,13 +5198,12 @@ function initApp(cloudData) {
     if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
     if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
     if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
-    if (cloudData['gc-mentees'] && cloudData['gc-mentees'].length > 0 && cloudData['gc-mentees'].some(m => m.name === 'Dionysio Ofra' || m.name === 'Ângela Basso')) {
-      mentees = cloudData['gc-mentees']; localStorage.setItem('gc-mentees', JSON.stringify(mentees));
-    } else {
-      // Firebase has old/placeholder data — force save the real mentees
-      localStorage.setItem('gc-mentees', JSON.stringify(mentees));
-      window.fbSave('gc-mentees', mentees);
+    // Sempre mescla: preserva sessões/notas existentes, garante todos os 19
+    if (cloudData['gc-mentees']) {
+      mentees = mergeMentees(cloudData['gc-mentees']);
     }
+    localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+    window.fbSave('gc-mentees', mentees);
     if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
     if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
     if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
