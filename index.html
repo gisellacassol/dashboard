@@ -528,7 +528,7 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-visao"></div>
   </div>
   <div class="section">
-    <div class="section-title">Tarefas Prioritárias</div>
+    <div class="section-title">Prioridade</div>
     <div id="prioridades-container"></div>
     <div style="margin-top:8px;">
       <button class="archived-toggle" id="prio-arq-btn" onclick="togglePrioridadesArquivadas()" style="display:none;"><span id="prio-arq-arrow">▸</span> Arquivados (<span id="prio-arq-count">0</span>)</button>
@@ -4310,26 +4310,27 @@ function buildPrioridades() {
   const el = document.getElementById('prioridades-container');
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0,10);
+  const todayStr = today.toISOString().slice(0,10);
   const threeDaysAgo = new Date(today); threeDaysAgo.setDate(today.getDate() - 3);
 
-  // Tarefas dos últimos 3 dias (não feitas)
+  // Tarefas: hoje e amanhã (não feitas)
   const tarefasPrio = events.filter(e => {
     if (e.arquivada) return false;
     if (e.tipo !== 'tarefa') return false;
     if (!e.data) return false;
-    const d = new Date(e.data + 'T00:00:00');
-    return d >= threeDaysAgo && d <= today;
+    return e.data === todayStr || e.data === tomorrowStr;
   });
 
-  // Conteúdos dos últimos 3 dias (não feitos)
+  // Conteúdos pela DATA DE PRODUÇÃO: hoje e amanhã (não feitos)
   const conteudosPrio = conteudos.filter(c => {
     if (c.done) return false;
-    if (!c.dataPost) return false;
-    const d = new Date(c.dataPost + 'T00:00:00');
-    return d >= threeDaysAgo && d <= today;
+    if (!c.dataProd) return false;
+    return c.dataProd === todayStr || c.dataProd === tomorrowStr;
   });
 
-  // Tarefas arquivadas dos últimos 3 dias
+  // Arquivados: tarefas dos últimos 3 dias concluídas
   const tarefasArq = events.filter(e => {
     if (!e.arquivada) return false;
     if (e.tipo === 'evento' || e.tipo === 'projeto') return false;
@@ -4337,10 +4338,11 @@ function buildPrioridades() {
     const d = new Date(e.data + 'T00:00:00');
     return d >= threeDaysAgo && d <= today;
   });
+  // Conteúdos arquivados pela data de produção
   const conteudosArq = conteudos.filter(c => {
     if (!c.done) return false;
-    if (!c.dataPost) return false;
-    const d = new Date(c.dataPost + 'T00:00:00');
+    if (!c.dataProd) return false;
+    const d = new Date(c.dataProd + 'T00:00:00');
     return d >= threeDaysAgo && d <= today;
   });
 
@@ -4367,27 +4369,27 @@ function buildPrioridades() {
   }
 
   function conteudoRowPrio(c) {
-    const st = ST_MAP[c.status]||{l:c.status,c:'b-gray'};
+    const prodColor = c.dataProd === todayStr ? 'var(--gisella)' : c.dataProd === tomorrowStr ? 'var(--warn)' : 'var(--text-soft)';
     return `<tr onclick="openConteudo(${c.id})">
       <td onclick="event.stopPropagation();">
         <input type="checkbox" onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
       </td>
       <td style="font-weight:500;">${c.nome}
-        <span style="font-size:10px;color:var(--text-soft);display:inline-block;margin-left:4px;">✍</span>
+        <span style="font-size:10px;color:var(--text-soft);display:inline-block;margin-left:4px;">✍ conteúdo</span>
       </td>
       <td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td>
-      <td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td>
+      <td style="font-size:12px;color:${prodColor};font-weight:500;">${c.dataProd?'prod. '+fmtDate(c.dataProd):'—'}</td>
     </tr>`;
   }
 
   // Combinar tarefas + conteúdos, ordenar por data mais recente primeiro
   const allItems = [
     ...tarefasPrio.map(e => ({type:'tarefa', data:e.data, e})),
-    ...conteudosPrio.map(c => ({type:'conteudo', data:c.dataPost, c}))
+    ...conteudosPrio.map(c => ({type:'conteudo', data:c.dataProd, c}))
   ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
 
   if (allItems.length === 0) {
-    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa ou conteúdo pendente nos últimos 3 dias.</div>';
+    el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">✓ Nenhuma prioridade para hoje ou amanhã.</div>';
   } else {
     el.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th style="width:32px;"></th><th>Item</th><th>Empresa</th><th>Data</th></tr></thead>
@@ -4398,7 +4400,7 @@ function buildPrioridades() {
   // Arquivados
   const allArq = [
     ...tarefasArq.map(e => ({type:'tarefa', data:e.data, e})),
-    ...conteudosArq.map(c => ({type:'conteudo', data:c.dataPost, c}))
+    ...conteudosArq.map(c => ({type:'conteudo', data:c.dataProd, c}))
   ].sort((a,b) => (b.data||'').localeCompare(a.data||''));
 
   const arqBtn = document.getElementById('prio-arq-btn');
@@ -4785,6 +4787,9 @@ function buildTarefasEmpresa(emp) {
   const el = document.getElementById('tarefas-empresa-' + emp);
   if (!el) return;
   const today = new Date(); today.setHours(0,0,0,0);
+  const fimSemana = new Date(today.getTime() + 7*24*60*60*1000);
+  const fimSemanaStr = fimSemana.toISOString().slice(0,10);
+  const todayStr = today.toISOString().slice(0,10);
 
   const etapaEvents = [];
   livros.forEach(l => {
@@ -4799,14 +4804,19 @@ function buildTarefasEmpresa(emp) {
     });
   });
 
-  const ativas = [
+  // Só mostra: atrasadas + esta semana (até 7 dias). Futuras ficam só na aba Tarefas.
+  const todasAtivas = [
     ...events.filter(e => !e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
     ...etapaEvents.filter(e => !e.arquivada)
-  ];
-  const arquivadas = [
-    ...events.filter(e => e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
-    ...etapaEvents.filter(e => e.arquivada)
-  ];
+  ].filter(e => !e.data || e.data <= fimSemanaStr); // atrasadas + esta semana
+
+  // Ordenar por prazo (sem data vai pro fim)
+  todasAtivas.sort((a,b) => {
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return a.data.localeCompare(b.data);
+  });
 
   const cor = emp==='editora' ? 'var(--editora)' : emp==='leia' ? 'var(--leia)' : 'var(--gisella)';
 
@@ -4827,30 +4837,47 @@ function buildTarefasEmpresa(emp) {
         ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
-      <td>${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;background:var(--bg);color:var(--text-mid);">${e.responsavel}</span>`:''}</td>
+      <td>${e.responsavel?`<span style="font-size:11px;padding:1px 6px;border-radius:10px;background:var(--bg);color:var(--text-mid);">${e.responsavel}</span>`:''}</td>
     </tr>`;
   }
 
-  if (ativas.length===0 && arquivadas.length===0) {
-    el.innerHTML='<div style="padding:1rem 0;color:var(--text-soft);font-size:13px;">Nenhuma tarefa ainda.</div>';
+  if (todasAtivas.length === 0) {
+    el.innerHTML='<div style="padding:1rem 0;color:var(--text-soft);font-size:13px;">✓ Nenhuma tarefa para esta semana.</div>';
     return;
   }
 
-  ativas.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
-  let html = `<div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Prazo</th><th>Responsável</th></tr></thead><tbody>${ativas.map(t=>tarefaRowEmp(t,false)).join('')}</tbody></table></div>`;
+  // Mostrar só as 3 primeiras, resto expandível
+  const visiveis = todasAtivas.slice(0, 3);
+  const extras   = todasAtivas.slice(3);
 
-  if (arquivadas.length > 0) {
-    html += `<button class="archived-toggle" onclick="toggleTarefasEmpArq('${emp}')"><span id="tarq-emp-arrow-${emp}">▸</span> Concluídas (${arquivadas.length})</button>
-    <div id="tarq-emp-arq-${emp}" style="display:none;margin-top:6px;">
-      <div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Prazo</th><th>Responsável</th></tr></thead><tbody>${arquivadas.map(t=>tarefaRowEmp(t,true)).join('')}</tbody></table></div>
-    </div>`;
+  function tabelaHtml(items) {
+    return `<div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Prazo</th><th>Responsável</th></tr></thead><tbody>${items.map(t=>tarefaRowEmp(t,false)).join('')}</tbody></table></div>`;
   }
+
+  let html = tabelaHtml(visiveis);
+
+  if (extras.length > 0) {
+    html += `<button class="archived-toggle" onclick="toggleTarefasEmpExtras('${emp}')">
+      <span id="tarq-emp-extras-arrow-${emp}">▸</span> Ver mais esta semana (${extras.length})
+    </button>
+    <div id="tarq-emp-extras-${emp}" style="display:none;margin-top:6px;">${tabelaHtml(extras)}</div>`;
+  }
+
   el.innerHTML = html;
 }
 
 function toggleTarefasEmpArq(emp) {
   const el = document.getElementById('tarq-emp-arq-' + emp);
   const arrow = document.getElementById('tarq-emp-arrow-' + emp);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
+}
+
+function toggleTarefasEmpExtras(emp) {
+  const el = document.getElementById('tarq-emp-extras-' + emp);
+  const arrow = document.getElementById('tarq-emp-extras-arrow-' + emp);
   if (!el) return;
   const open = el.style.display === 'none';
   el.style.display = open ? 'block' : 'none';
@@ -5134,7 +5161,13 @@ function initApp(cloudData) {
     if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
     if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
     if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
-    if (cloudData['gc-mentees'] && cloudData['gc-mentees'].length > 0) { mentees = cloudData['gc-mentees']; localStorage.setItem('gc-mentees', JSON.stringify(mentees)); } else if (!cloudData['gc-mentees']) { window.fbSave('gc-mentees', mentees); }
+    if (cloudData['gc-mentees'] && cloudData['gc-mentees'].length > 0 && cloudData['gc-mentees'].some(m => m.name === 'Dionysio Ofra' || m.name === 'Ângela Basso')) {
+      mentees = cloudData['gc-mentees']; localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+    } else {
+      // Firebase has old/placeholder data — force save the real mentees
+      localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+      window.fbSave('gc-mentees', mentees);
+    }
     if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
     if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
     if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
