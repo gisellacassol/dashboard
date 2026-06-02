@@ -1544,6 +1544,20 @@ tr:hover td { background: var(--bg); }
 
 <!-- MODAL TAREFA FIXA -->
 <div class="modal-overlay" id="modal-fixed-task" onclick="if(event.target===this)closeModal('modal-fixed-task')">
+  <div class="modal" style="width:360px;">
+    <button class="modal-close" onclick="closeModal('modal-fixed-task')">×</button>
+    <div class="modal-title" id="fxt-modal-title">Nova tarefa fixa</div>
+    <div class="form-group"><label class="form-label">Nome da tarefa</label>
+      <input class="form-input" id="fxt-label" placeholder="Nome..." onkeydown="if(event.key==='Enter')saveFixedTask()">
+    </div>
+    <div class="form-group"><label class="form-label">Link (opcional)</label>
+      <input class="form-input" id="fxt-link" placeholder="https://..." onkeydown="if(event.key==='Enter')saveFixedTask()">
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="closeModal('modal-fixed-task')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFixedTask()">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL PRAZOS ETAPAS LIVRO -->
@@ -2298,57 +2312,45 @@ function toggleFixed(colab, key, val) {
   renderFixedTasks(colab);
 }
 
+// Fixed task modal state
+let _fxtColab = null, _fxtType = null, _fxtId = null;
+
 function addFixedTask(colab, type) {
-  openFixedTaskModal(colab, type, null);
+  _fxtColab = colab; _fxtType = type; _fxtId = null;
+  document.getElementById('fxt-modal-title').textContent = 'Nova tarefa fixa';
+  document.getElementById('fxt-label').value = '';
+  document.getElementById('fxt-link').value = '';
+  openModal('modal-fixed-task');
+  setTimeout(() => document.getElementById('fxt-label').focus(), 50);
 }
 
 function openFixedTaskModal(colab, type, existingId) {
-  const data = getFixedData(colab);
-  const existing = existingId ? (type==='daily'?data.daily:data.weekly).find(t=>t.id===existingId) : null;
-  const title = existing ? 'Editar tarefa' : 'Nova tarefa fixa';
-  const label = existing ? existing.label : '';
-  const link  = existing ? (existing.link||'') : '';
-
-  const overlay = document.getElementById('modal-fixed-task');
-  overlay.innerHTML = `
-    <div class="modal" style="width:360px;">
-      <button class="modal-close" onclick="closeModal('modal-fixed-task')">×</button>
-      <div class="modal-title">${title}</div>
-      <div class="form-group"><label class="form-label">Nome da tarefa</label>
-        <input class="form-input" id="fxt-label" value="${label.replace(/"/g,'&quot;')}" placeholder="Nome..."
-          onkeydown="if(event.key==='Enter')saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">
-      </div>
-      <div class="form-group"><label class="form-label">Link (opcional)</label>
-        <input class="form-input" id="fxt-link" value="${link.replace(/"/g,'&quot;')}" placeholder="https://..."
-          onkeydown="if(event.key==='Enter')saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">
-      </div>
-      <div class="btn-row">
-        <button class="btn" onclick="closeModal('modal-fixed-task')">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveFixedTaskModal('${colab}','${type}',${existingId?`'${existingId}'`:'null'})">Salvar</button>
-      </div>
-    </div>`;
-  openModal('modal-fixed-task');
-  setTimeout(() => document.getElementById('fxt-label')?.focus(), 50);
-}
-
-function saveFixedTaskModal(colab, type, existingId) {
-  const labelEl = document.getElementById('fxt-label');
-  const linkEl  = document.getElementById('fxt-link');
-  const label = (labelEl?.value||'').trim();
-  if (!label) { labelEl?.focus(); return; }
-  const link = (linkEl?.value||'').trim();
+  _fxtColab = colab; _fxtType = type; _fxtId = existingId;
   const data = getFixedData(colab);
   const list = type==='daily' ? data.daily : data.weekly;
-  if (existingId && existingId !== 'null') {
-    const t = list.find(x=>x.id===existingId);
-    if (t) { t.label = label; t.link = link; }
+  const existing = existingId ? list.find(t=>t.id===existingId) : null;
+  document.getElementById('fxt-modal-title').textContent = existing ? 'Editar tarefa' : 'Nova tarefa fixa';
+  document.getElementById('fxt-label').value = existing ? existing.label : '';
+  document.getElementById('fxt-link').value = existing ? (existing.link||'') : '';
+  openModal('modal-fixed-task');
+  setTimeout(() => document.getElementById('fxt-label').focus(), 50);
+}
+
+function saveFixedTask() {
+  const label = document.getElementById('fxt-label').value.trim();
+  if (!label) { document.getElementById('fxt-label').focus(); return; }
+  const link = document.getElementById('fxt-link').value.trim();
+  const data = getFixedData(_fxtColab);
+  const list = _fxtType==='daily' ? data.daily : data.weekly;
+  if (_fxtId) {
+    const t = list.find(x=>x.id===_fxtId);
+    if (t) { t.label = label; t.link = link||undefined; }
   } else {
-    const id = colab[0] + '-' + type[0] + '-' + Date.now();
-    if (type === 'daily') data.daily.push({id, label, link: link||undefined});
-    else data.weekly.push({id, label, link: link||undefined});
+    const id = _fxtColab[0] + '-' + _fxtType[0] + '-' + Date.now();
+    list.push({id, label, link: link||undefined});
   }
-  saveFixedData(colab, data);
-  renderFixedTasks(colab);
+  saveFixedData(_fxtColab, data);
+  renderFixedTasks(_fxtColab);
   closeModal('modal-fixed-task');
 }
 
@@ -3173,7 +3175,7 @@ function submitAddLivro() {
   renderLivros();
   buildPrioridades();
   closeModal('modal-livro');
-  if (_newLivroId) setTimeout(() => openEtapasPrazos(_newLivroId), 500);
+  if (_newLivroId) setTimeout(() => openEtapasPrazos(_newLivroId), 800);
   // Reset modal
   document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
   document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
@@ -3204,6 +3206,7 @@ function livroCardHtml(l, draggable) {
         <span style="font-size:11px;color:var(--text-soft);">${pct}%</span>
       </div>
       ${proxima ? `<span style="font-size:11px;color:var(--text-soft);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proxima.nome}</span>` : '<span class="badge b-ok" style="font-size:10px;">concluído</span>'}
+      <button onclick="event.stopPropagation();openEtapasPrazos(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:2px 6px;" title="Definir prazos das etapas">📅</button>
       <button onclick="event.stopPropagation();openLivroFicha(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Editar ficha">✎</button>
       <button onclick="event.stopPropagation();duplicarLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Duplicar">⧉</button>
       <button onclick="event.stopPropagation();deleteLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;" title="Excluir">×</button>
