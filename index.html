@@ -44,7 +44,7 @@
   };
 
   window.fbLoadAll = async function() {
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
     const results = {};
     await Promise.all(KEYS.map(async key => {
       const val = await window.fbGet(key);
@@ -1550,9 +1550,6 @@ tr:hover td { background: var(--bg); }
     <div class="form-group"><label class="form-label">Nome da tarefa</label>
       <input class="form-input" id="fxt-label" placeholder="Nome..." onkeydown="if(event.key==='Enter')saveFixedTask()">
     </div>
-    <div class="form-group"><label class="form-label">Link (opcional)</label>
-      <input class="form-input" id="fxt-link" placeholder="https://..." onkeydown="if(event.key==='Enter')saveFixedTask()">
-    </div>
     <div class="btn-row">
       <button class="btn" onclick="closeModal('modal-fixed-task')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveFixedTask()">Salvar</button>
@@ -1566,10 +1563,14 @@ tr:hover td { background: var(--bg); }
     <button class="modal-close" onclick="closeModal('modal-etapas-prazos')">×</button>
     <div class="modal-title" style="margin-bottom:4px;">Definir prazos das etapas</div>
     <div style="font-size:12px;color:var(--text-soft);margin-bottom:1.2rem;" id="modal-ep-subtitulo"></div>
-    <div id="modal-ep-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;"></div>
+    <div id="modal-ep-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;margin-bottom:1rem;"></div>
+    <div style="display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--border);margin-bottom:12px;">
+      <input class="form-input" id="ep-nova-etapa" placeholder="+ Nova etapa..." style="flex:1;font-size:13px;"
+        onkeydown="if(event.key==='Enter')addEtapaModal()">
+      <button class="btn btn-primary" onclick="addEtapaModal()" style="white-space:nowrap;">Adicionar</button>
+    </div>
     <div class="btn-row">
       <button class="btn" onclick="closeModal('modal-etapas-prazos')">Fechar</button>
-      <button class="btn btn-primary" onclick="closeModal('modal-etapas-prazos')">Salvar e fechar</button>
     </div>
   </div>
 </div>
@@ -1839,7 +1840,7 @@ async function uploadLocalToFirebase() {
     return;
   }
 
-  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa'];
+  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
 
   // Verificar se há dados no localStorage
   const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -2293,8 +2294,8 @@ function renderFixedTasks(colab) {
       '<span style="cursor:grab;color:var(--text-soft);font-size:11px;flex-shrink:0;">⠿</span>' +
       '<input type="checkbox" ' + (checked ? 'checked' : '') + ' onchange="' + onch + '" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">' +
       '<span style="flex:1;">' + labelHtml + '</span>' +
-      '<button onclick="editFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>' +
-      '<button onclick="deleteFixedTask(' + JSON.stringify(colab) + ',' + JSON.stringify(type) + ',' + JSON.stringify(t.id) + ')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>' +
+      `<button onclick="editFixedTask('${colab}','${type}','${t.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:0 2px;">✎</button>` +
+      `<button onclick="deleteFixedTask('${colab}','${type}','${t.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:0 2px;">×</button>` +
       '</div>';
   }
 
@@ -2339,7 +2340,7 @@ function openFixedTaskModal(colab, type, existingId) {
 function saveFixedTask() {
   const label = document.getElementById('fxt-label').value.trim();
   if (!label) { document.getElementById('fxt-label').focus(); return; }
-  const link = document.getElementById('fxt-link').value.trim();
+  const link = '';
   const data = getFixedData(_fxtColab);
   const list = _fxtType==='daily' ? data.daily : data.weekly;
   if (_fxtId) {
@@ -3222,12 +3223,7 @@ function livroCardHtml(l, draggable) {
         })() : 'var(--text-soft)';
         const respColor = e.resp==='Gisella'?'var(--gisella)':e.resp==='Milena'?'var(--leia)':'var(--editora)';
         const respBg = e.resp==='Gisella'?'var(--gisella-bg)':e.resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)';
-        return `<div class="livro-etapa-row" draggable="true"
-          ondragstart="etapaDragStart(event,${l.id},${i})"
-          ondragover="event.preventDefault()"
-          ondrop="etapaDrop(event,${l.id},${i})"
-          style="${e.feito?'opacity:0.6;':''}">
-          <span style="cursor:grab;color:var(--text-soft);font-size:12px;padding-right:2px;">⠿</span>
+        return `<div class="livro-etapa-row" style="${e.feito?'opacity:0.6;':''}">
           <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapa(${l.id},${i})" onclick="event.stopPropagation()">
           <span class="livro-etapa-nome${e.feito?' done':''}" style="flex:1;">
             [${l.titulo}] ${e.nome}
@@ -5245,15 +5241,50 @@ function renderEpLista() {
       const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
       return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
     })() : 'var(--text)');
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
+    return `<div draggable="true"
+      ondragstart="epDragStart(event,${i})"
+      ondragover="event.preventDefault()"
+      ondrop="epDrop(event,${i})"
+      style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}cursor:default;">
+      <span style="cursor:grab;color:var(--text-soft);font-size:12px;flex-shrink:0;">⠿</span>
       <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapaModal(${_epLivroId},${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
       <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}" ondblclick="renameEtapaModal(${_epLivroId},${i},this)">${e.nome}</span>
       <input type="date" value="${e.prazo||''}"
         onchange="updateEtapaPrazoInline(${_epLivroId},${i},this.value)"
         style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
-      <button onclick="deleteEtapaModal(${_epLivroId},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;" title="Excluir etapa">×</button>
+      <button onclick="deleteEtapaModal(${_epLivroId},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;" title="Excluir">×</button>
     </div>`;
   }).join('');
+}
+
+function addEtapaModal() {
+  const l = livros.find(x => x.id === _epLivroId);
+  const input = document.getElementById('ep-nova-etapa');
+  const nome = (input?.value||'').trim();
+  if (!l || !nome) { input?.focus(); return; }
+  l.etapas.push({nome, feito: false, prazo: ''});
+  save('gc-livros', livros);
+  renderLivros();
+  if (input) input.value = '';
+  renderEpLista();
+  // Scroll to bottom
+  const lista = document.getElementById('modal-ep-lista');
+  if (lista) lista.scrollTop = lista.scrollHeight;
+}
+
+let _epDragIdx = null;
+function epDragStart(e, idx) { _epDragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function epDrop(e, toIdx) {
+  e.preventDefault();
+  if (_epDragIdx === null || _epDragIdx === toIdx) return;
+  const l = livros.find(x => x.id === _epLivroId);
+  if (!l) return;
+  const moved = l.etapas.splice(_epDragIdx, 1)[0];
+  l.etapas.splice(toIdx, 0, moved);
+  _epDragIdx = null;
+  save('gc-livros', livros);
+  renderLivros();
+  renderEpLista();
 }
 
 function toggleEtapaModal(livroId, idx) {
@@ -5303,6 +5334,7 @@ function getNotas(colab) {
 function saveNotas(colab, notas) {
   localStorage.setItem('gc-notas-' + colab, JSON.stringify(notas));
   if (window.fbSave) window.fbSave('gc-notas-' + colab, notas);
+  else console.warn('fbSave not available — nota saved locally only');
 }
 
 function renderNotas(colab) {
@@ -5717,7 +5749,7 @@ function buildHomeCards() {
 
   const empresas = ['editora','leia','gisella'];
   const hoje_str = hoje.toISOString().slice(0,10);
-  const em7dias = new Date(today.getTime() + 7*24*60*60*1000).toISOString().slice(0,10);
+  const em7dias = new Date(hoje.getTime() + 7*24*60*60*1000).toISOString().slice(0,10);
 
   let alertas = [];
 
@@ -5803,6 +5835,10 @@ function initApp(cloudData) {
     if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
     if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
     // Sempre mescla: preserva sessões/notas existentes, garante todos os 19
+    ['gisella','milena','luiggi'].forEach(c => {
+      const key = 'gc-notas-' + c;
+      if (cloudData[key]) localStorage.setItem(key, JSON.stringify(cloudData[key]));
+    });
     if (cloudData['gc-mentees']) {
       mentees = mergeMentees(cloudData['gc-mentees']);
     }
@@ -5811,6 +5847,14 @@ function initApp(cloudData) {
     if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
     if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
     if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
+    // Fixed tasks, checks e notas
+    ['gisella','milena','luiggi'].forEach(c => {
+      if (cloudData['gc-fixed-'+c])        localStorage.setItem('gc-fixed-'+c,        JSON.stringify(cloudData['gc-fixed-'+c]));
+      if (cloudData['gc-fixed-checks-'+c]) localStorage.setItem('gc-fixed-checks-'+c, JSON.stringify(cloudData['gc-fixed-checks-'+c]));
+    });
+    // Links
+    if (cloudData['gc-links'])         { links        = cloudData['gc-links'];         localStorage.setItem('gc-links',         JSON.stringify(links)); }
+    if (cloudData['gc-links-empresa']) { linksEmpresa = cloudData['gc-links-empresa']; localStorage.setItem('gc-links-empresa', JSON.stringify(linksEmpresa)); }
   }
 
   // Restaurar página salva
@@ -5852,6 +5896,14 @@ function initApp(cloudData) {
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
       ['gc-projetos',  v => { projetos  = v; renderProjetos(); buildTarefas(); }],
       ['gc-mentees',   v => { mentees   = v; renderMenteeList(); }],
+      ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
+      ['gc-notas-milena',  v => { localStorage.setItem('gc-notas-milena',  JSON.stringify(v)); renderNotas('milena');  }],
+      ['gc-notas-luiggi',  v => { localStorage.setItem('gc-notas-luiggi',  JSON.stringify(v)); renderNotas('luiggi');  }],
+      ['gc-fixed-gisella', v => { localStorage.setItem('gc-fixed-gisella', JSON.stringify(v)); renderFixedTasks('gisella'); }],
+      ['gc-fixed-milena',  v => { localStorage.setItem('gc-fixed-milena',  JSON.stringify(v)); renderFixedTasks('milena');  }],
+      ['gc-fixed-luiggi',  v => { localStorage.setItem('gc-fixed-luiggi',  JSON.stringify(v)); renderFixedTasks('luiggi');  }],
+      ['gc-links',         v => { links        = v; localStorage.setItem('gc-links',         JSON.stringify(v)); renderLinks(); }],
+      ['gc-links-empresa', v => { linksEmpresa = v; localStorage.setItem('gc-links-empresa', JSON.stringify(v)); }],
     ].forEach(([key, handler]) => {
       window.fbListen(key, val => { localStorage.setItem(key, JSON.stringify(val)); handler(val); });
     });
