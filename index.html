@@ -993,6 +993,39 @@ tr:hover td { background: var(--bg); }
 </div>
 
 <!-- BOTÃO + -->
+<!-- POMODORO WIDGET -->
+<div id="pomodoro-widget" style="position:fixed;bottom:6.5rem;right:2rem;z-index:150;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+  <!-- Display expandido -->
+  <div id="pomodoro-expanded" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;margin-bottom:6px;text-align:center;">
+    <!-- Modo label -->
+    <div id="pom-mode-label" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-soft);margin-bottom:8px;">Foco</div>
+    <!-- Timer display -->
+    <div id="pom-display" style="font-family:'DM Serif Display',serif;font-size:36px;color:var(--text);line-height:1;margin-bottom:10px;letter-spacing:2px;">25:00</div>
+    <!-- Progresso -->
+    <div style="height:3px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:12px;">
+      <div id="pom-progress" style="height:100%;border-radius:4px;background:var(--gisella);width:100%;transition:width 1s linear;"></div>
+    </div>
+    <!-- Controles -->
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px;">
+      <button id="pom-btn-start" onclick="pomToggle()" style="flex:1;padding:6px 0;border-radius:8px;border:none;background:var(--gisella);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">▶ Iniciar</button>
+      <button onclick="pomReset()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text-soft);font-size:12px;cursor:pointer;">↺</button>
+    </div>
+    <!-- Seletor de modo -->
+    <div style="display:flex;gap:4px;justify-content:center;">
+      <button onclick="pomSetMode('foco')" id="pom-tab-foco" style="flex:1;font-size:10px;padding:4px 0;border-radius:6px;border:none;background:var(--gisella-bg);color:var(--gisella);cursor:pointer;font-weight:600;">Foco</button>
+      <button onclick="pomSetMode('curta')" id="pom-tab-curta" style="flex:1;font-size:10px;padding:4px 0;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-soft);cursor:pointer;">Pausa</button>
+      <button onclick="pomSetMode('longa')" id="pom-tab-longa" style="flex:1;font-size:10px;padding:4px 0;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text-soft);cursor:pointer;">Longa</button>
+    </div>
+    <!-- Contador de pomodoros -->
+    <div id="pom-ciclos" style="font-size:10px;color:var(--text-soft);margin-top:8px;">🍅 0 pomodoros hoje</div>
+  </div>
+  <!-- Botão compacto -->
+  <button id="pom-toggle-btn" onclick="pomToggleWidget()" title="Pomodoro" style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;transition:all 0.15s;">
+    <span style="font-size:18px;line-height:1;">🍅</span>
+    <span id="pom-mini-display" style="font-size:9px;font-weight:600;color:var(--text-soft);font-family:'DM Sans',sans-serif;line-height:1;">25:00</span>
+  </button>
+</div>
+
 <button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
 
 <!-- MODAL QUICK ADD -->
@@ -4708,6 +4741,139 @@ function openGcalEvent(ev) {
 }
 
 /* ---- FIM GOOGLE CALENDAR ---- */
+
+
+/* ── POMODORO ── */
+const POM_MODES = {
+  foco:  { label: 'Foco',       mins: 25, color: 'var(--gisella)' },
+  curta: { label: 'Pausa curta', mins: 5,  color: 'var(--ok)' },
+  longa: { label: 'Pausa longa', mins: 15, color: 'var(--leia)' }
+};
+let pomMode      = 'foco';
+let pomTotal     = 25 * 60;
+let pomRemaining = 25 * 60;
+let pomRunning   = false;
+let pomInterval  = null;
+let pomCiclos    = parseInt(localStorage.getItem('pom-ciclos-' + new Date().toDateString()) || '0');
+
+function pomFmt(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0');
+}
+
+function pomUpdateUI() {
+  const d = document.getElementById('pom-display');
+  const m = document.getElementById('pom-mini-display');
+  const p = document.getElementById('pom-progress');
+  const c = document.getElementById('pom-ciclos');
+  const btn = document.getElementById('pom-btn-start');
+  const lbl = document.getElementById('pom-mode-label');
+  const mode = POM_MODES[pomMode];
+  if (d) d.textContent = pomFmt(pomRemaining);
+  if (m) m.textContent = pomFmt(pomRemaining);
+  if (p) { p.style.width = (pomRemaining / pomTotal * 100) + '%'; p.style.background = mode.color; }
+  if (c) c.textContent = '🍅 ' + pomCiclos + ' pomodoro' + (pomCiclos !== 1 ? 's' : '') + ' hoje';
+  if (btn) btn.textContent = pomRunning ? '⏸ Pausar' : '▶ ' + (pomRemaining < pomTotal ? 'Continuar' : 'Iniciar');
+  if (lbl) { lbl.textContent = mode.label; lbl.style.color = mode.color; }
+  // Update compact button ring
+  const toggleBtn = document.getElementById('pom-toggle-btn');
+  if (toggleBtn) toggleBtn.style.borderColor = pomRunning ? mode.color : 'var(--border)';
+}
+
+function pomSetMode(mode) {
+  pomStop();
+  pomMode = mode;
+  pomTotal = POM_MODES[mode].mins * 60;
+  pomRemaining = pomTotal;
+  // Update tab styles
+  ['foco','curta','longa'].forEach(m => {
+    const tab = document.getElementById('pom-tab-' + m);
+    if (!tab) return;
+    if (m === mode) {
+      tab.style.background = POM_MODES[m].color.replace(')', '-bg)').replace('var(--','var(--');
+      // simpler approach:
+      tab.style.background = m === 'foco' ? 'var(--gisella-bg)' : m === 'curta' ? 'var(--ok-bg)' : 'var(--leia-bg)';
+      tab.style.color = POM_MODES[m].color;
+      tab.style.border = 'none';
+      tab.style.fontWeight = '600';
+    } else {
+      tab.style.background = 'none';
+      tab.style.color = 'var(--text-soft)';
+      tab.style.border = '1px solid var(--border)';
+      tab.style.fontWeight = '400';
+    }
+  });
+  pomUpdateUI();
+}
+
+function pomToggle() {
+  if (pomRunning) {
+    pomStop();
+  } else {
+    pomRunning = true;
+    pomInterval = setInterval(() => {
+      pomRemaining--;
+      pomUpdateUI();
+      if (pomRemaining <= 0) {
+        pomStop();
+        pomFinish();
+      }
+    }, 1000);
+    pomUpdateUI();
+  }
+}
+
+function pomStop() {
+  pomRunning = false;
+  clearInterval(pomInterval);
+  pomInterval = null;
+  pomUpdateUI();
+}
+
+function pomReset() {
+  pomStop();
+  pomRemaining = pomTotal;
+  pomUpdateUI();
+}
+
+function pomFinish() {
+  if (pomMode === 'foco') {
+    pomCiclos++;
+    localStorage.setItem('pom-ciclos-' + new Date().toDateString(), pomCiclos);
+  }
+  // Notificação sonora simples
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.4);
+      osc.start(ctx.currentTime + i * 0.2);
+      osc.stop(ctx.currentTime + i * 0.2 + 0.4);
+    });
+  } catch(e) {}
+  // Auto-switch: foco -> pausa curta, pausas -> foco
+  setTimeout(() => {
+    if (pomMode === 'foco') pomSetMode('curta');
+    else pomSetMode('foco');
+    pomUpdateUI();
+  }, 500);
+}
+
+function pomToggleWidget() {
+  const exp = document.getElementById('pomodoro-expanded');
+  if (!exp) return;
+  const open = exp.style.display === 'none';
+  exp.style.display = open ? 'block' : 'none';
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); });
 
 /* ── HOME CARDS ── */
 function buildHomeCards() {
