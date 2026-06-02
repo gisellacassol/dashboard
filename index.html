@@ -2253,16 +2253,21 @@ async function loadGcalLeia() {
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
-    gcalLeiaCache = (data.items || []).map(ev => ({
-      title: ev.summary || '(sem título)',
-      start: ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date,
-      end:   ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date,
-      startTime: ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null,
-      endTime:   ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null,
-      description: ev.description || '',
-      link: ev.htmlLink || '',
-      empresa: 'leia',
-    }));
+    gcalLeiaCache = (data.items || []).map(ev => {
+      const title = (ev.summary && ev.summary.trim()) ? ev.summary.trim() : (ev.description ? ev.description.slice(0,30) : '(evento)');
+      const start = ev.start ? (ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date) : '';
+      const end   = ev.end   ? (ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date)   : start;
+      return {
+        title,
+        start,
+        end,
+        startTime: ev.start && ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null,
+        endTime:   ev.end   && ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null,
+        description: ev.description || '',
+        link: ev.htmlLink || '',
+        empresa: 'leia',
+      };
+    });
     // Injetar no calendário da Léia
     refreshCalendars();
     buildEventosList();
@@ -3574,13 +3579,10 @@ function buildTarefas() {
     const toggleFn = isEtapa ? `toggleEtapa(${isEtapa?'e._livroId':'0'},${isEtapa?'e._etapaIdx':'0'})` : `toggleTarefaArquivada(${isEtapa?0:'e.id'})`;
     return `<tr style="${isArquivada?'opacity:0.5;':''}">
       <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
-        <label style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:3px;">
-          <input type="checkbox" ${isArquivada?'checked':''}
+        <input type="checkbox" ${isArquivada?'checked':''}
             onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
-            style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;"
+            style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;"
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
-          ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
-        </label>
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
         <span>${e.titulo}</span>
@@ -3588,6 +3590,7 @@ function buildTarefas() {
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${!e._livroId?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
         ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:`<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`}
+        ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
       <td>
         ${empBadgesHtml(e.empresa)}
@@ -3611,24 +3614,23 @@ function buildTarefas() {
   const fimProxSemStr = fimProxSem.toISOString().slice(0,10);
   const todayStr2 = today.toISOString().slice(0,10);
 
-  const groups = {atrasado:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
+  // Atrasadas + hoje ficam no grupo "hoje"
+  const groups = {hoje:[], semana:[], proxSemana:[], proximas:[]};
   ativas.forEach(t=>{
-    if (!t.data) { groups.proximas.push(t); return; } // sem data vai em proximas
+    if (!t.data) { groups.proximas.push(t); return; }
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
-    if (diff < 0)                     groups.atrasado.push(t);
-    else if (diff === 0)              groups.hoje.push(t);
+    if (diff <= 0)                    groups.hoje.push(t);      // atrasadas e hoje juntas
     else if (t.data < fimSemAtualStr) groups.semana.push(t);
     else if (t.data < fimProxSemStr)  groups.proxSemana.push(t);
     else                              groups.proximas.push(t);
   });
 
-  // Arquivadas por grupo (mesmo critério de data)
-  const arqGroups = {atrasado:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
+  // Arquivadas por grupo
+  const arqGroups = {hoje:[], semana:[], proxSemana:[], proximas:[]};
   arquivadas.forEach(t=>{
     if (!t.data) { arqGroups.proximas.push(t); return; }
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
-    if (diff < 0)                     arqGroups.atrasado.push(t);
-    else if (diff === 0)              arqGroups.hoje.push(t);
+    if (diff <= 0)                    arqGroups.hoje.push(t);
     else if (t.data < fimSemAtualStr) arqGroups.semana.push(t);
     else if (t.data < fimProxSemStr)  arqGroups.proxSemana.push(t);
     else                              arqGroups.proximas.push(t);
@@ -3670,8 +3672,11 @@ function buildTarefas() {
     </div>`;
   }
 
-  let html = renderGroup('Atrasadas', groups.atrasado, 'var(--danger)', 'atrasado')
-    + renderGroup('Hoje', groups.hoje, 'var(--gisella)', 'hoje')
+  // Label dinâmico para "hoje" mostrando quantas estão atrasadas
+  const atrasadasHoje = groups.hoje.filter(t => t.data && t.data < todayStr2).length;
+  const labelHoje = atrasadasHoje > 0 ? `Hoje <span style="color:var(--danger);font-size:10px;">(${atrasadasHoje} atrasada${atrasadasHoje>1?'s':''})</span>` : 'Hoje';
+
+  let html = renderGroup(labelHoje, groups.hoje, 'var(--gisella)', 'hoje')
     + renderGroup('Esta semana', groups.semana, 'var(--warn)', 'semana')
     + renderGroupCollapsible('Próxima semana', groups.proxSemana, 'var(--text-mid)', 'proxSemana')
     + renderGroupCollapsible('Próximas', groups.proximas, 'var(--text-soft)', 'proximas');
@@ -4955,17 +4960,15 @@ function buildTarefasEmpresa(emp) {
     })() : 'var(--text-soft)';
     return `<tr style="${isArq?'opacity:0.5;':''}">
       <td style="width:44px;text-align:center;" onclick="event.stopPropagation();">
-        <label style="cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;gap:3px;">
-          <input type="checkbox" ${isArq?'checked':''}
+        <input type="checkbox" ${isArq?'checked':''}
             onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
-            style="accent-color:${cor};width:18px;height:18px;cursor:pointer;">
-          ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
-        </label>
+            style="accent-color:${cor};width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;">
       </td>
       <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
         ${e.titulo}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:''}
+        ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
       <td>${e.responsavel?`<span style="font-size:11px;padding:1px 6px;border-radius:10px;background:var(--bg);color:var(--text-mid);">${e.responsavel}</span>`:''}</td>
