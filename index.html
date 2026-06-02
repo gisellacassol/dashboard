@@ -417,22 +417,6 @@ tr:hover td { background: var(--bg); }
 }
 #undo-toast button:hover { background: rgba(255,255,255,0.15); }
 
-/* ── MOBILE NAV ── */
-function toggleMobileNav() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('mobile-nav-overlay');
-  sidebar.classList.toggle('mobile-open');
-  overlay.classList.toggle('visible');
-}
-function closeMobileNav() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('mobile-nav-overlay');
-  sidebar.classList.remove('mobile-open');
-  overlay.classList.remove('visible');
-}
-// Close nav when a page is selected on mobile
-const _origShowPage = typeof showPage === 'function' ? showPage : null;
-
 /* ── LOGIN ── */
 #login-screen {
   position:fixed;inset:0;background:var(--bg);z-index:99999;
@@ -496,15 +480,16 @@ const _origShowPage = typeof showPage === 'function' ? showPage : null;
   </div>
 </div>
 
-<div class="shell" id="app-shell" style="display:none;">
-<!-- Mobile nav overlay -->
-<div id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
-<!-- Hamburger button -->
-<button id="mobile-hamburger" onclick="toggleMobileNav()" style="display:none;position:fixed;top:12px;right:12px;z-index:501;width:42px;height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.1);flex-direction:column;gap:5px;padding:10px;">
+<!-- Mobile nav overlay (always in DOM) -->
+<div id="mobile-nav-overlay" onclick="closeMobileNav()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:499;"></div>
+<!-- Hamburger button (always in DOM, hidden until mobile+logged in) -->
+<button id="mobile-hamburger" onclick="toggleMobileNav()" style="display:none;position:fixed;top:12px;right:12px;z-index:501;width:42px;height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px;">
   <span style="display:block;width:20px;height:2px;background:var(--text);border-radius:2px;"></span>
   <span style="display:block;width:20px;height:2px;background:var(--text);border-radius:2px;"></span>
   <span style="display:block;width:20px;height:2px;background:var(--text);border-radius:2px;"></span>
 </button>
+
+<div class="shell" id="app-shell" style="display:none;">
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-name" onclick="showPage('visao', document.querySelector('.nav-item.active'))">Grupo Cassol</div>
@@ -2587,6 +2572,21 @@ const ETAPAS_REIMP = [
 ];
 
 /* ── NAV ── */
+/* ── MOBILE NAV ── */
+function toggleMobileNav() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  const isOpen = sidebar && sidebar.classList.contains('mobile-open');
+  if (sidebar) sidebar.classList.toggle('mobile-open');
+  if (overlay) overlay.style.display = isOpen ? 'none' : 'block';
+}
+function closeMobileNav() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  if (overlay) overlay.style.display = 'none';
+}
+
 function showPage(id, btn) {
   closeMobileNav();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -6066,6 +6066,17 @@ function checkSession() {
 function showApp(user, displayName) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
+  // Show hamburger on mobile
+  if (window.innerWidth <= 768) {
+    const hb = document.getElementById('mobile-hamburger');
+    if (hb) hb.style.display = 'flex';
+  }
+  window.addEventListener('resize', () => {
+    const hb = document.getElementById('mobile-hamburger');
+    if (!hb) return;
+    hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+    if (window.innerWidth > 768) closeMobileNav();
+  });
   // Mostrar nome do usuário logado no footer
   const footer = document.querySelector('.sidebar-footer');
   if (footer) {
