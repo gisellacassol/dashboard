@@ -407,11 +407,120 @@ tr:hover td { background: var(--bg); }
   <div class="page-header">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
       <div>
-        <div class="page-title">Visão Geral</div>
-        <div class="page-subtitle">Pulso das três empresas</div>
+        <div class="page-title">Grupo Cassol</div>
+        <div class="page-subtitle" id="visao-data-hoje"></div>
       </div>
-
     </div>
+  </div>
+
+  <!-- CARDS DAS 3 EMPRESAS -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2rem;" id="empresa-cards-row">
+
+    <!-- EDITORA CASSOL -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('editora', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('editora')))">
+      <div style="height:4px;background:var(--editora);"></div>
+      <div style="padding:1.1rem 1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--editora);display:inline-block;flex-shrink:0;"></span>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">Editora Cassol</span>
+          </div>
+          <span style="font-size:11px;color:var(--text-soft);">→</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Livros</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-livros">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-projetos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-conteudos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-tarefas">—</div>
+          </div>
+        </div>
+        <div id="home-editora-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
+      </div>
+    </div>
+
+    <!-- LÉIA CASSOL -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('leia', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('\'leia\'')))">
+      <div style="height:4px;background:var(--leia);"></div>
+      <div style="padding:1.1rem 1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--leia);display:inline-block;flex-shrink:0;"></span>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">Léia Cassol</span>
+          </div>
+          <span style="font-size:11px;color:var(--text-soft);">→</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Livros</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-livros">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-projetos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-conteudos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-tarefas">—</div>
+          </div>
+        </div>
+        <div id="home-leia-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
+      </div>
+    </div>
+
+    <!-- GC ESTRATÉGIAS -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('gisella', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('gisella')))">
+      <div style="height:4px;background:var(--gisella);"></div>
+      <div style="padding:1.1rem 1.2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;flex-shrink:0;"></span>
+            <span style="font-size:13px;font-weight:500;color:var(--text);">GC Estratégias</span>
+          </div>
+          <span style="font-size:11px;color:var(--text-soft);">→</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Mentoradas</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-mentees">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-projetos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-conteudos">—</div>
+          </div>
+          <div style="background:var(--bg);border-radius:8px;padding:8px 10px;">
+            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-tarefas">—</div>
+          </div>
+        </div>
+        <div id="home-gisella-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ALERTAS DE PRAZO -->
+  <div id="home-alertas" style="margin-bottom:2rem;display:none;">
+    <div class="section-title">⚠️ Atenção — prazos próximos</div>
+    <div id="home-alertas-lista" style="display:flex;flex-direction:column;gap:6px;"></div>
   </div>
 
   <div class="section">
@@ -925,6 +1034,22 @@ tr:hover td { background: var(--bg); }
           </select></div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+        <!-- COMENTÁRIOS -->
+        <div id="qa-comentarios-wrap" style="display:none;margin-top:4px;">
+          <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Comentários</div>
+          <div id="qa-comentarios-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:180px;overflow-y:auto;"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div style="flex:1;">
+              <select class="form-select" id="qa-comentario-autor" style="margin-bottom:6px;font-size:12px;">
+                <option value="Gisella">Gisella</option>
+                <option value="Milena">Milena</option>
+                <option value="Luiggi">Luiggi</option>
+              </select>
+              <textarea class="notes-area" id="qa-comentario-texto" placeholder="Escreva um comentário..." style="min-height:48px;font-size:13px;resize:none;"></textarea>
+            </div>
+            <button type="button" onclick="addComentarioTarefa()" style="background:var(--text);color:var(--surface);border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;height:48px;">Enviar</button>
+          </div>
+        </div>
       </div>
 
       <!-- EVENTO FIELDS -->
@@ -2081,25 +2206,21 @@ function save(key, val) {
 /* ── DATA ── */
 let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
 let mentees = load('gc-mentees', [
-  {id:1,name:'Ana C.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:2,name:'Bianca M.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
-  {id:3,name:'Carla F.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:4,name:'Diana S.',status:'sem contato',notes:'',sessions:[],tasks:[]},
-  {id:5,name:'Elisa L.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:6,name:'Fernanda M.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:7,name:'Gabriela R.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
-  {id:8,name:'Helena S.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:9,name:'Isabela S.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:10,name:'Julia L.',status:'aguardando',notes:'',sessions:[],tasks:[]},
-  {id:11,name:'Karen A.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:12,name:'Larissa B.',status:'indiv. pend.',notes:'',sessions:[],tasks:[]},
-  {id:13,name:'Mariana C.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:14,name:'Natalia F.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:15,name:'Olivia F.',status:'aguardando',notes:'',sessions:[],tasks:[]},
-  {id:16,name:'Patricia G.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:17,name:'Quintessa H.',status:'ok',notes:'',sessions:[],tasks:[]},
-  {id:18,name:'Renata S.',status:'sem contato',notes:'',sessions:[],tasks:[]},
-  {id:19,name:'Sofia T.',status:'ok',notes:'',sessions:[],tasks:[]}
+  {id:1,  name:'Dionysio Ofra',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1SGsDhwGmimnuiQk06NQqiS6bvi2HRwE3_VDAm85VAYc/edit?usp=sharing'},
+  {id:2,  name:'Ângela Basso',            status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1VpQVSkAmtufEFSTwG9mkHe9jsUfi0KEAGqDR9NmyGkU/edit?usp=sharing'},
+  {id:3,  name:'Hellen Quinta',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/10dKwyQVmCXfHBhlvB2uMSOPuW77mHDuyggP0sGypBXU/edit?usp=sharing'},
+  {id:4,  name:'Jacqueline Gisler',       status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1uHaDvfzAGTSUFSdT-sd4ptbL2kUQ0TffaBTMpSe2IDA/edit?usp=sharing'},
+  {id:5,  name:'Jessica Colvara Chacon', status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://drive.google.com/drive/folders/1VaNQTaLbvkg32k-oAQc2vI7BzUJzgvua?usp=sharing'},
+  {id:6,  name:'Juh Araujo',              status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/18QsOg5rRUF-uYampX0ZwhHArmENBtKQKYV_KX-RyeNc/edit?usp=sharing'},
+  {id:7,  name:'Lauren Vargas',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1wSn_Nb2P_6xHOXW4dDVMgKDizRFwGBzTN_wxDNSn5X4/edit?usp=sharing'},
+  {id:8,  name:'Liliana Madril',          status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1TeRxlkedAOhZTLTFiilRvEAL5Taa35zscKkWa5MJsA4/edit?usp=sharing'},
+  {id:9,  name:'Marilia Santos Ribeiro',  status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1jamtnbLHaV_0WG8nHAUajMfHiHxbzN6QWBKtWDs59RE/edit?usp=sharing'},
+  {id:10, name:'Martina Kirst',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1OjYYhf-Slk6fdgpzuYNpIh6gWSRseLi1xnzTWzZgeUg/edit?usp=sharing'},
+  {id:11, name:'Michele Melo',            status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1WT6gbvQ9hoznBGmFf1ItVe3TmdfF3PoPH4Lf-RI9B74/edit?usp=sharing'},
+  {id:12, name:'Nathiele Fagundes',       status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1p3_DLCevkLsYHTMmaJ7O90G0crY_v9sTdE9Mbn1i6iA/edit?usp=sharing'},
+  {id:13, name:'Priscila Cunha',          status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1UzZ4a9OQphe0hA62QZyfqQASbBYDv4UzYl_k-IL99wI/edit?usp=sharing'},
+  {id:14, name:'Regina Vieira',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/17DxYV8MinQJ5SYx1EoD8qqPvTK8C2Z2xuTBxrHX0hJI/edit?usp=sharing'},
+  {id:15, name:'Tetê Amodeo',             status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/17btvt710XxKuOQx4Ezk1ocyZM5CHFJKzqXdS3mMrXfY/edit?usp=sharing'}
 ]);
 let livros = load('gc-livros', []);
 let conteudos = load('gc-conteudos', []);
@@ -2368,6 +2489,9 @@ function openQuickAdd() {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   updateQaFields();
+  // Esconder comentários ao criar nova tarefa
+  const comWrapNew = document.getElementById('qa-comentarios-wrap');
+  if (comWrapNew) comWrapNew.style.display = 'none';
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
 }
@@ -2389,8 +2513,64 @@ function openEditEvent(id) {
   document.getElementById('qa-hora-fim').value = ev.horaFim || '';
   document.getElementById('qa-responsavel').value = ev.responsavel || '';
   document.getElementById('qa-observacao').value = ev.observacao || '';
+  // Mostrar e popular comentários
+  const comWrap = document.getElementById('qa-comentarios-wrap');
+  if (comWrap) {
+    comWrap.style.display = 'block';
+    renderComentariosTarefa(ev);
+    document.getElementById('qa-comentario-texto').value = '';
+  }
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
+}
+
+/* ── COMENTÁRIOS DE TAREFA ── */
+function renderComentariosTarefa(ev) {
+  const lista = document.getElementById('qa-comentarios-lista');
+  if (!lista) return;
+  const comentarios = ev.comentarios || [];
+  if (comentarios.length === 0) {
+    lista.innerHTML = '<div style="font-size:12px;color:var(--text-soft);text-align:center;padding:8px 0;">Nenhum comentário ainda.</div>';
+    return;
+  }
+  const cores = { Gisella: 'var(--gisella)', Milena: 'var(--leia)', Luiggi: 'var(--editora)' };
+  lista.innerHTML = comentarios.map((c, i) => `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:11px;font-weight:600;color:${cores[c.autor]||'var(--text-mid)'};">${c.autor}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--text-soft);">${c.data}</span>
+          <button onclick="deleteComentarioTarefa(${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0;line-height:1;" title="Excluir">x</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.5;">${c.texto}</div>
+    </div>`).join('');
+  lista.scrollTop = lista.scrollHeight;
+}
+
+function addComentarioTarefa() {
+  if (!editingEventId) return;
+  const ev = events.find(x => x.id === editingEventId);
+  if (!ev) return;
+  const texto = (document.getElementById('qa-comentario-texto').value || '').trim();
+  if (!texto) { document.getElementById('qa-comentario-texto').focus(); return; }
+  const autor = document.getElementById('qa-comentario-autor').value || 'Gisella';
+  const agora = new Date();
+  const data = agora.getDate().toString().padStart(2,'0') + '/' + (agora.getMonth()+1).toString().padStart(2,'0') + ' ' + agora.getHours().toString().padStart(2,'0') + ':' + agora.getMinutes().toString().padStart(2,'0');
+  if (!ev.comentarios) ev.comentarios = [];
+  ev.comentarios.push({ autor, texto, data });
+  save('gc-events', events);
+  document.getElementById('qa-comentario-texto').value = '';
+  renderComentariosTarefa(ev);
+}
+
+function deleteComentarioTarefa(idx) {
+  if (!editingEventId) return;
+  const ev = events.find(x => x.id === editingEventId);
+  if (!ev || !ev.comentarios) return;
+  ev.comentarios.splice(idx, 1);
+  save('gc-events', events);
+  renderComentariosTarefa(ev);
 }
 
 function deleteEventDirect(id) {
@@ -4529,8 +4709,90 @@ function openGcalEvent(ev) {
 
 /* ---- FIM GOOGLE CALENDAR ---- */
 
-/* ── INIT ── */
-window.gcalEventsCache = [];
+/* ── HOME CARDS ── */
+function buildHomeCards() {
+  // Data de hoje
+  const hoje = new Date();
+  const diasSemana = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const dataEl = document.getElementById('visao-data-hoje');
+  if (dataEl) dataEl.textContent = `${diasSemana[hoje.getDay()]}, ${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}`;
+
+  const empresas = ['editora','leia','gisella'];
+  const hoje_str = hoje.toISOString().slice(0,10);
+  const em7dias = new Date(hoje.getTime() + 7*24*60*60*1000).toISOString().slice(0,10);
+
+  let alertas = [];
+
+  empresas.forEach(emp => {
+    // Livros ativos
+    const livrosEmp = (livros||[]).filter(l => (l.empresa||'').split(',').includes(emp) && !((l.etapas||[]).length > 0 && l.etapas.every(e=>e.feito)));
+    // Projetos ativos
+    const projetosEmp = (projetos||[]).filter(p => (p.empresa||'')=== emp && p.status !== 'finalizado');
+    // Conteudos ativos
+    const conteudosEmp = (conteudos||[]).filter(c => (c.empresa||'')=== emp && !c.archived && c.status !== 'postado');
+    // Tarefas abertas (eventos do tipo tarefa)
+    const tarefasEmp = (events||[]).filter(e => (e.empresa||'')=== emp && !e.done && e.tipo !== 'evento');
+    // Mentoradas (só gisella)
+    const menteesCount = (mentees||[]).length;
+
+    // Preencher métricas
+    if (emp === 'gisella') {
+      const el = document.getElementById('home-gisella-mentees');
+      if (el) el.textContent = menteesCount;
+    } else {
+      const el = document.getElementById(`home-${emp}-livros`);
+      if (el) el.textContent = livrosEmp.length;
+    }
+    const pEl = document.getElementById(`home-${emp}-projetos`);
+    if (pEl) pEl.textContent = projetosEmp.length;
+    const cEl = document.getElementById(`home-${emp}-conteudos`);
+    if (cEl) cEl.textContent = conteudosEmp.length;
+    const tEl = document.getElementById(`home-${emp}-tarefas`);
+    if (tEl) tEl.textContent = tarefasEmp.length;
+
+    // Urgentes: tarefas vencidas ou vencendo em 2 dias
+    const urgentes = tarefasEmp.filter(e => e.date && e.date <= em7dias);
+    const urgenteEl = document.getElementById(`home-${emp}-urgente`);
+    if (urgenteEl) {
+      if (urgentes.length > 0) {
+        const vencidas = urgentes.filter(e => e.date < hoje_str).length;
+        const proximas = urgentes.filter(e => e.date >= hoje_str).length;
+        let txt = [];
+        if (vencidas > 0) txt.push(`<span style="color:var(--danger);">⚠ ${vencidas} vencida${vencidas>1?'s':''}</span>`);
+        if (proximas > 0) txt.push(`<span style="color:var(--warn);">⏰ ${proximas} nos próximos 7 dias</span>`);
+        urgenteEl.innerHTML = txt.join(' · ');
+      } else {
+        urgenteEl.innerHTML = '<span style="color:var(--ok);">✓ Em dia</span>';
+      }
+    }
+
+    // Coletar alertas globais
+    tarefasEmp.filter(e => e.date && e.date < hoje_str).forEach(e => {
+      alertas.push({ emp, texto: e.titulo||e.title||'Tarefa', data: e.date });
+    });
+  });
+
+  // Alertas de prazo
+  const alertasEl = document.getElementById('home-alertas');
+  const alertasLista = document.getElementById('home-alertas-lista');
+  if (alertas.length > 0 && alertasEl && alertasLista) {
+    alertasEl.style.display = 'block';
+    const cores = { editora: 'var(--editora)', leia: 'var(--leia)', gisella: 'var(--gisella)' };
+    const nomes = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC Estratégias' };
+    alertasLista.innerHTML = alertas.slice(0,5).map(a => `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--danger-bg);border:1px solid rgba(240,112,112,0.2);border-radius:8px;padding:8px 12px;font-size:13px;">
+        <span style="width:6px;height:6px;border-radius:50%;background:${cores[a.emp]};flex-shrink:0;"></span>
+        <span style="color:${cores[a.emp]};font-size:11px;font-weight:500;">${nomes[a.emp]}</span>
+        <span style="flex:1;">${a.texto}</span>
+        <span style="color:var(--danger);font-size:11px;">${a.data}</span>
+      </div>`).join('');
+  } else if (alertasEl) {
+    alertasEl.style.display = 'none';
+  }
+}
+
+
 
 function initApp(cloudData) {
   // Se vieram dados da nuvem, sobrescrever variáveis locais
@@ -4568,6 +4830,7 @@ function initApp(cloudData) {
   buildPrioridades();
   buildEventosList();
   loadGcal();
+  buildHomeCards();
 
   // Indicador de sync
   const ind = document.getElementById('sync-indicator');
