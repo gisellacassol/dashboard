@@ -2253,6 +2253,7 @@ async function loadGcalLeia() {
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
+    console.log('LEIA GCAL raw items:', JSON.stringify((data.items||[]).slice(0,3)));
     gcalLeiaCache = (data.items || []).map(ev => {
       const title = (ev.summary && ev.summary.trim()) ? ev.summary.trim() : (ev.description ? ev.description.slice(0,30) : '(evento)');
       const start = ev.start ? (ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date) : '';
