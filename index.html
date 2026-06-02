@@ -1020,10 +1020,13 @@ tr:hover td { background: var(--bg); }
     <div id="pom-ciclos" style="font-size:10px;color:var(--text-soft);margin-top:8px;">🍅 0 pomodoros hoje</div>
   </div>
   <!-- Botão compacto -->
-  <button id="pom-toggle-btn" onclick="pomToggleWidget()" title="Pomodoro" style="width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;transition:all 0.15s;">
-    <span style="font-size:18px;line-height:1;">🍅</span>
-    <span id="pom-mini-display" style="font-size:9px;font-weight:600;color:var(--text-soft);font-family:'DM Sans',sans-serif;line-height:1;">25:00</span>
-  </button>
+  <div style="position:relative;width:52px;height:52px;" onclick="pomHandleClick(event)" ondblclick="pomHandleDouble(event)" title="Clique para pausar · Duplo clique para abrir">
+    <canvas id="pom-ring-canvas" width="52" height="52" style="position:absolute;top:0;left:0;border-radius:50%;"></canvas>
+    <button id="pom-toggle-btn" style="position:absolute;top:3px;left:3px;width:46px;height:46px;border-radius:50%;background:var(--surface);border:none;font-size:20px;cursor:pointer;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;">
+      <span style="font-size:18px;line-height:1;">🍅</span>
+      <span id="pom-mini-display" style="font-size:9px;font-weight:600;color:var(--text-soft);font-family:'DM Sans',sans-serif;line-height:1;">25:00</span>
+    </button>
+  </div>
 </div>
 
 <button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
@@ -4771,6 +4774,44 @@ function pomFmt(s) {
   return m.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0');
 }
 
+function pomDrawRing() {
+  const canvas = document.getElementById('pom-ring-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = 52;
+  const cx = size / 2, cy = size / 2, r = 24;
+  ctx.clearRect(0, 0, size, size);
+  const mode = POM_MODES[pomMode];
+  // Resolve CSS color variable to actual color
+  const colorMap = { 'var(--gisella)': '#c0396b', 'var(--ok)': '#1A6B4A', 'var(--leia)': '#7c3aed' };
+  const color = colorMap[mode.color] || '#c0396b';
+  if (!pomRunning && pomRemaining === pomTotal) {
+    // idle — thin gray ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(168,147,127,0.25)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    return;
+  }
+  // Background track
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(168,147,127,0.15)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  // Progress arc — starts full, shrinks clockwise (remaining time, clockwise)
+  const pct = pomRemaining / pomTotal;
+  const startAngle = -Math.PI / 2;
+  const endAngle = startAngle + (Math.PI * 2 * pct);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startAngle, endAngle, false);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+}
+
 function pomUpdateUI() {
   const d = document.getElementById('pom-display');
   const m = document.getElementById('pom-mini-display');
@@ -4780,14 +4821,14 @@ function pomUpdateUI() {
   const lbl = document.getElementById('pom-mode-label');
   const mode = POM_MODES[pomMode];
   if (d) d.textContent = pomFmt(pomRemaining);
-  if (m) m.textContent = pomFmt(pomRemaining);
+  if (m) m.textContent = !pomRunning && pomRemaining < pomTotal ? '⏸' : pomFmt(pomRemaining);
   if (p) { p.style.width = (pomRemaining / pomTotal * 100) + '%'; p.style.background = mode.color; }
   if (c) c.textContent = '🍅 ' + pomCiclos + ' pomodoro' + (pomCiclos !== 1 ? 's' : '') + ' hoje';
   if (btn) btn.textContent = pomRunning ? '⏸ Pausar' : '▶ ' + (pomRemaining < pomTotal ? 'Continuar' : 'Iniciar');
   if (lbl) { lbl.textContent = mode.label; lbl.style.color = mode.color; }
   // Update compact button ring
   const toggleBtn = document.getElementById('pom-toggle-btn');
-  if (toggleBtn) { toggleBtn.style.borderColor = pomRunning ? mode.color : 'var(--border)'; toggleBtn.style.borderWidth = pomRunning ? '3px' : '1px'; }
+  pomDrawRing();
 }
 
 function pomSetMode(mode) {
@@ -4874,6 +4915,21 @@ function pomFinish() {
   }, 500);
 }
 
+let _pomClickTimer = null;
+function pomHandleClick(e) {
+  // Single click: start/pause. Use a short delay to distinguish from dblclick.
+  if (_pomClickTimer) return;
+  _pomClickTimer = setTimeout(() => {
+    _pomClickTimer = null;
+    pomToggle();
+  }, 200);
+}
+function pomHandleDouble(e) {
+  // Double click: cancel the pending single-click and open/close widget
+  if (_pomClickTimer) { clearTimeout(_pomClickTimer); _pomClickTimer = null; }
+  pomToggleWidget();
+}
+
 function pomToggleWidget() {
   const exp = document.getElementById('pomodoro-expanded');
   if (!exp) return;
@@ -4882,7 +4938,7 @@ function pomToggleWidget() {
 }
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); });
+document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); pomDrawRing(); });
 
 /* ── HOME CARDS ── */
 function buildHomeCards() {
