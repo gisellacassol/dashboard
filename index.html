@@ -380,8 +380,8 @@ tr:hover td { background: var(--bg); }
   <div class="nav-section">
     <div class="nav-label">Sessões</div>
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
-    <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
     <button class="nav-item" onclick="showPage('conteudo-menu',this)"><span style="font-size:13px;">✍</span> Conteúdo</button>
+    <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
     <button class="nav-item" onclick="showPage('projetos',this)"><span style="font-size:13px;">◆</span> Projetos</button>
     <button class="nav-item" onclick="showPage('livros',this)"><span style="font-size:13px;">📖</span> Livros</button>
   </div>
@@ -573,16 +573,16 @@ tr:hover td { background: var(--bg); }
     <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-editora"></div>
   </div>
+  <div class="section" id="section-tarefas-editora">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-emp-editora').checked=true;},50)">+ nova tarefa</button>
+    </div>
+    <div id="tarefas-empresa-editora"></div>
+  </div>
   <div class="section">
     <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-editora"></tbody></table></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddLivro('editora')">+ novo livro</button>
-    </div>
-    <div id="livros-editora"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -591,6 +591,13 @@ tr:hover td { background: var(--bg); }
     <div id="projetos-editora"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('editora')"><span id="parq-arrow-editora">▸</span> Arquivados (<span id="parq-count-editora">0</span>)</button>
     <div id="projetos-arquivados-editora" style="display:none;margin-top:8px;"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddLivro('editora')">+ novo livro</button>
+    </div>
+    <div id="livros-editora"></div>
   </div>
 </div>
 
@@ -610,16 +617,16 @@ tr:hover td { background: var(--bg); }
     <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-leia"></div>
   </div>
+  <div class="section" id="section-tarefas-leia">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-emp-leia').checked=true;},50)">+ nova tarefa</button>
+    </div>
+    <div id="tarefas-empresa-leia"></div>
+  </div>
   <div class="section">
     <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-leia"></tbody></table></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddLivro('leia')">+ novo livro</button>
-    </div>
-    <div id="livros-leia"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -628,6 +635,13 @@ tr:hover td { background: var(--bg); }
     <div id="projetos-leia"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('leia')"><span id="parq-arrow-leia">▸</span> Arquivados (<span id="parq-count-leia">0</span>)</button>
     <div id="projetos-arquivados-leia" style="display:none;margin-top:8px;"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddLivro('leia')">+ novo livro</button>
+    </div>
+    <div id="livros-leia"></div>
   </div>
 </div>
 
@@ -647,6 +661,13 @@ tr:hover td { background: var(--bg); }
     <div class="section-title">Calendário</div>
     <div class="cal-wrap" id="cal-gisella"></div>
   </div>
+  <div class="section" id="section-tarefas-gisella">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-emp-gisella').checked=true;},50)">+ nova tarefa</button>
+    </div>
+    <div id="tarefas-empresa-gisella"></div>
+  </div>
   <div class="section">
     <div class="section-title">Criação de conteúdo</div>
     <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-gisella"></tbody></table></div>
@@ -655,6 +676,14 @@ tr:hover td { background: var(--bg); }
     <div class="section-title">Plano Diretor · mentoradas</div>
     <div id="mentee-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
     <button class="add-btn" onclick="openAddMentee()">+ cadastrar mentorada</button>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Projetos</div>
+    </div>
+    <div id="projetos-gisella"></div>
+    <button class="archived-toggle" onclick="toggleProjetosArquivados('gisella')"><span id="parq-arrow-gisella">▸</span> Arquivados (<span id="parq-count-gisella">0</span>)</button>
+    <div id="projetos-arquivados-gisella" style="display:none;margin-top:8px;"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -673,14 +702,6 @@ tr:hover td { background: var(--bg); }
       <div class="steira-item steira-clickable" onclick="openSteira('Workshop avulso')"><span>Workshop avulso</span><span class="steira-arrow">›</span></div>
     </div>
     <button class="add-btn" onclick="addSteiraItem()">+ adicionar produto</button>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos</div>
-    </div>
-    <div id="projetos-gisella"></div>
-    <button class="archived-toggle" onclick="toggleProjetosArquivados('gisella')"><span id="parq-arrow-gisella">▸</span> Arquivados (<span id="parq-count-gisella">0</span>)</button>
-    <div id="projetos-arquivados-gisella" style="display:none;margin-top:8px;"></div>
   </div>
 </div>
 
@@ -2308,6 +2329,8 @@ function showPage(id, btn) {
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
   if (id === 'visao') { buildPrioridades(); }
+  if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
+  if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
   if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks();
 renderColabFixedTasks('milena');
 renderColabFixedTasks('luiggi');
@@ -3552,6 +3575,7 @@ function buildTarefas() {
     + renderGroup('Próximas',groups.proximas,'var(--text-soft)')
     + renderGroup('Sem data',groups.semData,'var(--text-soft)');
 
+  ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   // Arquivadas section
   if (arquivadas.length > 0) {
     html += `<div style="margin-top:1.5rem;">
@@ -4755,6 +4779,84 @@ function openGcalEvent(ev) {
 /* ---- FIM GOOGLE CALENDAR ---- */
 
 
+
+/* ── TAREFAS POR EMPRESA ── */
+function buildTarefasEmpresa(emp) {
+  const el = document.getElementById('tarefas-empresa-' + emp);
+  if (!el) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const etapaEvents = [];
+  livros.forEach(l => {
+    (l.etapas||[]).forEach((e,i) => {
+      if (!(l.empresa||'').split(',').includes(emp)) return;
+      etapaEvents.push({
+        id: `livro-${l.id}-${i}`, _livroId: l.id, _etapaIdx: i,
+        titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa,
+        data: e.prazo||'', responsavel: e.resp||'',
+        arquivada: e.feito, tipo: 'tarefa',
+      });
+    });
+  });
+
+  const ativas = [
+    ...events.filter(e => !e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
+    ...etapaEvents.filter(e => !e.arquivada)
+  ];
+  const arquivadas = [
+    ...events.filter(e => e.arquivada && e.tipo==='tarefa' && (e.empresa||'').split(',').includes(emp)),
+    ...etapaEvents.filter(e => e.arquivada)
+  ];
+
+  const cor = emp==='editora' ? 'var(--editora)' : emp==='leia' ? 'var(--leia)' : 'var(--gisella)';
+
+  function tarefaRowEmp(e, isArq) {
+    const prazoColor = !isArq && e.data ? (() => {
+      const diff = Math.round((new Date(e.data+'T00:00:00')-today)/86400000);
+      return diff<0 ? 'var(--danger)' : diff===0 ? cor : diff<=7 ? 'var(--warn)' : 'var(--text-soft)';
+    })() : 'var(--text-soft)';
+    return `<tr style="${isArq?'opacity:0.5;':''}">
+      <td style="width:32px;" onclick="event.stopPropagation();">
+        <input type="checkbox" ${isArq?'checked':''}
+          onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
+          style="accent-color:${cor};width:14px;height:14px;cursor:pointer;">
+      </td>
+      <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
+        ${e.titulo}
+        ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
+        ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:''}
+      </td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
+      <td>${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;background:var(--bg);color:var(--text-mid);">${e.responsavel}</span>`:''}</td>
+    </tr>`;
+  }
+
+  if (ativas.length===0 && arquivadas.length===0) {
+    el.innerHTML='<div style="padding:1rem 0;color:var(--text-soft);font-size:13px;">Nenhuma tarefa ainda.</div>';
+    return;
+  }
+
+  ativas.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  let html = `<div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Prazo</th><th>Responsável</th></tr></thead><tbody>${ativas.map(t=>tarefaRowEmp(t,false)).join('')}</tbody></table></div>`;
+
+  if (arquivadas.length > 0) {
+    html += `<button class="archived-toggle" onclick="toggleTarefasEmpArq('${emp}')"><span id="tarq-emp-arrow-${emp}">▸</span> Concluídas (${arquivadas.length})</button>
+    <div id="tarq-emp-arq-${emp}" style="display:none;margin-top:6px;">
+      <div class="table-wrap"><table><thead><tr><th style="width:32px;"></th><th>Tarefa</th><th>Prazo</th><th>Responsável</th></tr></thead><tbody>${arquivadas.map(t=>tarefaRowEmp(t,true)).join('')}</tbody></table></div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function toggleTarefasEmpArq(emp) {
+  const el = document.getElementById('tarq-emp-arq-' + emp);
+  const arrow = document.getElementById('tarq-emp-arrow-' + emp);
+  if (!el) return;
+  const open = el.style.display === 'none';
+  el.style.display = open ? 'block' : 'none';
+  if (arrow) arrow.textContent = open ? '▾' : '▸';
+}
+
 /* ── POMODORO ── */
 const POM_MODES = {
   foco:  { label: 'Foco',       mins: 25, color: 'var(--gisella)' },
@@ -5032,7 +5134,7 @@ function initApp(cloudData) {
     if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
     if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
     if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
-    if (cloudData['gc-mentees'])     { mentees     = cloudData['gc-mentees'];     localStorage.setItem('gc-mentees',     JSON.stringify(mentees)); }
+    if (cloudData['gc-mentees'] && cloudData['gc-mentees'].length > 0) { mentees = cloudData['gc-mentees']; localStorage.setItem('gc-mentees', JSON.stringify(mentees)); } else if (!cloudData['gc-mentees']) { window.fbSave('gc-mentees', mentees); }
     if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
     if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
     if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
@@ -5061,7 +5163,9 @@ function initApp(cloudData) {
   buildPrioridades();
   buildEventosList();
   loadGcal();
+  loadGcalLeia();
   buildHomeCards();
+  ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
 
   // Indicador de sync
   const ind = document.getElementById('sync-indicator');
