@@ -882,8 +882,16 @@ tr:hover td { background: var(--bg); }
   </div>
 
   <div class="section">
-    <div class="section-title">Calendário</div>
-    <div class="cal-wrap" id="cal-conteudo"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Calendário</div>
+      <div style="display:flex;gap:4px;">
+        <button id="btn-cal-semana" onclick="setConteudoCalView('semana')" class="filter-btn active" style="font-size:11px;padding:4px 12px;">Semana</button>
+        <button id="btn-cal-mes" onclick="setConteudoCalView('mes')" class="filter-btn" style="font-size:11px;padding:4px 12px;">Mês</button>
+      </div>
+    </div>
+    <div id="cal-conteudo-wrap">
+      <div id="cal-conteudo-semana"></div>
+    </div>
   </div>
   <div class="section">
     <div class="section-title">Todos os conteúdos</div>
@@ -2574,6 +2582,87 @@ const ETAPAS_REIMP = [
 ];
 
 /* ── NAV ── */
+
+/* ── CALENDÁRIO SEMANAL CONTEÚDO ── */
+let _conteudoCalView = 'semana';
+let _conteudoWeekOffset = 0;
+
+function setConteudoCalView(view) {
+  _conteudoCalView = view;
+  const wrap = document.getElementById('cal-conteudo-wrap');
+  if (wrap) wrap.dataset.view = view;
+  document.getElementById('btn-cal-semana').classList.toggle('active', view === 'semana');
+  document.getElementById('btn-cal-mes').classList.toggle('active', view === 'mes');
+  if (view === 'semana') {
+    buildConteudoCalSemana();
+  } else {
+    const wrap2 = document.getElementById('cal-conteudo-wrap');
+    if (wrap2) wrap2.innerHTML = '<div class="cal-wrap" id="cal-conteudo"></div>';
+    buildCalendar('cal-conteudo', getFilter('conteudo-menu'));
+  }
+}
+
+function buildConteudoCalSemana() {
+  const wrap = document.getElementById('cal-conteudo-wrap');
+  if (!wrap) return;
+  wrap.dataset.view = 'semana';
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - hoje.getDay() + (_conteudoWeekOffset * 7));
+  const dias = Array.from({length:7}, (_,i) => {
+    const d = new Date(inicioSemana);
+    d.setDate(inicioSemana.getDate() + i);
+    return d;
+  });
+
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dows = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  const filter = getFilter('conteudo-menu');
+
+  const inicioStr = dias[0].toISOString().slice(0,10);
+  const fimStr = dias[6].toISOString().slice(0,10);
+  const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
+
+  let html = `<div class="cal-header">
+    <button class="cal-nav" onclick="_conteudoWeekOffset--;buildConteudoCalSemana()">‹</button>
+    <div class="cal-month">${label}</div>
+    <button class="cal-nav" onclick="_conteudoWeekOffset++;buildConteudoCalSemana()">›</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">`;
+
+  dias.forEach((dia, idx) => {
+    const ds = dia.toISOString().slice(0,10);
+    const isToday = ds === hoje.toISOString().slice(0,10);
+    const dayConts = conteudos.filter(c =>
+      !c.done && c.dataPost === ds &&
+      (filter === 'all' || (c.empresa||'') === filter)
+    );
+    const dayProds = conteudos.filter(c =>
+      !c.done && c.dataProd === ds &&
+      (filter === 'all' || (c.empresa||'') === filter)
+    );
+
+    html += `<div style="background:var(--bg);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};${isToday?'background:var(--gisella-bg);':''}">
+      <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
+      <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
+
+    dayProds.forEach(c => {
+      const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
+      html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}20;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="Produção: ${c.nome}">✍ ${c.nome}</div>`;
+    });
+    dayConts.forEach(c => {
+      const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
+      html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}15;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${cor};" title="Postagem: ${c.nome}">📤 ${c.nome}</div>`;
+    });
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
 /* ── MOBILE NAV ── */
 function toggleMobileNav() {
   const sidebar = document.querySelector('.sidebar');
@@ -2605,7 +2694,7 @@ function showPage(id, btn) {
   if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
   if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); }
   if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); renderNotas('luiggi'); }
-  if (id === 'conteudo-menu') { buildCalendar('cal-conteudo', 'all'); }
+  if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
   if (id === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
 }
