@@ -1367,6 +1367,7 @@ tr:hover td { background: var(--bg); }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group"><label class="form-label">Data de produção</label><input class="form-input" id="qa-c-dataprod" type="date"></div>
           <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="qa-c-datapost" type="date"></div>
+          <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="qa-c-hora" type="time"></div>
         </div>
         <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
         <div class="form-group"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
@@ -1543,9 +1544,10 @@ tr:hover td { background: var(--bg); }
         <div class="form-group"><label class="form-label">Data de produção</label><input class="form-input" id="mc-dataprod" type="date"></div>
         <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="mc-datapost" type="date"></div>
         <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="mc-hora" type="time"></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link do portal</label><input class="form-input" id="mc-link" type="url" placeholder="https://..."></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link</label><input class="form-input" id="mc-link" type="url" placeholder="https://..."></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Copy</label><textarea class="notes-area" id="mc-copy" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Legenda</label><textarea class="notes-area" id="mc-legenda" style="min-height:70px;"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Observação</label><textarea class="notes-area" id="mc-observacao" style="min-height:50px;"></textarea></div>
       </div>
       <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-conteudo')">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
     </form>
@@ -2759,11 +2761,11 @@ function showPage(id, btn) {
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(countMentoriasmes, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
-  if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); }
-  if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); renderNotas('luiggi'); }
+  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
+  if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); setTimeout(() => renderNotas('milena'), 300); }
+  if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); renderNotas('luiggi'); setTimeout(() => renderNotas('luiggi'), 300); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
-  if (id === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
+  if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
 }
 
@@ -2879,7 +2881,10 @@ function buildCalendar(id, filter) {
       ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'') === _calFilter))
       : [];
     const allEvents = showEventos ? [...events, ...gcalEventsNative] : [];
+    const _evFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
     const dayEvs = showEventos ? allEvents.filter(e => {
+      // Apply empresa filter for eventos calendar
+      if (id === 'cal-eventos' && _evFilter !== 'all' && !(e.empresa||'').split(',').includes(_evFilter)) return false;
       if (e.tipo !== 'evento' && e.tipo !== undefined && e.tipo !== null && e.tipo !== '') {
         if (id === 'cal-eventos') return false;
       }
@@ -2982,7 +2987,7 @@ function openQuickAdd() {
   ['editora','leia','gisella'].forEach(e => { const cb = document.getElementById('qa-l-emp-'+e); if(cb) cb.checked = false; });
   const lcb = document.getElementById('qa-l-lancamento'); if(lcb) lcb.value = '';
   ['qa-prazo','qa-evento-inicio','qa-hora-inicio','qa-data-fim','qa-hora-fim',
-   'qa-proj-inicio','qa-proj-fim','qa-c-dataprod','qa-c-datapost','qa-c-link'].forEach(id => {
+   'qa-proj-inicio','qa-proj-fim','qa-c-dataprod','qa-c-datapost','qa-c-hora','qa-c-link'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   ['qa-observacao','qa-observacao-evento','qa-observacao-projeto','qa-observacao-conteudo',
@@ -3202,7 +3207,7 @@ function submitQuickAdd() {
       rede: getQaVal('qa-c-rede'), tipo: getQaVal('qa-c-tipo'),
       status: getQaVal('qa-c-status'), responsavel: getQaVal('qa-responsavel-conteudo'),
       dataProd: getQaVal('qa-c-dataprod'), dataPost: getQaVal('qa-c-datapost'),
-      link: getQaVal('qa-c-link'), copy: getQaVal('qa-c-copy'),
+      hora: getQaVal('qa-c-hora'), link: getQaVal('qa-c-link'), copy: getQaVal('qa-c-copy'),
       legenda: getQaVal('qa-c-legenda'), observacao: getQaVal('qa-observacao-conteudo'),
     };
     if (editingEventId) {
@@ -3827,6 +3832,7 @@ function openNewConteudo() {
   document.getElementById('mc-dataprod').value='';
   document.getElementById('mc-datapost').value='';
   document.getElementById('mc-hora').value='';
+  document.getElementById('mc-observacao').value='';
   openModal('modal-conteudo');
   setTimeout(()=>document.getElementById('mc-nome').focus(),50);
 }
@@ -3847,6 +3853,7 @@ function openConteudo(id) {
   document.getElementById('mc-dataprod').value=c.dataProd||'';
   document.getElementById('mc-datapost').value=c.dataPost||'';
   document.getElementById('mc-hora').value=c.hora||'';
+  document.getElementById('mc-observacao').value=c.observacao||'';
   document.getElementById('mc-link').value=c.link||'';
   document.getElementById('mc-copy').value=c.copy||'';
   document.getElementById('mc-legenda').value=c.legenda||'';
@@ -3856,7 +3863,7 @@ function openConteudo(id) {
 function saveConteudo() {
   const nome = document.getElementById('mc-nome').value.trim();
   if (!nome) { document.getElementById('mc-nome').focus(); return; }
-  const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value};
+  const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
   if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
   else conteudos.push({id:Date.now(), done:false, ...data});
   save('gc-conteudos',conteudos); renderConteudos(); closeModal('modal-conteudo');
@@ -3918,7 +3925,7 @@ function saveSteira() {
   const linkSpan = document.getElementById('steira-link-' + currentSteiraName);
   if (linkSpan) {
     const lnk = steiraData[currentSteiraName].link;
-    if (lnk) { linkSpan.textContent = '🔗 portal'; linkSpan.style.display='inline'; }
+    if (lnk) { linkSpan.textContent = '🔗 link'; linkSpan.style.display='inline'; }
     else { linkSpan.style.display='none'; }
   }
   closeModal('modal-steira');
@@ -4157,7 +4164,7 @@ function setFilter(pageId, empresa, btn) {
   if (btn) btn.classList.add('active');
   // Rebuild relevant section
   if (pageId === 'tarefas') buildTarefas();
-  if (pageId === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
+  if (pageId === 'eventos') { buildCalendar('cal-eventos', empresa); buildEventosList(); }
   if (pageId === 'conteudo-menu') {
     renderConteudos();
     const _wrap = document.getElementById('cal-conteudo-wrap');
@@ -4554,16 +4561,8 @@ function buildColabTarefas() {
     const ativas = tasks.filter(t => !t.arquivada);
     const arquivadas = tasks.filter(t => t.arquivada);
 
-    // Aplicar ordem manual se existir; fallback: atrasadas → hoje → amanhã → futuras → sem data
-    const ordem = colabOrdem[colabKey] || [];
-    const todayStr = today.toISOString().slice(0,10);
+    // Ordenar: atrasadas → hoje → amanhã → futuras → sem data
     ativas.sort((a,b) => {
-      const ia = ordem.indexOf(a.id);
-      const ib = ordem.indexOf(b.id);
-      if (ia !== -1 && ib !== -1) return ia - ib;
-      if (ia !== -1) return -1;
-      if (ib !== -1) return 1;
-      // Sem ordem manual: sort por data (sem data vai pro fim)
       const da = a.data || '9999-99-99';
       const db = b.data || '9999-99-99';
       return da.localeCompare(db);
@@ -5597,7 +5596,11 @@ function saveNotas(colab, notas) {
 
 function renderNotas(colab) {
   const el = document.getElementById(colab + '-notas-lista');
-  if (!el) return;
+  if (!el) {
+    // Element not in DOM yet — retry after navigation
+    setTimeout(() => renderNotas(colab), 200);
+    return;
+  }
   const notas = getNotas(colab);
   if (!notas.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-soft);padding:4px 0;">Nenhuma nota.</div>'; return; }
   el.innerHTML = notas.map((n, i) => `
