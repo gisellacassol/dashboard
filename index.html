@@ -3048,14 +3048,20 @@ function deleteComentarioTarefa(idx) {
 }
 
 function deleteEventDirect(id) {
+  const ev = events.find(x => x.id === id);
+  if (!ev) return;
+  const snapEv = [...events];
+  const snapPr = projetos.map(p => ({...p, tarefas: [...(p.tarefas||[])]}));
   events = events.filter(x => x.id !== id);
-  // Also remove from projeto if linked
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
   save('gc-events', events);
   save('gc-projetos', projetos);
-  buildTarefas();
-  buildColabTarefas();
-  renderProjetos();
+  buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
+  pushUndo(ev.titulo || 'Tarefa', () => {
+    events = snapEv; projetos = snapPr;
+    save('gc-events', events); save('gc-projetos', projetos);
+    buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
+  });
 }
 
 function deleteCurrentEvent() {
@@ -3520,7 +3526,14 @@ function openLivroFicha(id) {
   document.querySelector('#modal-livro .btn-primary').textContent = 'Salvar alterações';
   openModal('modal-livro');
 }
-function deleteLivro(id) { if(!confirm('Excluir este livro?')) return; livros=livros.filter(x=>x.id!==id); save('gc-livros',livros); renderLivros(); }
+function deleteLivro(id) {
+  const l = livros.find(x=>x.id===id);
+  if (!l) return;
+  const snap = [...livros];
+  livros = livros.filter(x=>x.id!==id);
+  save('gc-livros', livros); renderLivros();
+  pushUndo(l.titulo||'Livro', ()=>{ livros=snap; save('gc-livros',livros); renderLivros(); });
+}
 function toggleEtapa(id, i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].feito=!l.etapas[i].feito; save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); buildPrioridades(); } }
 function setPrazoEtapa(id,i,val) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].prazo=val; save('gc-livros',livros); renderLivros(); } }
 function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
@@ -3684,7 +3697,7 @@ function openAddMentee() {
 
 function deleteMentee(id) {
   const m = mentees.find(x=>x.id===id);
-  if (!m||!confirm(`Descadastrar "${m.name}"?`)) return;
+  if (!m) return;
   mentees = mentees.filter(x=>x.id!==id);
   save('gc-mentees',mentees); renderMenteeList();
 }
@@ -3946,7 +3959,7 @@ function buildTarefas() {
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${!e._livroId?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
-        ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:`<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`}
+        ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
       <td>
@@ -4337,7 +4350,7 @@ function renderProjetos() {
 function toggleProjeto(id) { const p=projetos.find(x=>x.id===id); if(p){p.expandido=!p.expandido; save('gc-projetos',projetos); renderProjetos();} }
 function deleteCurrentProjeto() {
   if (!editingProjetoId) return;
-  if (!confirm('Excluir este projeto? As tarefas internas também serão removidas.')) return;
+
   projetos = projetos.filter(x => x.id !== editingProjetoId);
   save('gc-projetos', projetos);
   renderProjetos();
@@ -4345,7 +4358,14 @@ function deleteCurrentProjeto() {
   editingProjetoId = null;
 }
 
-function deleteProjeto(id) { if(!confirm('Excluir este projeto?')) return; projetos=projetos.filter(x=>x.id!==id); save('gc-projetos',projetos); renderProjetos(); }
+function deleteProjeto(id) {
+  const p = projetos.find(x=>x.id===id);
+  if (!p) return;
+  const snap = [...projetos];
+  projetos = projetos.filter(x=>x.id!==id);
+  save('gc-projetos',projetos); renderProjetos();
+  pushUndo(p.nome||'Projeto', ()=>{ projetos=snap; save('gc-projetos',projetos); renderProjetos(); });
+}
 
 function openEditProjeto(id) {
   const p = projetos.find(x=>x.id===id);
@@ -5340,7 +5360,7 @@ function buildTarefasEmpresa(emp) {
       <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
         ${e.titulo}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
-        ${!e._livroId?`<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>`:''}
+        ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : ''}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
