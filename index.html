@@ -2171,8 +2171,10 @@ function deleteLinkEmpresaModal(emp, id) {
 function criarTarefasEventos(allEvents) {
   // Cria tarefas automáticas para TODOS os eventos do gcal da GC
   let changed = false;
+  const _hj = new Date(); _hj.setHours(0,0,0,0); const _hjStr = _hj.toISOString().slice(0,10);
   allEvents.forEach(ev => {
     if (!ev.start || !ev.title) return;
+    if (ev.start < _hjStr) return; // ignorar eventos passados
     const nome = ev.title.trim();
     const eventDate = new Date(ev.start + 'T12:00:00');
     const prep = new Date(eventDate); prep.setDate(prep.getDate() - 2);
@@ -2206,6 +2208,9 @@ function criarTarefasMentoria(allEvents) {
   let changed = false;
 
   mentorias.forEach(ev => {
+    // Só processar eventos futuros ou de hoje
+    const _hoje = new Date(); _hoje.setHours(0,0,0,0); const _hojeStr = _hoje.toISOString().slice(0,10);
+    if (ev.start < _hojeStr) return;
     // Extrair nome — entre parênteses ou após "Mentoria "
     let nomeMentee = '';
     const matchParen = ev.title.match(/\(([^)]+)\)/);
