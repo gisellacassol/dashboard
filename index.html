@@ -60,6 +60,12 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Central GC">
+<meta name="theme-color" content="#F5F2ED">
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Central Grupo Cassol&quot;,&quot;short_name&quot;:&quot;Central GC&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%23F5F2ED&quot;,&quot;theme_color&quot;:&quot;%23111111&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23111'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-size='100' fill='white' font-family='serif'%3EG%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
 <style>
 [data-theme="dark"] {
   --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
@@ -67,7 +73,7 @@
   --text: #e8eaf0; --text-mid: #9da3c0; --text-soft: #6b7194;
   --editora: #DA020E; --editora-bg: rgba(218,2,14,0.10); --editora-border: rgba(218,2,14,0.3);
   --leia: #7c3aed; --leia-bg: rgba(124,58,237,0.12); --leia-border: rgba(124,58,237,0.3);
-  --gisella: #c0396b; --gisella-bg: rgba(192,57,107,0.12); --gisella-border: rgba(192,57,107,0.3);
+  --gisella: #111111; --gisella-bg: rgba(17,17,17,0.09); --gisella-border: rgba(17,17,17,0.25);
   --ok: #4dc98a; --ok-bg: rgba(77,201,138,0.15); --warn: #e6b34d; --warn-bg: rgba(230,179,77,0.15);
   --danger: #f07070; --danger-bg: rgba(240,112,112,0.15);
   --shadow: 0 2px 16px rgba(0,0,0,0.5);
@@ -83,7 +89,7 @@
   --text: #1C1410; --text-mid: #6B5A4E; --text-soft: #A8937F;
   --editora: #DA020E; --editora-bg: rgba(218,2,14,0.15); --editora-border: rgba(218,2,14,0.4);
   --leia: #7c3aed; --leia-bg: rgba(124,58,237,0.18); --leia-border: rgba(124,58,237,0.4);
-  --gisella: #c0396b; --gisella-bg: rgba(192,57,107,0.18); --gisella-border: rgba(192,57,107,0.4);
+  --gisella: #111111; --gisella-bg: rgba(17,17,17,0.07); --gisella-border: rgba(17,17,17,0.2);
   --ok: #1A6B4A; --ok-bg: #E6F5EE; --warn: #7A5200; --warn-bg: #FEF3DA;
   --danger: #8C1A1A; --danger-bg: #FCEAEA; --info: #1A3D8C; --info-bg: #EAF0FC;
   --gray: #5F5248; --gray-bg: #F0EDE8;
@@ -398,6 +404,116 @@ tr:hover td { background: var(--bg); }
   .page-title { font-size: 19px; }
 }
 
+/* ── BOTTOM NAV BAR (mobile Instagram-style) ── */
+#bottom-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 62px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 300;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  box-shadow: 0 -2px 12px rgba(28,20,16,0.08);
+}
+@media (max-width: 768px) {
+  #bottom-nav { display: flex; }
+  .main { padding-bottom: 80px !important; }
+  /* Larger fonts on mobile */
+  body { font-size: 15px; }
+  .nav-item { font-size: 14px !important; }
+  .badge, .status-badge, .rede-badge { font-size: 12px !important; padding: 3px 8px !important; }
+  td { font-size: 13px !important; }
+  .form-input, .form-select, .notes-area { font-size: 16px !important; } /* prevents zoom on iOS */
+  .form-label { font-size: 13px !important; }
+  .btn { font-size: 14px !important; padding: 10px 18px !important; }
+  .check-item { font-size: 14px !important; }
+  .modal-title { font-size: 22px !important; }
+  /* Hide desktop floating buttons on mobile — use bottom bar instead */
+  button[onclick="openQuickAdd()"] { display: none !important; }
+  button[onclick="openNotaRapidaFlutuante()"] { display: none !important; }
+  #pomodoro-widget { bottom: 72px !important; right: 1rem !important; }
+}
+.bottom-nav-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 6px 10px; border: none; background: none;
+  cursor: pointer; border-radius: 10px; transition: all 0.15s;
+  color: var(--text-soft); flex: 1; min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-btn.active { color: var(--text); }
+.bottom-nav-btn:active { background: var(--bg); }
+.bottom-nav-icon { font-size: 22px; line-height: 1; }
+.bottom-nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap; }
+.bottom-nav-badge {
+  position: absolute; top: 4px; right: 8px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
+  display: none;
+}
+/* ── NOTIFICAÇÕES PANEL ── */
+#notif-panel {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 400;
+  align-items: flex-end;
+}
+#notif-panel.open { display: flex; }
+#notif-panel-inner {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  padding: 1.2rem; width: 100%; max-height: 70vh; overflow-y: auto;
+}
+#notif-panel-inner::-webkit-scrollbar { display: none; }
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; cursor: pointer;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); flex-shrink: 0; margin-top: 4px; }
+.notif-dot.read { background: var(--border); }
+.notif-text { flex: 1; line-height: 1.4; }
+.notif-time { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
+/* ── CHAT PANEL ── */
+#chat-panel {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.4); z-index: 400;
+  align-items: flex-end;
+}
+#chat-panel.open { display: flex; flex-direction: column; justify-content: flex-end; }
+#chat-panel-inner {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  width: 100%; height: 75vh; display: flex; flex-direction: column;
+}
+.chat-panel-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.chat-panel-messages {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.chat-panel-input-row {
+  padding: 10px 12px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; flex-shrink: 0;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.chat-bubble {
+  max-width: 80%; padding: 8px 12px; border-radius: 14px;
+  font-size: 14px; line-height: 1.4;
+}
+.chat-bubble.mine {
+  background: var(--text); color: var(--surface);
+  align-self: flex-end; border-bottom-right-radius: 4px;
+}
+.chat-bubble.theirs {
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  align-self: flex-start; border-bottom-left-radius: 4px;
+}
+.chat-bubble-meta { font-size: 10px; opacity: 0.6; margin-top: 2px; text-align: right; }
+
 /* ── UNDO TOAST ── */
 #undo-toast {
   position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
@@ -408,6 +524,9 @@ tr:hover td { background: var(--bg); }
   box-shadow: 0 4px 20px rgba(0,0,0,0.25);
   z-index: 999; transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
   white-space: nowrap;
+}
+@media (max-width: 768px) {
+  #undo-toast { bottom: 72px; }
 }
 #undo-toast.visible { transform: translateX(-50%) translateY(0); }
 #undo-toast button {
@@ -489,13 +608,67 @@ tr:hover td { background: var(--bg); }
   <span style="display:block;width:20px;height:2px;background:var(--text);border-radius:2px;"></span>
 </button>
 
+<!-- BOTTOM NAV BAR (mobile) -->
+<div id="bottom-nav">
+  <button class="bottom-nav-btn active" id="bnav-tarefas" onclick="bottomNav('tarefas',this)" title="Tarefas">
+    <span class="bottom-nav-icon">✓</span>
+    <span class="bottom-nav-label">Tarefas</span>
+  </button>
+  <button class="bottom-nav-btn" id="bnav-add" onclick="bottomNavAdd()" title="Adicionar">
+    <span class="bottom-nav-icon" style="width:38px;height:38px;border-radius:50%;background:var(--text);color:var(--surface);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 2px 10px rgba(28,20,16,0.2);">+</span>
+    <span class="bottom-nav-label" style="opacity:0;">·</span>
+  </button>
+  <button class="bottom-nav-btn" id="bnav-notas" onclick="bottomNav('colab-self',this)" title="Notas" style="position:relative;">
+    <span class="bottom-nav-icon">✏️</span>
+    <span class="bottom-nav-label">Notas</span>
+  </button>
+  <button class="bottom-nav-btn" id="bnav-notif" onclick="openNotifPanel()" title="Notificações" style="position:relative;">
+    <span class="bottom-nav-icon">🔔</span>
+    <span class="bottom-nav-label">Alertas</span>
+    <span class="bottom-nav-badge" id="notif-badge"></span>
+  </button>
+  <button class="bottom-nav-btn" id="bnav-chat" onclick="openChatPanel()" title="Chat">
+    <span class="bottom-nav-icon">💬</span>
+    <span class="bottom-nav-label">Chat</span>
+    <span class="bottom-nav-badge" id="chat-badge"></span>
+  </button>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div id="notif-panel" onclick="if(event.target===this)closeNotifPanel()">
+  <div id="notif-panel-inner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;">Notificações</div>
+      <button onclick="closeNotifPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-soft);">×</button>
+    </div>
+    <div id="notif-list"><div style="text-align:center;color:var(--text-soft);padding:2rem;font-size:13px;">Nenhuma notificação</div></div>
+  </div>
+</div>
+
+<!-- CHAT PANEL -->
+<div id="chat-panel" onclick="if(event.target===this)closeChatPanel()">
+  <div id="chat-panel-inner">
+    <div class="chat-panel-header">
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;">Chat da equipe</div>
+      <button onclick="closeChatPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-soft);">×</button>
+    </div>
+    <div class="chat-panel-messages" id="chat-panel-messages"></div>
+    <div class="chat-panel-input-row">
+      <textarea id="chat-panel-input" placeholder="Mensagem..." rows="1"
+        style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);resize:none;outline:none;max-height:80px;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+      <button onclick="sendChatMessage()" style="background:var(--text);color:var(--surface);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
+    </div>
+  </div>
+</div>
+
 <div class="shell" id="app-shell" style="display:none;">
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-name" onclick="showPage('visao', document.querySelector('.nav-item.active'))">Grupo Cassol</div>
     <div class="logo-sub">Central de Controle</div>
   </div>
-  <div class="nav-section">
+  <div class="nav-section" style="display:none;">
     <div class="nav-label">Visão</div>
     <button class="nav-item active" onclick="showPage('visao',this)"><span style="font-size:15px;opacity:0.6;">◈</span> Visão Geral</button>
   </div>
@@ -1242,10 +1415,17 @@ tr:hover td { background: var(--bg); }
       <!-- TAREFA FIELDS -->
       <div id="qa-fields-tarefa">
         <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" id="qa-prazo" type="date"></div>
-        <div class="form-group"><label class="form-label">Responsável</label>
+        <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
             <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
           </select></div>
+          <div style="padding-top:18px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;">
+              <input type="checkbox" id="qa-urgente" style="accent-color:var(--danger);width:16px;height:16px;"> <span style="font-size:16px;">❗</span> <span style="color:var(--danger);font-weight:500;">Urgente</span>
+            </label>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
         <!-- COMENTÁRIOS -->
@@ -1365,14 +1545,13 @@ tr:hover td { background: var(--bg); }
             </select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label class="form-label">Data de produção</label><input class="form-input" id="qa-c-dataprod" type="date"></div>
           <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="qa-c-datapost" type="date"></div>
           <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="qa-c-hora" type="time"></div>
         </div>
         <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
         <div class="form-group"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
-        <div class="form-group"><label class="form-label">Legenda</label><textarea class="notes-area" id="qa-c-legenda" style="min-height:60px;"></textarea></div>
         <div class="form-group"><label class="form-label">Observação</label><textarea class="notes-area" id="qa-observacao-conteudo" style="min-height:40px;"></textarea></div>
+        <input type="hidden" id="qa-c-dataprod"><input type="hidden" id="qa-c-legenda">
       </div>
 
       <div class="btn-row">
@@ -1506,6 +1685,50 @@ tr:hover td { background: var(--bg); }
       <div id="mm-livros-list"></div>
     </div>
     <div class="btn-row" style="margin-top:1rem;"><button class="btn btn-primary" onclick="closeModal('modal-mentee')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL CONTEUDO DETALHE (Status/Responsável/Etapas) -->
+<div class="modal-overlay" id="modal-conteudo-detalhe" onclick="if(event.target===this)closeModal('modal-conteudo-detalhe')">
+  <div class="modal" style="width:520px;">
+    <button class="modal-close" onclick="closeModal('modal-conteudo-detalhe')">×</button>
+    <div id="mcd-title" class="modal-title" style="margin-bottom:4px;"></div>
+    <div id="mcd-subtitulo" style="font-size:12px;color:var(--text-soft);margin-bottom:1rem;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div>
+        <div class="form-label">Status</div>
+        <select class="form-select" id="mcd-status" onchange="saveConteudoDetalhe()">
+          <option value="copy">Copy</option><option value="gravado">Gravado</option>
+          <option value="edicao">Em edição</option><option value="aprovado">Aprovado</option>
+          <option value="agendado">Agendado</option><option value="postado">Postado</option>
+          <option value="turbinar">Turbinar</option><option value="metricas">Métricas</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-label">Responsável</div>
+        <select class="form-select" id="mcd-responsavel" onchange="saveConteudoDetalhe()">
+          <option value="">— nenhum —</option><option value="Gisella">Gisella</option>
+          <option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-label">Data de produção</div>
+        <input class="form-input" type="date" id="mcd-dataprod" onchange="saveConteudoDetalhe()">
+      </div>
+      <div>
+        <div class="form-label">Data de postagem</div>
+        <input class="form-input" type="date" id="mcd-datapost" onchange="saveConteudoDetalhe()">
+      </div>
+    </div>
+    <div class="form-label" style="margin-bottom:8px;">Etapas</div>
+    <div id="mcd-etapas-lista" style="max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:1rem;">
+      <input class="form-input" id="mcd-nova-etapa" type="text" placeholder="Nova etapa..." style="flex:1;" onkeydown="if(event.key==='Enter')addConteudoEtapa()">
+      <button class="btn btn-primary" onclick="addConteudoEtapa()">+ Etapa</button>
+    </div>
+    <div class="form-label" style="margin-bottom:6px;">Legenda</div>
+    <textarea class="notes-area" id="mcd-legenda" placeholder="Legenda para redes sociais..." style="min-height:70px;margin-bottom:12px;" onchange="saveConteudoDetalhe()"></textarea>
+    <div class="btn-row"><button class="btn btn-primary" onclick="closeModal('modal-conteudo-detalhe')">Fechar</button></div>
   </div>
 </div>
 
@@ -2978,7 +3201,18 @@ function openQuickAdd() {
   document.getElementById('qa-titulo').value = '';
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
   setEmpresasChecked('qa-emp-', 'editora');
-  document.getElementById('qa-tipo').value = 'tarefa';
+  // Auto-detect tipo from current active page
+  const activePage = document.querySelector('.page.active');
+  const pageId = activePage ? activePage.id : '';
+  let defaultTipo = 'tarefa';
+  if (pageId === 'page-tarefas') defaultTipo = 'tarefa';
+  else if (pageId === 'page-conteudo-menu') defaultTipo = 'conteudo';
+  else if (pageId === 'page-eventos') defaultTipo = 'evento';
+  else if (pageId === 'page-livros') defaultTipo = 'livro';
+  else if (pageId === 'page-projetos') defaultTipo = 'projeto';
+  document.getElementById('qa-tipo').value = defaultTipo;
+  const urgenteEl = document.getElementById('qa-urgente');
+  if (urgenteEl) urgenteEl.checked = false;
   // Reset all fields
   ['qa-l-autor','qa-l-ilustrador','qa-l-publico','qa-l-faixa','qa-l-paginas',
    'qa-l-tiragem','qa-l-isbn','qa-l-formato','qa-l-colecao','qa-l-editora','qa-l-sinopse'].forEach(id => {
@@ -3022,6 +3256,8 @@ function openEditEvent(id) {
   document.getElementById('qa-hora-fim').value = ev.horaFim || '';
   document.getElementById('qa-responsavel').value = ev.responsavel || '';
   document.getElementById('qa-observacao').value = ev.observacao || '';
+  const urgenteEdit = document.getElementById('qa-urgente');
+  if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
   // Mostrar e popular comentários
   const comWrap = document.getElementById('qa-comentarios-wrap');
   if (comWrap) {
@@ -3222,12 +3458,14 @@ function submitQuickAdd() {
 
   const responsavel = tipo === 'evento' ? getQaVal('qa-responsavel-evento') : getQaVal('qa-responsavel');
   const observacao = tipo === 'evento' ? getQaVal('qa-observacao-evento') : getQaVal('qa-observacao');
+  const urgenteVal = document.getElementById('qa-urgente') ? document.getElementById('qa-urgente').checked : false;
   const eventData = {
     empresa, titulo, tipo,
     data: tipo === 'tarefa' ? getQaVal('qa-prazo') : getQaVal('qa-evento-inicio'),
     horaInicio: getQaVal('qa-hora-inicio'),
     dataFim: getQaVal('qa-data-fim'), horaFim: getQaVal('qa-hora-fim'),
     responsavel, observacao,
+    urgente: tipo === 'tarefa' ? urgenteVal : undefined,
   };
 
   if (editingEventId) {
@@ -3755,10 +3993,11 @@ function renderConteudos() {
     const st = ST_MAP[c.status]||{l:c.status,c:'b-gray'};
     const check = `<input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">`;
     const empCol = showEmpresa ? `<td>${empBadgesHtml(c.empresa)}</td>` : '';
-    return `<tr onclick="openConteudo(${c.id})" style="${c.done?'opacity:0.5;':''}" >
+    return `<tr style="${c.done?'opacity:0.5;':''}">
       <td onclick="event.stopPropagation();">${check}</td>
       <td style="font-weight:500;">
         ${c.nome}
+        <button onclick="event.stopPropagation();openConteudoDetalhe(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Ver detalhes">›</button>
         <button onclick="event.stopPropagation();openConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
         <button onclick="event.stopPropagation();duplicarConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>
         <button onclick="event.stopPropagation();deleteConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
@@ -3891,6 +4130,113 @@ function toggleConteudoDone(id) {
   save('gc-conteudos',conteudos); renderConteudos(); buildPrioridades();
 }
 
+let _mcdConteudoId = null;
+
+function openConteudoDetalhe(id) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  _mcdConteudoId = id;
+  document.getElementById('mcd-title').textContent = c.nome;
+  const empLabel = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'}[c.empresa] || c.empresa;
+  document.getElementById('mcd-subtitulo').textContent = empLabel + ' · ' + (c.rede||'') + (c.tipo ? ' · '+c.tipo : '');
+  document.getElementById('mcd-status').value = c.status || 'copy';
+  document.getElementById('mcd-responsavel').value = c.responsavel || '';
+  document.getElementById('mcd-dataprod').value = c.dataProd || '';
+  document.getElementById('mcd-datapost').value = c.dataPost || '';
+  document.getElementById('mcd-legenda').value = c.legenda || '';
+  renderMcdEtapas(c);
+  openModal('modal-conteudo-detalhe');
+}
+
+function renderMcdEtapas(c) {
+  const el = document.getElementById('mcd-etapas-lista');
+  if (!el) return;
+  const etapas = c.etapas || [];
+  if (etapas.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-soft);padding:6px 0;">Nenhuma etapa. Adicione abaixo.</div>';
+    return;
+  }
+  el.innerHTML = etapas.map((e, i) => {
+    const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
+      const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
+      return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
+    })() : 'var(--text)');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
+      <input type="checkbox" ${e.feito?'checked':''} onchange="toggleMcdEtapa(${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+      <select onchange="setMcdEtapaResp(${i},this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);">
+        <option value="" ${!e.resp?'selected':''}>—</option>
+        <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
+        <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
+        <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+      </select>
+      <input type="date" value="${e.prazo||''}" onchange="setMcdEtapaPrazo(${i},this.value)"
+        style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
+      <button onclick="deleteMcdEtapa(${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;">×</button>
+    </div>`;
+  }).join('');
+}
+
+function saveConteudoDetalhe() {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  if (!c) return;
+  c.status = document.getElementById('mcd-status').value;
+  c.responsavel = document.getElementById('mcd-responsavel').value;
+  c.dataProd = document.getElementById('mcd-dataprod').value;
+  c.dataPost = document.getElementById('mcd-datapost').value;
+  c.legenda = document.getElementById('mcd-legenda').value;
+  save('gc-conteudos', conteudos);
+  renderConteudos();
+}
+
+function addConteudoEtapa() {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  const inp = document.getElementById('mcd-nova-etapa');
+  const nome = (inp?.value||'').trim();
+  if (!c || !nome) { inp?.focus(); return; }
+  if (!c.etapas) c.etapas = [];
+  c.etapas.push({nome, feito: false, prazo: '', resp: ''});
+  save('gc-conteudos', conteudos);
+  if (inp) inp.value = '';
+  renderMcdEtapas(c);
+}
+
+function toggleMcdEtapa(idx) {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  if (!c || !c.etapas || !c.etapas[idx]) return;
+  c.etapas[idx].feito = !c.etapas[idx].feito;
+  save('gc-conteudos', conteudos);
+  renderMcdEtapas(c);
+  // Notify if completed
+  const user = window._currentUserName || '';
+  const etapa = c.etapas[idx];
+  if (etapa.feito) {
+    addNotif(`✅ Etapa concluída em "${c.nome}": ${etapa.nome}`, 'conteudo');
+  }
+}
+
+function setMcdEtapaResp(idx, resp) {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  if (!c || !c.etapas || !c.etapas[idx]) return;
+  c.etapas[idx].resp = resp;
+  save('gc-conteudos', conteudos);
+}
+
+function setMcdEtapaPrazo(idx, prazo) {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  if (!c || !c.etapas || !c.etapas[idx]) return;
+  c.etapas[idx].prazo = prazo;
+  save('gc-conteudos', conteudos);
+}
+
+function deleteMcdEtapa(idx) {
+  const c = conteudos.find(x => x.id === _mcdConteudoId);
+  if (!c || !c.etapas) return;
+  c.etapas.splice(idx, 1);
+  save('gc-conteudos', conteudos);
+  renderMcdEtapas(c);
+}
+
 /* ── STEIRA ── */
 let currentSteiraName = null;
 
@@ -3997,6 +4343,7 @@ function buildTarefas() {
         <span>${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
+        ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
         ${!e._livroId?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
         ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
@@ -5817,7 +6164,7 @@ function pomFinish() {
     pomCiclos++;
     localStorage.setItem('pom-ciclos-' + new Date().toDateString(), pomCiclos);
   }
-  // Notificação sonora simples
+  // Notificação sonora
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     [523, 659, 784].forEach((freq, i) => {
@@ -5832,6 +6179,12 @@ function pomFinish() {
       osc.stop(ctx.currentTime + i * 0.2 + 0.4);
     });
   } catch(e) {}
+  // Push notification
+  const msg = pomMode === 'foco' ? '🍅 Pomodoro concluído! Hora da pausa.' : '⏰ Pausa terminada! Volte ao foco.';
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    new Notification('Central GC · Pomodoro', { body: msg });
+  }
+  addNotif(msg, 'pomodoro');
   // Auto-switch: foco -> pausa curta, pausas -> foco
   setTimeout(() => {
     if (pomMode === 'foco') pomSetMode('curta');
@@ -5864,6 +6217,210 @@ function pomToggleWidget() {
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', () => { pomUpdateUI(); pomDrawRing(); });
+
+/* ── BOTTOM NAV ── */
+function bottomNav(pageId, btn) {
+  // Deactivate all
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (pageId === 'colab-self') {
+    const user = localStorage.getItem('gc-session-user') || 'gisella';
+    const colabPage = 'colab-' + user;
+    const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
+    showPage(colabPage, navBtn);
+  } else {
+    const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(pageId));
+    showPage(pageId, navBtn);
+  }
+}
+
+function bottomNavAdd() {
+  // Open modal with default type based on current page
+  openQuickAdd();
+}
+
+/* ── NOTIFICATIONS ── */
+let _notifs = [];
+
+function openNotifPanel() {
+  buildNotifList();
+  document.getElementById('notif-panel').classList.add('open');
+}
+
+function closeNotifPanel() {
+  document.getElementById('notif-panel').classList.remove('open');
+  // Mark all read
+  _notifs.forEach(n => n.read = true);
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  const unread = _notifs.filter(n => !n.read).length;
+  badge.style.display = unread > 0 ? 'block' : 'none';
+}
+
+function addNotif(text, tipo) {
+  const n = { id: Date.now(), text, tipo: tipo||'info', read: false, ts: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) };
+  _notifs.unshift(n);
+  if (_notifs.length > 50) _notifs = _notifs.slice(0, 50);
+  updateNotifBadge();
+  // Push notification
+  if (Notification && Notification.permission === 'granted') {
+    new Notification('Central GC', { body: text, icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%23111"/><text x="32" y="44" text-anchor="middle" font-size="36" fill="white" font-family="serif">G</text></svg>' });
+  }
+}
+
+function buildNotifList() {
+  const el = document.getElementById('notif-list');
+  if (!el) return;
+  if (_notifs.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--text-soft);padding:2rem;font-size:13px;">Nenhuma notificação</div>';
+    return;
+  }
+  el.innerHTML = _notifs.map(n => `
+    <div class="notif-item" onclick="this.querySelector('.notif-dot').classList.add('read')">
+      <span class="notif-dot ${n.read?'read':''}"></span>
+      <span class="notif-text">${n.text}</span>
+      <span class="notif-time">${n.ts}</span>
+    </div>`).join('');
+}
+
+function checkUrgentTasksNotif() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+  const user = (localStorage.getItem('gc-session-user')||'').toLowerCase();
+  const userName = user ? (user[0].toUpperCase() + user.slice(1)) : '';
+  // Urgent tasks for today
+  const urgentes = events.filter(e =>
+    !e.arquivada && e.tipo === 'tarefa' && e.urgente && e.data && e.data <= todayStr &&
+    (!userName || !e.responsavel || e.responsavel === userName)
+  );
+  urgentes.forEach(e => addNotif('❗ Urgente: ' + e.titulo, 'urgente'));
+  // Today's tasks count
+  const hoje = events.filter(e => !e.arquivada && e.tipo === 'tarefa' && e.data === todayStr && (!userName || !e.responsavel || e.responsavel === userName));
+  if (hoje.length > 0) {
+    addNotif(`📋 Você tem ${hoje.length} tarefa${hoje.length>1?'s':''} para hoje`, 'info');
+  }
+}
+
+function requestPushPermission() {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// Schedule daily push at 10h
+function scheduleDailyNotif() {
+  const now = new Date();
+  const target10 = new Date(now); target10.setHours(10, 0, 0, 0);
+  if (target10 <= now) target10.setDate(target10.getDate() + 1);
+  const target13 = new Date(now); target13.setHours(13, 0, 0, 0);
+  if (target13 <= now) target13.setDate(target13.getDate() + 1);
+
+  setTimeout(() => {
+    checkUrgentTasksNotif();
+    setInterval(checkUrgentTasksNotif, 24*60*60*1000);
+  }, target10 - now);
+}
+
+/* ── CHAT ── */
+let _chatMessages = [];
+
+function openChatPanel() {
+  document.getElementById('chat-panel').classList.add('open');
+  renderChatMessages();
+  setTimeout(() => {
+    const msgs = document.getElementById('chat-panel-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    const inp = document.getElementById('chat-panel-input');
+    if (inp) inp.focus();
+  }, 100);
+  // Mark as read
+  const badge = document.getElementById('chat-badge');
+  if (badge) badge.style.display = 'none';
+  _chatMessages.forEach(m => { if (!m.read) m.read = true; });
+}
+
+function closeChatPanel() {
+  document.getElementById('chat-panel').classList.remove('open');
+}
+
+function renderChatMessages() {
+  const el = document.getElementById('chat-panel-messages');
+  if (!el) return;
+  const currentUser = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+  if (_chatMessages.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--text-soft);padding:2rem;font-size:13px;">Nenhuma mensagem ainda. Seja o primeiro a escrever! 👋</div>';
+    return;
+  }
+  el.innerHTML = _chatMessages.map(m => {
+    const isMine = m.autor === currentUser;
+    return `<div style="display:flex;flex-direction:column;align-items:${isMine?'flex-end':'flex-start'};">
+      ${!isMine ? `<div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:2px;padding-left:4px;">${m.autor}</div>` : ''}
+      <div class="chat-bubble ${isMine?'mine':'theirs'}">${m.texto}
+        <div class="chat-bubble-meta">${m.hora}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const inp = document.getElementById('chat-panel-input');
+  const texto = (inp?.value||'').trim();
+  if (!texto) return;
+  const autor = window._currentUserName || localStorage.getItem('gc-session-name') || 'Usuário';
+  const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const msg = { id: Date.now(), autor, texto, hora, read: false };
+  _chatMessages.push(msg);
+  inp.value = '';
+  // Save to Firebase
+  if (window.fbSave) {
+    await window.fbSave('gc-chat-messages', _chatMessages.slice(-100));
+  } else {
+    localStorage.setItem('gc-chat-messages', JSON.stringify(_chatMessages));
+  }
+  renderChatMessages();
+  // Notify others
+  addNotif(`💬 ${autor}: ${texto.slice(0,40)}${texto.length>40?'...':''}`, 'chat');
+}
+
+async function loadChatMessages() {
+  try {
+    let msgs = null;
+    if (window.fbGet) msgs = await window.fbGet('gc-chat-messages');
+    if (!msgs) msgs = JSON.parse(localStorage.getItem('gc-chat-messages') || '[]');
+    _chatMessages = msgs || [];
+  } catch(e) { _chatMessages = []; }
+}
+
+// Listen for new chat messages from other users
+function setupChatListener() {
+  if (!window.fbListen) return;
+  window.fbListen('gc-chat-messages', msgs => {
+    if (!msgs) return;
+    const prevLen = _chatMessages.length;
+    _chatMessages = msgs;
+    if (msgs.length > prevLen) {
+      const latest = msgs[msgs.length - 1];
+      const currentUser = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+      if (latest && latest.autor !== currentUser) {
+        const badge = document.getElementById('chat-badge');
+        if (badge) badge.style.display = 'block';
+        addNotif(`💬 ${latest.autor}: ${latest.texto.slice(0,50)}`, 'chat');
+      }
+    }
+    // If panel is open, re-render
+    if (document.getElementById('chat-panel').classList.contains('open')) {
+      renderChatMessages();
+    }
+  });
+}
+
+/* ── POMODORO SOUND NOTIFICATION ── */
+// Enhanced pomodoro finish with Web Notifications
 
 /* ── MODAL COMENTÁRIOS RÁPIDO ── */
 let _comModalEventId = null;
@@ -6190,6 +6747,14 @@ function initApp(cloudData) {
   ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
   ['gisella','milena','luiggi'].forEach(renderNotas);
 
+  // Initialize chat + notifications
+  loadChatMessages().then(() => {});
+  setupChatListener();
+  requestPushPermission();
+  scheduleDailyNotif();
+  // Check notifications after data loads
+  setTimeout(checkUrgentTasksNotif, 1500);
+
   // Indicador de sync
   const ind = document.getElementById('sync-indicator');
   if (ind) ind.style.display = cloudData ? 'flex' : 'none';
@@ -6295,6 +6860,12 @@ function checkSession() {
 function showApp(user, displayName) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
+  // Show bottom nav on mobile
+  const bn = document.getElementById('bottom-nav');
+  if (bn) bn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+  window.addEventListener('resize', () => {
+    if (bn) bn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+  });
   // Show hamburger on mobile
   if (window.innerWidth <= 768) {
     const hb = document.getElementById('mobile-hamburger');
@@ -6306,6 +6877,24 @@ function showApp(user, displayName) {
     hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
     if (window.innerWidth > 768) closeMobileNav();
   });
+  // If a collaborator (not admin/visao), redirect to their own page
+  if (['gisella','milena','luiggi'].includes(user)) {
+    const colabPage = 'colab-' + user;
+    setTimeout(() => {
+      const el = document.getElementById('page-' + colabPage);
+      const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
+      if (el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        if (btn) btn.classList.add('active');
+        localStorage.setItem('gc-current-page', colabPage);
+      }
+    }, 50);
+  }
+  // Set chat author selector
+  window._currentUser = user;
+  window._currentUserName = displayName || user;
   // Mostrar nome do usuário logado no footer
   const footer = document.querySelector('.sidebar-footer');
   if (footer) {
