@@ -709,8 +709,11 @@ tr:hover td { background: var(--bg); }
     <div id="tarefas-empresa-editora"></div>
   </div>
   <div class="section">
-    <div class="section-title">Criação de conteúdo</div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-editora"></tbody></table></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-editora').checked=true;},50)">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-editora"></tbody></table></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -753,8 +756,11 @@ tr:hover td { background: var(--bg); }
     <div id="tarefas-empresa-leia"></div>
   </div>
   <div class="section">
-    <div class="section-title">Criação de conteúdo</div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-leia"></tbody></table></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-leia').checked=true;},50)">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-leia"></tbody></table></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -798,8 +804,11 @@ tr:hover td { background: var(--bg); }
     <div id="tarefas-empresa-gisella"></div>
   </div>
   <div class="section">
-    <div class="section-title">Criação de conteúdo</div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-gisella"></tbody></table></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-gisella').checked=true;},50)">+ novo conteúdo</button>
+    </div>
+    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-gisella"></tbody></table></div>
   </div>
   <div class="section">
     <div class="section-title">Plano Diretor · mentoradas</div>
@@ -857,7 +866,7 @@ tr:hover td { background: var(--bg); }
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Próximos</div>
+        <div id="eventos-proximos-label" style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Próximos</div>
         <div id="eventos-lista-proximos"></div>
       </div>
       <div>
@@ -894,7 +903,10 @@ tr:hover td { background: var(--bg); }
     </div>
   </div>
   <div class="section">
-    <div class="section-title">Todos os conteúdos</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Todos os conteúdos</div>
+      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();},50)">+ novo conteúdo</button>
+    </div>
     <div class="content-table-wrap">
       <table class="content-table">
         <thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
@@ -1221,7 +1233,7 @@ tr:hover td { background: var(--bg); }
             <option value="tarefa" selected>Tarefa</option>
             <option value="evento">Evento</option>
             <option value="projeto">Projeto</option>
-            <option value="conteudo">Criação de conteúdo</option>
+            <option value="conteudo">Conteúdo</option>
             <option value="livro">Livro</option>
           </select></div>
       </div>
@@ -2156,6 +2168,35 @@ function deleteLinkEmpresaModal(emp, id) {
 }
 
 /* ── TAREFAS AUTO MENTORIA ── */
+function criarTarefasEventos(allEvents) {
+  // Cria tarefas automáticas para TODOS os eventos do gcal da GC
+  let changed = false;
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    const nome = ev.title.trim();
+    const eventDate = new Date(ev.start + 'T12:00:00');
+    const prep = new Date(eventDate); prep.setDate(prep.getDate() - 2);
+    const enc  = new Date(eventDate); enc.setDate(enc.getDate() + 1);
+    const prepStr = prep.toISOString().slice(0,10);
+    const encStr  = enc.toISOString().slice(0,10);
+    const keyPrep = 'gcal-prep-ev-' + ev.start + '-' + nome.replace(/\s/g,'_').slice(0,20);
+    const keyEnc  = 'gcal-enc-ev-'  + ev.start + '-' + nome.replace(/\s/g,'_').slice(0,20);
+    if (!events.some(e => e.gcalKey === keyPrep)) {
+      events.push({ id: Date.now() + Math.floor(Math.random()*9999),
+        titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
+        data: prepStr, responsavel: 'Gisella', gcalKey: keyPrep, arquivada: false });
+      changed = true;
+    }
+    if (!events.some(e => e.gcalKey === keyEnc)) {
+      events.push({ id: Date.now() + Math.floor(Math.random()*9999) + 1,
+        titulo: 'Encerrar ' + nome, empresa: 'gisella', tipo: 'tarefa',
+        data: encStr, responsavel: 'Gisella', gcalKey: keyEnc, arquivada: false });
+      changed = true;
+    }
+  });
+  if (changed) { save('gc-events', events); buildTarefas(); buildColabTarefas(); buildPrioridades(); }
+}
+
 function criarTarefasMentoria(allEvents) {
   const mentorias = allEvents.filter(ev =>
     ev.title && ev.title.trim().toLowerCase().startsWith('mentoria')
@@ -2643,7 +2684,7 @@ function buildConteudoCalSemana() {
       (filter === 'all' || (c.empresa||'') === filter)
     );
 
-    html += `<div style="background:var(--bg);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};${isToday?'background:var(--gisella-bg);':''}">
+    html += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'}">
       <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
       <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
 
@@ -2826,11 +2867,11 @@ function buildCalendar(id, filter) {
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
     const contColors = {editora:{bg:'rgba(120,20,20,0.12)',color:'#7b1414'},leia:{bg:'rgba(60,10,80,0.12)',color:'#3c0a50'},gisella:{bg:'rgba(140,10,60,0.12)',color:'#8c0a3c'}};
-    evHtml += dayConteudos.slice(0,2).map(c => {
+    evHtml += dayConteudos.slice(0,3).map(c => {
       const cc = contColors[c.empresa||'editora']||contColors.editora;
       return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;" onclick="event.stopPropagation();openConteudo(${c.id})">✏ ${c.nome}</div>`;
     }).join('');
-    evHtml += dayEvs.slice(0,2).map(e => {
+    evHtml += dayEvs.slice(0,3).map(e => {
       if (e._gcal || e.gcal) {
         const time = e.startTime ? `${e.startTime} ` : '';
         const gcalColor = e.empresa === 'leia' ? 'var(--leia-bg);color:var(--leia);border-left:2px solid var(--leia)' : 'var(--gisella-bg);color:var(--gisella);border-left:2px solid var(--gisella)';
@@ -2841,7 +2882,7 @@ function buildCalendar(id, filter) {
     const total = dayConteudos.length + dayEvs.length;
     // Collect ALL events for this day for modal
     const allDayEvs = [...dayConteudos.map(c=>({type:'conteudo',c})), ...dayEvs.map(e=>({type:'evento',e}))];
-    const moreCount = allDayEvs.length - 2;
+    const moreCount = allDayEvs.length - 3;
     // Store day data in global cache keyed by calId+date
     if (!window._calDayCache) window._calDayCache = {};
     window._calDayCache[id+'_'+ds] = allDayEvs;
@@ -2860,6 +2901,7 @@ function calNav(id, dir) {
   if (CAL_STATE[id].m > 11) { CAL_STATE[id].m = 0; CAL_STATE[id].y++; }
   if (CAL_STATE[id].m < 0) { CAL_STATE[id].m = 11; CAL_STATE[id].y--; }
   buildCalendar(id, CAL_STATE[id].filter);
+  if (id === 'cal-eventos') buildEventosList();
 }
 
 function initCalendars() {
@@ -3314,6 +3356,30 @@ function submitAddLivro() {
 const EMP_BADGE_L = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
 const EMP_SHORT_L = {editora:'Editora',leia:'Léia',gisella:'GC'};
 
+function renderLivroEtapas(l) {
+  const sorted = l.etapas.map((e,i)=>({e,i})).sort((a,b)=> a.e.feito===b.e.feito?0:a.e.feito?-1:1);
+  const today2 = new Date(); today2.setHours(0,0,0,0);
+  return sorted.map(({e,i}) => {
+    const prazoColor = e.prazo && !e.feito ? (() => {
+      const diff = Math.round((new Date(e.prazo+'T00:00:00')-today2)/86400000);
+      return diff<0?'var(--danger)':diff===0?'var(--gisella)':diff<=7?'var(--warn)':'var(--text-soft)';
+    })() : 'var(--text-soft)';
+    const respColor = e.resp==='Gisella'?'var(--gisella)':e.resp==='Milena'?'var(--leia)':'var(--editora)';
+    return '<div class="livro-etapa-row" style="'+(e.feito?'opacity:0.6;':'')+'">' +
+      '<input type="checkbox" '+(e.feito?'checked':'')+' onchange="toggleEtapa('+l.id+','+i+')" onclick="event.stopPropagation()">' +
+      '<span class="livro-etapa-nome'+(e.feito?' done':'')+'" style="flex:1;">['+l.titulo+'] '+e.nome+'</span>' +
+      '<span style="font-size:11px;color:'+(prazoColor||'var(--text-soft)')+';font-weight:'+(e.prazo?'500':'400')+';">'+(e.prazo?fmtDate(e.prazo):'—')+'</span>' +
+      '<select onchange="setEtapaResp('+l.id+','+i+',this.value)" onclick="event.stopPropagation()" '+
+        'style="font-size:10px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:'+(e.resp?respColor:'var(--text-soft)')+';cursor:pointer;max-width:80px;">' +
+        '<option value="" '+((!e.resp)?'selected':'')+'>—</option>' +
+        '<option value="Gisella" '+(e.resp==='Gisella'?'selected':'')+'>Gisella</option>' +
+        '<option value="Milena" '+(e.resp==='Milena'?'selected':'')+'>Milena</option>' +
+        '<option value="Luiggi" '+(e.resp==='Luiggi'?'selected':'')+'>Luiggi</option>' +
+      '</select>' +
+    '</div>';
+  }).join('');
+}
+
 function livroCardHtml(l, draggable) {
   const done = l.etapas.filter(e => e.feito).length;
   const pct = Math.round(done / l.etapas.length * 100);
@@ -3339,23 +3405,7 @@ function livroCardHtml(l, draggable) {
     </div>
     <div class="livro-body${l.expandido?' open':''}">
       ${l.info ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;">${l.info.autor?`<span class="badge b-gray">Autor: ${l.info.autor}</span>`:''}${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}${l.tipopub?`<span class="badge ${l.tipopub==='reimpressao'?'b-warn':'b-editora'}">${l.tipopub==='reimpressao'?'Reimpressão':'Lançamento'}</span>`:''}${l.info.os?`<span class="badge b-gray">OS: ${l.info.os}</span>`:''}${l.info.ano?`<span class="badge b-gray">Ano: ${l.info.ano}</span>`:''}</div>` : ''}
-      ${l.etapas.map((e,i) => {
-        const today2 = new Date(); today2.setHours(0,0,0,0);
-        const prazoColor = e.prazo && !e.feito ? (() => {
-          const diff = Math.round((new Date(e.prazo+'T00:00:00')-today2)/86400000);
-          return diff<0?'var(--danger)':diff===0?'var(--gisella)':diff<=7?'var(--warn)':'var(--text-soft)';
-        })() : 'var(--text-soft)';
-        const respColor = e.resp==='Gisella'?'var(--gisella)':e.resp==='Milena'?'var(--leia)':'var(--editora)';
-        const respBg = e.resp==='Gisella'?'var(--gisella-bg)':e.resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)';
-        return `<div class="livro-etapa-row" style="${e.feito?'opacity:0.6;':''}">
-          <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapa(${l.id},${i})" onclick="event.stopPropagation()">
-          <span class="livro-etapa-nome${e.feito?' done':''}" style="flex:1;">
-            [${l.titulo}] ${e.nome}
-            ${e.resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${respBg};color:${respColor};">${e.resp}</span>`:''}
-          </span>
-          <span style="font-size:11px;color:${prazoColor||'var(--text-soft)'};font-weight:${e.prazo?'500':'400'};">${e.prazo?fmtDate(e.prazo):'—'}</span>
-        </div>`;
-      }).join('')}
+      ${renderLivroEtapas(l)}
       <button class="add-btn" style="margin-top:8px;font-size:12px;" onclick="adicionarEtapa(${l.id})">+ etapa</button>
     </div>
   </div>`;
@@ -4121,9 +4171,19 @@ function buildEventosList() {
   }
 
   if (proxEl) {
-    const proximos = evList.filter(e=>(e.data||'')>=today);
+    // Get current calendar month from CAL_STATE
+    const calState = CAL_STATE['cal-eventos'] || {y: new Date().getFullYear(), m: new Date().getMonth()};
+    const calY = calState.y, calM = calState.m;
+    const mesInicio = calY + '-' + String(calM+1).padStart(2,'0') + '-01';
+    const mesFim   = calY + '-' + String(calM+1).padStart(2,'0') + '-' + String(new Date(calY,calM+1,0).getDate()).padStart(2,'0');
+    const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    // Update label
+    const labelEl = document.getElementById('eventos-proximos-label');
+    if (labelEl) labelEl.textContent = MESES_PT[calM] + ' ' + calY;
+    // Filter proximos to current calendar month
+    const proximos = evList.filter(e=>(e.data||'')>=mesInicio && (e.data||'')<=mesFim);
     const passados = evList.filter(e=>(e.data||'')<today).reverse().slice(0,20);
-    proxEl.innerHTML = proximos.length ? proximos.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum evento futuro.</div>';
+    proxEl.innerHTML = proximos.length ? proximos.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum evento em '+MESES_PT[calM]+'.</div>';
     if (passEl) passEl.innerHTML = passados.length ? passados.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum.</div>';
     return;
   }
@@ -4982,6 +5042,7 @@ async function loadGcal() {
 
     // Detectar eventos de mentoria e criar tarefas automaticamente
     criarTarefasMentoria(mapped);
+    criarTarefasEventos(mapped);
 
     // Atualizar todos os calendários da GC em tempo real
     refreshCalendars();
@@ -5377,6 +5438,13 @@ function renderEpLista() {
       <span style="cursor:grab;color:var(--text-soft);font-size:12px;flex-shrink:0;">⠿</span>
       <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapaModal(${_epLivroId},${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
       <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}" ondblclick="renameEtapaModal(${_epLivroId},${i},this)">${e.nome}</span>
+      <select onchange="setEtapaResp(${_epLivroId},${i},this.value)"
+        style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
+        <option value="" ${!e.resp?'selected':''}>—</option>
+        <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
+        <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
+        <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+      </select>
       <input type="date" value="${e.prazo||''}"
         onchange="updateEtapaPrazoInline(${_epLivroId},${i},this.value)"
         style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
