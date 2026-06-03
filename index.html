@@ -2168,6 +2168,37 @@ function deleteLinkEmpresaModal(emp, id) {
 }
 
 /* ── TAREFAS AUTO MENTORIA ── */
+function limparTarefasEventosRemovidos(allEvents) {
+  // Coletar todas as gcalKeys válidas dos eventos atuais
+  const validKeys = new Set();
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    const nome = ev.title.trim();
+    const nomeKey = nome.replace(/\s/g,'_').slice(0,20);
+    validKeys.add('gcal-prep-ev-' + ev.start + '-' + nomeKey);
+    validKeys.add('gcal-enc-ev-'  + ev.start + '-' + nomeKey);
+    // Mentorias
+    const matchParen = nome.match(/\(([^)]+)\)/);
+    const nomeMentee = matchParen ? matchParen[1].trim() : nome.replace(/^[Mm]entoria\s*[-\u2013]?\s*/, '').trim();
+    if (nomeMentee) {
+      validKeys.add('gcal-prep-' + ev.start + '-' + nomeMentee.replace(/\s/g,'_'));
+    }
+  });
+
+  // Remover tarefas automáticas cujo evento gcal não existe mais
+  const antes = events.length;
+  events = events.filter(e => {
+    if (!e.gcalKey) return true; // não é automática, manter
+    return validKeys.has(e.gcalKey); // manter só se evento ainda existe
+  });
+
+  if (events.length < antes) {
+    save('gc-events', events);
+    buildTarefas(); buildColabTarefas(); buildPrioridades();
+    console.log('Limpeza gcal: ' + (antes - events.length) + ' tarefa(s) removida(s)');
+  }
+}
+
 function criarTarefasEventos(allEvents) {
   // Cria tarefas automáticas para TODOS os eventos do gcal da GC
   let changed = false;
@@ -2249,16 +2280,7 @@ function criarTarefasMentoria(allEvents) {
       changed = true;
     }
 
-    if (!events.some(e => e.gcalKey === keyDev)) {
-      events.push({
-        id: Date.now() + Math.floor(Math.random()*1000) + 1,
-        titulo: 'Devolutiva mentoria (' + nomeMentee + ')',
-        empresa: 'gisella', tipo: 'tarefa',
-        data: afterStr, responsavel: 'Gisella',
-        menteeId, gcalKey: keyDev, arquivada: false,
-      });
-      changed = true;
-    }
+
   });
 
   if (changed) {
@@ -2810,6 +2832,7 @@ function buildCalendar(id, filter) {
   const el = document.getElementById(id);
   if (!el) return;
   if (!CAL_STATE[id]) { const n = new Date(); CAL_STATE[id] = {y:n.getFullYear(), m:n.getMonth(), filter}; }
+  else { CAL_STATE[id].filter = filter; }
   const {y, m} = CAL_STATE[id];
   const today = new Date(); today.setHours(0,0,0,0);
   const first = new Date(y, m, 1).getDay();
@@ -2851,8 +2874,9 @@ function buildCalendar(id, filter) {
     const feriadoNome = isFeriado(ds) ? getFeriadoNome(ds) : null;
     const showConteudos = (id === 'cal-conteudo' || id === 'cal-visao');
     const showEventos = (id !== 'cal-conteudo');
+    const _calFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
     const dayConteudos = showConteudos
-      ? conteudos.filter(c => !c.done && c.dataPost === ds)
+      ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'') === _calFilter))
       : [];
     const allEvents = showEventos ? [...events, ...gcalEventsNative] : [];
     const dayEvs = showEventos ? allEvents.filter(e => {
@@ -5078,6 +5102,7 @@ async function loadGcal() {
       && ev.start <= weekEnd.toISOString().slice(0,10));
 
     // Detectar eventos de mentoria e criar tarefas automaticamente
+    limparTarefasEventosRemovidos(mapped);
     criarTarefasMentoria(mapped);
     criarTarefasEventos(mapped);
 
@@ -5354,11 +5379,11 @@ function buildTarefasEmpresa(emp) {
     ...etapaEvents.filter(e => e.arquivada)
   ].filter(e => e.data && e.data <= fimSemanaStr);
 
+  const _todayEmp = today.toISOString().slice(0,10);
   todasAtivas.sort((a,b) => {
-    if (!a.data && !b.data) return 0;
-    if (!a.data) return 1;
-    if (!b.data) return -1;
-    return a.data.localeCompare(b.data);
+    const da = a.data || '9999-99-99';
+    const db = b.data || '9999-99-99';
+    return da.localeCompare(db);
   });
 
   const cor = emp==='editora' ? 'var(--editora)' : emp==='leia' ? 'var(--leia)' : 'var(--gisella)';
