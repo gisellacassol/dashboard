@@ -167,7 +167,7 @@ tr:hover td { background: var(--bg); }
 .cal-nav:hover { background: var(--bg); }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-dow { text-align: center; font-size: 10px; font-weight: 500; color: var(--text-soft); padding: 8px 4px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
-.cal-day { min-height: 60px; padding: 4px 4px 3px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; word-break: break-word; }
+.cal-day { min-height: 60px; padding: 4px 4px 3px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; word-break: break-word; overflow: visible; }
 .cal-day:nth-child(7n) { border-right: none; }
 .cal-day:hover { background: var(--bg); }
 .cal-day.other-month .cal-num { color: var(--text-soft); opacity: 0.4; }
@@ -2872,11 +2872,12 @@ function buildCalendar(id, filter) {
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
     const contColors = {editora:{bg:'rgba(120,20,20,0.12)',color:'#7b1414'},leia:{bg:'rgba(60,10,80,0.12)',color:'#3c0a50'},gisella:{bg:'rgba(140,10,60,0.12)',color:'#8c0a3c'}};
-    evHtml += dayConteudos.slice(0,3).map(c => {
+    const _maxItems = (id === 'cal-visao') ? 99 : 3;
+    evHtml += dayConteudos.slice(0,_maxItems).map(c => {
       const cc = contColors[c.empresa||'editora']||contColors.editora;
       return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;" onclick="event.stopPropagation();openConteudo(${c.id})">✏ ${c.nome}</div>`;
     }).join('');
-    evHtml += dayEvs.slice(0,3).map(e => {
+    evHtml += dayEvs.slice(0,_maxItems).map(e => {
       if (e._gcal || e.gcal) {
         const time = e.startTime ? `${e.startTime} ` : '';
         const gcalColor = e.empresa === 'leia' ? 'var(--leia-bg);color:var(--leia);border-left:2px solid var(--leia)' : 'var(--gisella-bg);color:var(--gisella);border-left:2px solid var(--gisella)';
@@ -2887,7 +2888,7 @@ function buildCalendar(id, filter) {
     const total = dayConteudos.length + dayEvs.length;
     // Collect ALL events for this day for modal
     const allDayEvs = [...dayConteudos.map(c=>({type:'conteudo',c})), ...dayEvs.map(e=>({type:'evento',e}))];
-    const moreCount = allDayEvs.length - 3;
+    const moreCount = (id === 'cal-visao') ? 0 : allDayEvs.length - 3;
     // Store day data in global cache keyed by calId+date
     if (!window._calDayCache) window._calDayCache = {};
     window._calDayCache[id+'_'+ds] = allDayEvs;
@@ -3062,10 +3063,12 @@ function deleteEventDirect(id) {
   save('gc-events', events);
   save('gc-projetos', projetos);
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
+  ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   pushUndo(ev.titulo || 'Tarefa', () => {
     events = snapEv; projetos = snapPr;
     save('gc-events', events); save('gc-projetos', projetos);
     buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
+    ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   });
 }
 
@@ -4131,7 +4134,12 @@ function setFilter(pageId, empresa, btn) {
   // Rebuild relevant section
   if (pageId === 'tarefas') buildTarefas();
   if (pageId === 'eventos') { buildCalendar('cal-eventos', 'all'); buildEventosList(); }
-  if (pageId === 'conteudo-menu') { renderConteudos(); buildCalendar('cal-conteudo', 'all'); }
+  if (pageId === 'conteudo-menu') {
+    renderConteudos();
+    const _wrap = document.getElementById('cal-conteudo-wrap');
+    if (_wrap && _wrap.dataset.view === 'mes') buildCalendar('cal-conteudo', empresa);
+    else buildConteudoCalSemana();
+  }
   if (pageId === 'projetos') renderProjetos();
   if (pageId === 'livros') renderLivros();
 }
@@ -4522,15 +4530,19 @@ function buildColabTarefas() {
     const ativas = tasks.filter(t => !t.arquivada);
     const arquivadas = tasks.filter(t => t.arquivada);
 
-    // Aplicar ordem manual se existir
+    // Aplicar ordem manual se existir; fallback: atrasadas → hoje → amanhã → futuras → sem data
     const ordem = colabOrdem[colabKey] || [];
+    const todayStr = today.toISOString().slice(0,10);
     ativas.sort((a,b) => {
       const ia = ordem.indexOf(a.id);
       const ib = ordem.indexOf(b.id);
-      if (ia === -1 && ib === -1) return (a.data||'').localeCompare(b.data||'');
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      // Sem ordem manual: sort por data (sem data vai pro fim)
+      const da = a.data || '9999-99-99';
+      const db = b.data || '9999-99-99';
+      return da.localeCompare(db);
     });
 
     let colabDragSrc = null;
@@ -6100,7 +6112,9 @@ function initApp(cloudData) {
     // Sempre mescla: preserva sessões/notas existentes, garante todos os 19
     ['gisella','milena','luiggi'].forEach(c => {
       const key = 'gc-notas-' + c;
-      if (cloudData[key]) localStorage.setItem(key, JSON.stringify(cloudData[key]));
+      if (cloudData[key] && cloudData[key].length > 0) {
+        localStorage.setItem(key, JSON.stringify(cloudData[key]));
+      }
     });
     if (cloudData['gc-mentees']) {
       mentees = mergeMentees(cloudData['gc-mentees']);
@@ -6146,6 +6160,7 @@ function initApp(cloudData) {
   loadGcalLeia();
   buildHomeCards();
   ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
+  ['gisella','milena','luiggi'].forEach(renderNotas);
 
   // Indicador de sync
   const ind = document.getElementById('sync-indicator');
