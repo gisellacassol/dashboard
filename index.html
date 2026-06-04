@@ -280,6 +280,18 @@ tr:hover td { background: var(--bg); }
 .livro-card[draggable="true"] { cursor: grab; }
 .livro-card[draggable="true"]:active { cursor: grabbing; opacity: 0.85; }
 .livro-card.drag-over-livro { border-color: var(--editora); background: var(--editora-bg); }
+
+/* ── CONTEÚDO CARDS (estilo livro) ── */
+.conteudo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; transition: box-shadow 0.15s; overflow: hidden; }
+.conteudo-card:hover { box-shadow: 0 2px 10px rgba(28,20,16,0.08); }
+.conteudo-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; user-select: none; }
+.conteudo-titulo { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conteudo-progress-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.conteudo-progress { width: 60px; height: 4px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.conteudo-progress-fill { height: 100%; border-radius: 4px; background: var(--gisella); transition: width 0.3s; }
+.conteudo-body { display: none; padding: 8px 14px 12px; border-top: 1px solid var(--border); }
+.conteudo-body.open { display: block; }
+.conteudo-toggle { font-size: 12px; color: var(--text-soft); flex-shrink: 0; margin-left: 2px; }
 .livro-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
 .livro-header:hover { background: var(--bg); }
 .livro-titulo { font-weight: 500; font-size: 14px; flex: 1; }
@@ -727,14 +739,6 @@ tr:hover td { background: var(--bg); }
 
 <!-- VISÃO GERAL -->
 <div class="page active" id="page-visao">
-  <div class="page-header">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-      <div>
-        <div class="page-title">Grupo Cassol</div>
-        <div class="page-subtitle" id="visao-data-hoje"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- CARDS DAS 3 EMPRESAS -->
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2rem;" id="empresa-cards-row">
@@ -908,7 +912,7 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
       <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-editora').checked=true;},50)">+ novo conteúdo</button>
     </div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-editora"></tbody></table></div>
+    <div id="conteudo-tbody-editora"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -955,7 +959,7 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
       <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-leia').checked=true;},50)">+ novo conteúdo</button>
     </div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-leia"></tbody></table></div>
+    <div id="conteudo-tbody-leia"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
@@ -1003,7 +1007,7 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
       <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-gisella').checked=true;},50)">+ novo conteúdo</button>
     </div>
-    <div class="content-table-wrap"><table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead><tbody id="conteudo-tbody-gisella"></tbody></table></div>
+    <div id="conteudo-tbody-gisella"></div>
   </div>
   <div class="section">
     <div class="section-title">Plano Diretor · mentoradas</div>
@@ -1102,19 +1106,11 @@ tr:hover td { background: var(--bg); }
       <div class="section-title" style="margin-bottom:0;">Todos os conteúdos</div>
       <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();},50)">+ novo conteúdo</button>
     </div>
-    <div class="content-table-wrap">
-      <table class="content-table">
-        <thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Responsável</th><th>Rede</th><th>Tipo</th><th>Status</th><th>Postagem</th></tr></thead>
-        <tbody id="conteudo-tbody-menu"></tbody>
-      </table>
-    </div>
+    <div id="conteudo-tbody-menu"></div>
     <div style="margin-top:1rem;">
       <button class="archived-toggle" onclick="toggleArchivedMenu()"><span id="archived-arrow-menu">▸</span> Arquivados (<span id="archived-count-menu">0</span>)</button>
       <div id="archived-section-menu" style="display:none;margin-top:8px;">
-        <div class="content-table-wrap">
-          <table class="content-table"><thead><tr><th style="width:32px;"></th><th>Conteúdo</th><th>Empresa</th><th>Rede</th><th>Data postagem</th></tr></thead>
-          <tbody id="archived-tbody-menu"></tbody></table>
-        </div>
+        <div id="archived-tbody-menu"></div>
       </div>
     </div>
   </div>
@@ -1366,9 +1362,9 @@ tr:hover td { background: var(--bg); }
 
 <!-- BOTÃO + -->
 <!-- POMODORO WIDGET -->
-<div id="pomodoro-widget" style="position:fixed;bottom:2rem;left:1rem;z-index:150;">
+<div id="pomodoro-widget" style="position:fixed;bottom:16rem;right:1rem;z-index:150;">
   <!-- Display expandido -->
-  <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:62px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
+  <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:0;right:62px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
     <!-- Modo label -->
     <div id="pom-mode-label" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-soft);margin-bottom:8px;">Foco</div>
     <!-- Timer display -->
@@ -1401,12 +1397,13 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-<!-- BOTÕES FLUTUANTES LATERAIS ESQUERDOS -->
-<!-- Ordem de cima pra baixo: Chat → Notificações → Pomodoro (já acima) → Notas → + -->
-<button onclick="openChatPanel()" title="Chat da equipe" style="position:fixed;bottom:18rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;position:relative;" id="chat-float-btn">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
-<button onclick="openNotifPanel()" title="Notificações" style="position:fixed;bottom:13.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;position:relative;" id="notif-float-btn">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:var(--danger);"></span></button>
-<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:6.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
-<button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
+<!-- BOTÕES FLUTUANTES LATERAL ESQUERDA: Chat → Notificações -->
+<button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:9rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
+<button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:4.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:var(--danger);border-radius:50%;"></span></button>
+
+<!-- BOTÕES FLUTUANTES LATERAL DIREITA: Lápis → Pomodoro (widget acima) → + -->
+<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:11rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
+<button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -1561,23 +1558,13 @@ tr:hover td { background: var(--bg); }
             </select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="form-group"><label class="form-label">Status</label>
-            <select class="form-select" id="qa-c-status">
-              <option value="copy">Copy</option><option value="gravado">Gravado</option><option value="edicao">Em edição</option><option value="aprovado">Aprovado</option><option value="agendado">Agendado</option><option value="postado">Postado</option><option value="turbinar">Turbinar</option><option value="metricas">Métricas</option>
-            </select></div>
-          <div class="form-group"><label class="form-label">Responsável</label>
-            <select class="form-select" id="qa-responsavel-conteudo">
-              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
-            </select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="qa-c-datapost" type="date"></div>
           <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="qa-c-hora" type="time"></div>
         </div>
         <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
         <div class="form-group"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
         <div class="form-group"><label class="form-label">Observação</label><textarea class="notes-area" id="qa-observacao-conteudo" style="min-height:40px;"></textarea></div>
-        <input type="hidden" id="qa-c-dataprod"><input type="hidden" id="qa-c-legenda">
+        <input type="hidden" id="qa-c-dataprod"><input type="hidden" id="qa-c-legenda"><input type="hidden" id="qa-c-status" value="copy"><input type="hidden" id="qa-responsavel-conteudo" value="">
       </div>
 
       <div class="btn-row">
@@ -1755,6 +1742,17 @@ tr:hover td { background: var(--bg); }
     <div class="form-label" style="margin-bottom:6px;">Legenda</div>
     <textarea class="notes-area" id="mcd-legenda" placeholder="Legenda para redes sociais..." style="min-height:70px;margin-bottom:12px;" onchange="saveConteudoDetalhe()"></textarea>
     <div class="btn-row"><button class="btn btn-primary" onclick="closeModal('modal-conteudo-detalhe')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL ETAPAS PRAZOS CONTEÚDO -->
+<div class="modal-overlay" id="modal-conteudo-etapas-prazos" onclick="if(event.target===this)closeModal('modal-conteudo-etapas-prazos')">
+  <div class="modal" style="width:520px;">
+    <button class="modal-close" onclick="closeModal('modal-conteudo-etapas-prazos')">×</button>
+    <div class="modal-title">📅 Prazos do conteúdo</div>
+    <div id="modal-cep-subtitulo" style="font-size:12px;color:var(--text-soft);margin-bottom:1rem;"></div>
+    <div id="modal-cep-lista" style="max-height:380px;overflow-y:auto;margin-bottom:12px;"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="closeModal('modal-conteudo-etapas-prazos')">Fechar</button></div>
   </div>
 </div>
 
@@ -4014,62 +4012,218 @@ const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carro
 const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
 const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
 
+// Etapas padrão de um conteúdo (baseadas no fluxo de status)
+const CONTEUDO_ETAPAS_PADRAO = ['Copy','Gravado','Em edição','Aprovado','Agendado','Postado','Turbinar','Métricas'];
+const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado','turbinar','metricas'];
+
+function getConteudoEtapas(c) {
+  // Se conteúdo já tem etapas customizadas, usa elas
+  // Caso contrário, gera a partir do fluxo padrão com estado salvo em c.etapasStatus
+  if (!c.etapasStatus) c.etapasStatus = {};
+  return CONTEUDO_ETAPAS_PADRAO.map((nome, i) => ({
+    key: CONTEUDO_ETAPAS_KEYS[i],
+    nome,
+    feito: !!c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.feito,
+    resp:  c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.resp  || '',
+    prazo: c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.prazo || '',
+  }));
+}
+
+function conteudoCardHtml(c, showEmpresa) {
+  const etapas = getConteudoEtapas(c);
+  const done = etapas.filter(e => e.feito).length;
+  const pct = etapas.length > 0 ? Math.round(done / etapas.length * 100) : 0;
+  const proxima = etapas.find(e => !e.feito);
+  const empBadges = empBadgesHtml(c.empresa);
+  const isOpen = c.expandido;
+
+  return `<div class="conteudo-card${c.done?' style="opacity:0.55;"':''}">
+    <div class="conteudo-header" onclick="toggleConteudo(${c.id})">
+      <input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleConteudoDone(${c.id})"
+        style="accent-color:var(--gisella);width:15px;height:15px;cursor:pointer;flex-shrink:0;">
+      <span class="conteudo-titulo" title="${c.nome}">${c.nome}</span>
+      ${showEmpresa ? empBadges : ''}
+      <span class="rede-badge rede-${c.rede}" style="flex-shrink:0;font-size:10px;">${REDE_L[c.rede]||c.rede||''}</span>
+      <span style="font-size:11px;color:var(--text-soft);flex-shrink:0;">${TIPO_L[c.tipo]||c.tipo||''}</span>
+      <div class="conteudo-progress-wrap">
+        <div class="conteudo-progress"><div class="conteudo-progress-fill" style="width:${pct}%;"></div></div>
+        <span style="font-size:11px;color:var(--text-soft);">${pct}%</span>
+      </div>
+      ${proxima && !c.done ? `<span style="font-size:11px;color:var(--text-soft);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${proxima.nome}</span>` : (c.done ? '<span class="badge b-ok" style="font-size:10px;">concluído</span>' : '')}
+      <button onclick="event.stopPropagation();openConteudoEtapasPrazos(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0;" title="Editar prazos e responsáveis">📅</button>
+      <button onclick="event.stopPropagation();openConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;" title="Editar">✎</button>
+      <button onclick="event.stopPropagation();duplicarConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;" title="Duplicar">⧉</button>
+      <button onclick="event.stopPropagation();deleteConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 4px;flex-shrink:0;" title="Excluir">×</button>
+      <span class="conteudo-toggle">${isOpen?'▾':'▸'}</span>
+    </div>
+    <div class="conteudo-body${isOpen?' open':''}">
+      ${renderConteudoEtapasInline(c, etapas)}
+    </div>
+  </div>`;
+}
+
+function renderConteudoEtapasInline(c, etapas) {
+  // Feitas sobem pro topo
+  const sorted = [...etapas].sort((a,b) => {
+    if (a.feito && !b.feito) return -1;
+    if (!a.feito && b.feito) return 1;
+    return 0;
+  });
+  return sorted.map(e => {
+    const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
+      const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
+      return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
+    })() : 'var(--text)');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
+      <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapa(${c.id},'${e.key}')"
+        style="accent-color:var(--gisella);width:15px;height:15px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+      <select onchange="setConteudoEtapaResp(${c.id},'${e.key}',this.value)"
+        style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);">
+        <option value="" ${!e.resp?'selected':''}>—</option>
+        <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
+        <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
+        <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+      </select>
+      <input type="date" value="${e.prazo||''}" onchange="setConteudoEtapaPrazo(${c.id},'${e.key}',this.value)"
+        style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
+    </div>`;
+  }).join('');
+}
+
+function toggleConteudo(id) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  c.expandido = !c.expandido;
+  save('gc-conteudos', conteudos);
+  renderConteudos();
+}
+
+function toggleConteudoEtapa(id, key) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  if (!c.etapasStatus) c.etapasStatus = {};
+  if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+  c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
+  // Atualizar status geral do conteúdo para o key atual se não feito
+  if (!c.etapasStatus[key].feito) {
+    // Reverter: encontrar a última etapa feita antes desta
+    const idx = CONTEUDO_ETAPAS_KEYS.indexOf(key);
+    const prevFeito = CONTEUDO_ETAPAS_KEYS.slice(0, idx).filter(k => c.etapasStatus[k]?.feito);
+    c.status = prevFeito.length > 0 ? prevFeito[prevFeito.length-1] : 'copy';
+  } else {
+    c.status = key;
+  }
+  save('gc-conteudos', conteudos);
+  renderConteudos();
+  buildTarefas();
+}
+
+function setConteudoEtapaResp(id, key, resp) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  if (!c.etapasStatus) c.etapasStatus = {};
+  if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+  c.etapasStatus[key].resp = resp;
+  save('gc-conteudos', conteudos);
+}
+
+function setConteudoEtapaPrazo(id, key, prazo) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  if (!c.etapasStatus) c.etapasStatus = {};
+  if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+  c.etapasStatus[key].prazo = prazo;
+  save('gc-conteudos', conteudos);
+}
+
+// Modal de prazos (estilo openEtapasPrazos dos livros)
+let _epConteudoId = null;
+function openConteudoEtapasPrazos(id) {
+  const c = conteudos.find(x => x.id === id);
+  if (!c) return;
+  _epConteudoId = id;
+  document.getElementById('modal-cep-subtitulo').textContent = c.nome + ' — prazos e responsáveis';
+  renderCepLista();
+  openModal('modal-conteudo-etapas-prazos');
+}
+
+function renderCepLista() {
+  const c = conteudos.find(x => x.id === _epConteudoId);
+  const el = document.getElementById('modal-cep-lista');
+  if (!c || !el) return;
+  const etapas = getConteudoEtapas(c);
+  // Feitas sobem pro topo
+  const sorted = [...etapas].sort((a,b) => {
+    if (a.feito && !b.feito) return -1;
+    if (!a.feito && b.feito) return 1;
+    return 0;
+  });
+  el.innerHTML = sorted.map(e => {
+    const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
+      const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
+      return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
+    })() : 'var(--text)');
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
+      <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapaCep('${e.key}')"
+        style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+      <select onchange="setConteudoEtapaResp(${_epConteudoId},'${e.key}',this.value)"
+        style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
+        <option value="" ${!e.resp?'selected':''}>—</option>
+        <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
+        <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
+        <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+      </select>
+      <input type="date" value="${e.prazo||''}" onchange="setConteudoEtapaPrazo(${_epConteudoId},'${e.key}',this.value);renderCepLista()"
+        style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
+    </div>`;
+  }).join('');
+}
+
+function toggleConteudoEtapaCep(key) {
+  toggleConteudoEtapa(_epConteudoId, key);
+  renderCepLista();
+}
+
 function renderConteudos() {
   const ativos = conteudos.filter(c=>!c.done);
   const arquivados = conteudos.filter(c=>c.done);
 
-  function rowHtml(c, showEmpresa) {
-    const st = ST_MAP[c.status]||{l:c.status,c:'b-gray'};
-    const check = `<input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">`;
-    const empCol = showEmpresa ? `<td>${empBadgesHtml(c.empresa)}</td>` : '';
-    return `<tr style="${c.done?'opacity:0.5;':''}">
-      <td onclick="event.stopPropagation();">${check}</td>
-      <td style="font-weight:500;">
-        ${c.nome}
-        <button onclick="event.stopPropagation();openConteudoDetalhe(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Ver detalhes">›</button>
-        <button onclick="event.stopPropagation();openConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>
-        <button onclick="event.stopPropagation();duplicarConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>
-        <button onclick="event.stopPropagation();deleteConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>
-      </td>
-      ${empCol}
-      <td style="font-size:12px;color:var(--text-soft);">${c.responsavel||'—'}</td>
-      <td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td>
-      <td style="font-size:12px;color:var(--text-soft);">${TIPO_L[c.tipo]||c.tipo}</td>
-      <td><span class="status-badge ${st.c}">${st.l}</span></td>
-      <td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost)+(c.hora?' '+c.hora:''):'—'}</td>
-    </tr>`;
+  function cardsHtml(lista, showEmpresa) {
+    return lista.length === 0
+      ? '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo. Use o botão + para adicionar.</div>'
+      : lista.map(c => conteudoCardHtml(c, showEmpresa)).join('');
   }
 
-  const tbody = document.getElementById('conteudo-tbody');
-  if (tbody) tbody.innerHTML = ativos.length===0 ? '<tr><td colspan="8" style="text-align:center;color:var(--text-soft);padding:1.5rem;">Nenhum conteúdo ativo. Use o botão + para adicionar.</td></tr>' : ativos.map(c=>rowHtml(c,true)).join('');
+  // Aba conteúdo unificada
+  const contDiv = document.getElementById('conteudo-tbody');
+  if (contDiv) contDiv.innerHTML = cardsHtml(ativos, true);
 
+  // Por empresa
   ['editora','leia','gisella'].forEach(emp => {
-    const tb = document.getElementById('conteudo-tbody-'+emp);
-    if (!tb) return;
-    const items = ativos.filter(c=>c.empresa===emp);
-    tb.innerHTML = items.length===0 ? '<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:1rem;">Nenhum conteúdo ativo.</td></tr>' : items.map(c=>rowHtml(c,false)).join('');
+    const el = document.getElementById('conteudo-tbody-'+emp);
+    if (!el) return;
+    const items = ativos.filter(c => c.empresa === emp);
+    el.innerHTML = cardsHtml(items, false);
   });
 
   // Menu page
   const _cf = getFilter('conteudo-menu');
   const ativosMenu = _cf==='all' ? ativos : ativos.filter(c=>c.empresa===_cf);
-  const menuTb = document.getElementById('conteudo-tbody-menu');
-  if (menuTb) menuTb.innerHTML = ativosMenu.length===0 ? '<tr><td colspan="8" style="text-align:center;color:var(--text-soft);padding:1.5rem;">Nenhum conteúdo ativo.</td></tr>' : ativosMenu.map(c=>rowHtml(c,true)).join('');
-  const archMenuTb = document.getElementById('archived-tbody-menu');
+  const menuDiv = document.getElementById('conteudo-tbody-menu');
+  if (menuDiv) menuDiv.innerHTML = cardsHtml(ativosMenu, true);
+
+  // Arquivados
   const archMenuCnt = document.getElementById('archived-count-menu');
   if (archMenuCnt) archMenuCnt.textContent = arquivados.length;
-  if (archMenuTb) archMenuTb.innerHTML = arquivados.map(c=>`<tr onclick="openConteudo(${c.id})" style="opacity:0.6;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;">${c.nome}</td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`).join('');
+  const archMenuDiv = document.getElementById('archived-tbody-menu');
+  if (archMenuDiv) archMenuDiv.innerHTML = arquivados.map(c=>conteudoCardHtml(c,true)).join('');
 
-  const archTb = document.getElementById('archived-tbody');
   const archCnt = document.getElementById('archived-count');
   if (archCnt) archCnt.textContent = arquivados.length;
-  if (archTb) archTb.innerHTML = arquivados.map(c=>`<tr onclick="openConteudo(${c.id})" style="opacity:0.6;">
-    <td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;" title="Desmarcar para voltar à lista"></td>
-    <td style="font-weight:500;">${c.nome}</td>
-    <td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td>
-    <td><span class="rede-badge rede-${c.rede}">${REDE_L[c.rede]||c.rede}</span></td>
-    <td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td>
-  </tr>`).join('');
+  const archDiv = document.getElementById('archived-tbody');
+  if (archDiv) archDiv.innerHTML = arquivados.map(c=>conteudoCardHtml(c,true)).join('');
 }
 
 function toggleArchivedMenu() {
