@@ -385,11 +385,6 @@ tr:hover td { background: var(--bg); }
     grid-template-columns: 1fr !important;
   }
 
-  /* Botões flutuantes — mobile */
-  #pomodoro-widget { bottom: 1rem !important; right: 4rem !important; }
-  button[onclick="openQuickAdd()"] { bottom: 1rem !important; right: 4rem !important; }
-  button[onclick="openNotaRapidaFlutuante()"] { bottom: 6rem !important; right: 4rem !important; }
-
   /* Tabelas */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { font-size: 12px; }
@@ -432,10 +427,12 @@ tr:hover td { background: var(--bg); }
   .btn { font-size: 14px !important; padding: 10px 18px !important; }
   .check-item { font-size: 14px !important; }
   .modal-title { font-size: 22px !important; }
-  /* Hide desktop floating buttons on mobile — use bottom bar instead */
+  /* Esconder botões flutuantes no mobile — usar barra inferior */
   button[onclick="openQuickAdd()"] { display: none !important; }
   button[onclick="openNotaRapidaFlutuante()"] { display: none !important; }
-  #pomodoro-widget { bottom: 72px !important; right: 1rem !important; }
+  button[onclick="openChatPanel()"] { display: none !important; }
+  button[onclick="openNotifPanel()"] { display: none !important; }
+  #pomodoro-widget { display: none !important; }
 }
 .bottom-nav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -475,16 +472,40 @@ tr:hover td { background: var(--bg); }
 .notif-dot.read { background: var(--border); }
 .notif-text { flex: 1; line-height: 1.4; }
 .notif-time { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
-/* ── CHAT PANEL ── */
+/* ── CHAT PANEL DESKTOP ── */
 #chat-panel {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4); z-index: 400;
-  align-items: flex-end;
+  position: fixed; top: 0; right: -380px; bottom: 0;
+  width: 360px; z-index: 400;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px rgba(28,20,16,0.12);
+  display: flex; flex-direction: column;
+  transition: right 0.28s cubic-bezier(.4,0,.2,1);
 }
-#chat-panel.open { display: flex; flex-direction: column; justify-content: flex-end; }
-#chat-panel-inner {
-  background: var(--surface); border-radius: 20px 20px 0 0;
-  width: 100%; height: 75vh; display: flex; flex-direction: column;
+#chat-panel.open { right: 0; }
+/* No mobile mantém comportamento de overlay */
+@media (max-width: 768px) {
+  #chat-panel {
+    position: fixed; inset: 0; right: 0;
+    width: 100%; top: auto; height: 75vh;
+    border-radius: 20px 20px 0 0;
+    border-left: none;
+    box-shadow: 0 -4px 24px rgba(28,20,16,0.15);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+  }
+  #chat-panel.open { transform: translateY(0); right: 0; }
+  #chat-overlay { display: block !important; }
+}
+#chat-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3); z-index: 399;
+}
+.chat-float-btn-badge {
+  position: absolute; top: 4px; right: 4px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--danger); border: 2px solid var(--surface);
+  display: none;
 }
 .chat-panel-header {
   padding: 12px 16px; border-bottom: 1px solid var(--border);
@@ -645,20 +666,21 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-<!-- CHAT PANEL -->
-<div id="chat-panel" onclick="if(event.target===this)closeChatPanel()">
-  <div id="chat-panel-inner">
-    <div class="chat-panel-header">
-      <div style="font-family:'DM Serif Display',serif;font-size:18px;">Chat da equipe</div>
-      <button onclick="closeChatPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-soft);">×</button>
-    </div>
-    <div class="chat-panel-messages" id="chat-panel-messages"></div>
-    <div class="chat-panel-input-row">
-      <textarea id="chat-panel-input" placeholder="Mensagem..." rows="1"
-        style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);resize:none;outline:none;max-height:80px;"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
-      <button onclick="sendChatMessage()" style="background:var(--text);color:var(--surface);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
-    </div>
+<!-- CHAT OVERLAY (mobile) -->
+<div id="chat-overlay" onclick="closeChatPanel()"></div>
+
+<!-- CHAT DRAWER -->
+<div id="chat-panel">
+  <div class="chat-panel-header">
+    <div style="font-family:'DM Serif Display',serif;font-size:18px;">Chat da equipe</div>
+    <button onclick="closeChatPanel()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-soft);line-height:1;">×</button>
+  </div>
+  <div class="chat-panel-messages" id="chat-panel-messages"></div>
+  <div class="chat-panel-input-row">
+    <textarea id="chat-panel-input" placeholder="Mensagem..." rows="1"
+      style="flex:1;padding:9px 12px;border:1px solid var(--border-mid);border-radius:20px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);resize:none;outline:none;max-height:80px;"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+    <button onclick="sendChatMessage()" style="background:var(--text);color:var(--surface);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">↑</button>
   </div>
 </div>
 
@@ -668,7 +690,7 @@ tr:hover td { background: var(--bg); }
     <div class="logo-name" onclick="showPage('visao', document.querySelector('.nav-item.active'))">Grupo Cassol</div>
     <div class="logo-sub">Central de Controle</div>
   </div>
-  <div class="nav-section" style="display:none;">
+  <div class="nav-section">
     <div class="nav-label">Visão</div>
     <button class="nav-item active" onclick="showPage('visao',this)"><span style="font-size:15px;opacity:0.6;">◈</span> Visão Geral</button>
   </div>
@@ -1344,9 +1366,9 @@ tr:hover td { background: var(--bg); }
 
 <!-- BOTÃO + -->
 <!-- POMODORO WIDGET -->
-<div id="pomodoro-widget" style="position:fixed;bottom:2rem;right:6rem;z-index:150;">
+<div id="pomodoro-widget" style="position:fixed;bottom:2rem;left:1rem;z-index:150;">
   <!-- Display expandido -->
-  <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:62px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
+  <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:62px;left:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
     <!-- Modo label -->
     <div id="pom-mode-label" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-soft);margin-bottom:8px;">Foco</div>
     <!-- Timer display -->
@@ -1379,8 +1401,12 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
+<!-- BOTÕES FLUTUANTES LATERAIS ESQUERDOS -->
+<!-- Ordem de cima pra baixo: Chat → Notificações → Pomodoro (já acima) → Notas → + -->
+<button onclick="openChatPanel()" title="Chat da equipe" style="position:fixed;bottom:18rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;position:relative;" id="chat-float-btn">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
+<button onclick="openNotifPanel()" title="Notificações" style="position:fixed;bottom:13.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;position:relative;" id="notif-float-btn">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:var(--danger);"></span></button>
+<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:6.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
 <button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
-<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:6.5rem;right:2rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -1945,10 +1971,13 @@ function updateDarkBtn(isDark) {
 function duplicarEvento(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
-  const novo = {...ev, id: Date.now(), titulo: ev.titulo + ' (cópia)'};
+  const novoId = Date.now();
+  const novo = {...ev, id: novoId, titulo: ev.titulo + ' (cópia)', arquivada: false};
   events.push(novo);
   save('gc-events', events);
   buildTarefas(); buildColabTarefas(); buildEventosList(); buildPrioridades();
+  // Abrir modal de edição do novo item
+  setTimeout(() => openEditEvent(novoId), 50);
 }
 
 function duplicarConteudo(id) {
@@ -4292,7 +4321,16 @@ function addSteiraItem() {
 function buildTarefas() {
   const el = document.getElementById('tarefas-container');
   if (!el) return;
+
+  // Salvar estado dos grupos abertos ANTES de rebuildar
+  const openGroups = {};
+  ['proxSemana','proximas','arq-hoje','arq-semana','arq-proxSemana','arq-proximas'].forEach(k => {
+    const el2 = document.getElementById('tgrp-' + k);
+    if (el2) openGroups[k] = el2.style.display !== 'none';
+  });
+
   const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr2 = today.toISOString().slice(0,10);
 
   const _tf = getFilter('tarefas');
   // Etapas de livros como tarefas virtuais
@@ -4331,7 +4369,6 @@ function buildTarefas() {
       return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
     })() : 'var(--text-soft)';
     const isEtapa = e._livroId !== undefined;
-    const toggleFn = isEtapa ? `toggleEtapa(${isEtapa?'e._livroId':'0'},${isEtapa?'e._etapaIdx':'0'})` : `toggleTarefaArquivada(${isEtapa?0:'e.id'})`;
     return `<tr style="${isArquivada?'opacity:0.5;':''}">
       <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
         <input type="checkbox" ${isArquivada?'checked':''}
@@ -4364,32 +4401,39 @@ function buildTarefas() {
   ativas.sort((a,b)=>(a.data||'9').localeCompare(b.data||'9'));
   arquivadas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
 
-  const fimSemAtual = new Date(today); fimSemAtual.setDate(today.getDate() + (6 - today.getDay()) + 1);
+  // Calcular limites de semana corretamente (segunda a domingo)
+  const dow = today.getDay(); // 0=dom,1=seg...6=sab
+  // Fim desta semana = próximo domingo (ou hoje se for domingo)
+  const daysToSunday = dow === 0 ? 0 : 7 - dow;
+  const fimSemAtual = new Date(today); fimSemAtual.setDate(today.getDate() + daysToSunday);
+  fimSemAtual.setHours(23,59,59,999);
   const fimSemAtualStr = fimSemAtual.toISOString().slice(0,10);
+  // Fim da próxima semana
   const fimProxSem = new Date(fimSemAtual); fimProxSem.setDate(fimSemAtual.getDate() + 7);
   const fimProxSemStr = fimProxSem.toISOString().slice(0,10);
-  const todayStr2 = today.toISOString().slice(0,10);
 
-  // Atrasadas + hoje ficam no grupo "hoje"
-  const groups = {hoje:[], semana:[], proxSemana:[], proximas:[]};
+  // Separar atrasadas de hoje
+  const groups = {atrasadas:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
   ativas.forEach(t=>{
     if (!t.data) { groups.proximas.push(t); return; }
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
-    if (diff <= 0)                    groups.hoje.push(t);      // atrasadas e hoje juntas
-    else if (t.data < fimSemAtualStr) groups.semana.push(t);
-    else if (t.data < fimProxSemStr)  groups.proxSemana.push(t);
-    else                              groups.proximas.push(t);
+    if (diff < 0)                      groups.atrasadas.push(t);
+    else if (diff === 0)               groups.hoje.push(t);
+    else if (t.data <= fimSemAtualStr) groups.semana.push(t);
+    else if (t.data <= fimProxSemStr)  groups.proxSemana.push(t);
+    else                               groups.proximas.push(t);
   });
 
   // Arquivadas por grupo
-  const arqGroups = {hoje:[], semana:[], proxSemana:[], proximas:[]};
+  const arqGroups = {atrasadas:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
   arquivadas.forEach(t=>{
     if (!t.data) { arqGroups.proximas.push(t); return; }
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
-    if (diff <= 0)                    arqGroups.hoje.push(t);
-    else if (t.data < fimSemAtualStr) arqGroups.semana.push(t);
-    else if (t.data < fimProxSemStr)  arqGroups.proxSemana.push(t);
-    else                              arqGroups.proximas.push(t);
+    if (diff < 0)                      arqGroups.atrasadas.push(t);
+    else if (diff === 0)               arqGroups.hoje.push(t);
+    else if (t.data <= fimSemAtualStr) arqGroups.semana.push(t);
+    else if (t.data <= fimProxSemStr)  arqGroups.proxSemana.push(t);
+    else                               arqGroups.proximas.push(t);
   });
 
   function tableHtml(items, isArq) {
@@ -4399,9 +4443,10 @@ function buildTarefas() {
 
   function arqToggle(key, items) {
     if (!items.length) return '';
+    const wasOpen = openGroups['arq-'+key];
     return `<div style="margin-top:6px;">
-      <button class="archived-toggle" onclick="toggleTarefaGroup('arq-${key}')"><span id="tgrp-arrow-arq-${key}">▸</span> Concluídas (${items.length})</button>
-      <div id="tgrp-arq-${key}" style="display:none;margin-top:6px;">${tableHtml(items,true)}</div>
+      <button class="archived-toggle" onclick="toggleTarefaGroup('arq-${key}')"><span id="tgrp-arrow-arq-${key}">${wasOpen?'▾':'▸'}</span> Concluídas (${items.length})</button>
+      <div id="tgrp-arq-${key}" style="display:${wasOpen?'block':'none'};margin-top:6px;">${tableHtml(items,true)}</div>
     </div>`;
   }
 
@@ -4417,22 +4462,23 @@ function buildTarefas() {
   function renderGroupCollapsible(label, items, color, key) {
     const total = items.length + (arqGroups[key]||[]).length;
     if (total === 0) return '';
+    const wasOpen = openGroups[key] !== undefined ? openGroups[key] : false;
     return `<div style="margin-bottom:1.5rem;">
       <button class="archived-toggle" style="color:${color};font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.09em;" onclick="toggleTarefaGroup('${key}')">
-        <span id="tgrp-arrow-${key}">▸</span> ${label}${items.length ? ' · ' + items.length : ''}
+        <span id="tgrp-arrow-${key}">${wasOpen?'▾':'▸'}</span> ${label}${items.length ? ' · ' + items.length : ''}
       </button>
-      <div id="tgrp-${key}" style="display:none;margin-top:8px;">
+      <div id="tgrp-${key}" style="display:${wasOpen?'block':'none'};margin-top:8px;">
         ${items.length ? tableHtml(items,false) : ''}
         ${arqToggle(key, arqGroups[key]||[])}
       </div>
     </div>`;
   }
 
-  // Label dinâmico para "hoje" mostrando quantas estão atrasadas
-  const atrasadasHoje = groups.hoje.filter(t => t.data && t.data < todayStr2).length;
-  const labelHoje = atrasadasHoje > 0 ? `Hoje <span style="color:var(--danger);font-size:10px;">(${atrasadasHoje} atrasada${atrasadasHoje>1?'s':''})</span>` : 'Hoje';
-
-  let html = renderGroup(labelHoje, groups.hoje, 'var(--gisella)', 'hoje')
+  let html = '';
+  if (groups.atrasadas.length > 0 || arqGroups.atrasadas.length > 0) {
+    html += renderGroup(`⚠️ Atrasadas · ${groups.atrasadas.length}`, groups.atrasadas, 'var(--danger)', 'atrasadas');
+  }
+  html += renderGroup('Hoje', groups.hoje, 'var(--gisella)', 'hoje')
     + renderGroup('Esta semana', groups.semana, 'var(--warn)', 'semana')
     + renderGroupCollapsible('Próxima semana', groups.proxSemana, 'var(--text-mid)', 'proxSemana')
     + renderGroupCollapsible('Próximas', groups.proximas, 'var(--text-soft)', 'proximas');
@@ -6256,9 +6302,10 @@ function closeNotifPanel() {
 
 function updateNotifBadge() {
   const badge = document.getElementById('notif-badge');
-  if (!badge) return;
+  const floatBadge = document.getElementById('notif-float-badge');
   const unread = _notifs.filter(n => !n.read).length;
-  badge.style.display = unread > 0 ? 'block' : 'none';
+  if (badge) badge.style.display = unread > 0 ? 'block' : 'none';
+  if (floatBadge) floatBadge.style.display = unread > 0 ? 'block' : 'none';
 }
 
 function addNotif(text, tipo) {
@@ -6330,6 +6377,11 @@ let _chatMessages = [];
 
 function openChatPanel() {
   document.getElementById('chat-panel').classList.add('open');
+  // Overlay só no mobile
+  if (window.innerWidth <= 768) {
+    const ov = document.getElementById('chat-overlay');
+    if (ov) ov.style.display = 'block';
+  }
   renderChatMessages();
   setTimeout(() => {
     const msgs = document.getElementById('chat-panel-messages');
@@ -6337,14 +6389,22 @@ function openChatPanel() {
     const inp = document.getElementById('chat-panel-input');
     if (inp) inp.focus();
   }, 100);
-  // Mark as read
-  const badge = document.getElementById('chat-badge');
-  if (badge) badge.style.display = 'none';
-  _chatMessages.forEach(m => { if (!m.read) m.read = true; });
+  // Zerar badge
+  _notifs.filter(n => n.tipo === 'chat').forEach(n => n.read = true);
+  updateChatBadge(false);
 }
 
 function closeChatPanel() {
   document.getElementById('chat-panel').classList.remove('open');
+  const ov = document.getElementById('chat-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function updateChatBadge(show) {
+  const b1 = document.getElementById('chat-badge');        // barra mobile
+  const b2 = document.getElementById('chat-float-badge');  // botão desktop
+  if (b1) b1.style.display = show ? 'block' : 'none';
+  if (b2) b2.style.display = show ? 'block' : 'none';
 }
 
 function renderChatMessages() {
@@ -6383,7 +6443,7 @@ async function sendChatMessage() {
     localStorage.setItem('gc-chat-messages', JSON.stringify(_chatMessages));
   }
   renderChatMessages();
-  // Notify others
+  // Notificar outros (badge aparecerá quando o listener receber)
   addNotif(`💬 ${autor}: ${texto.slice(0,40)}${texto.length>40?'...':''}`, 'chat');
 }
 
@@ -6407,8 +6467,7 @@ function setupChatListener() {
       const latest = msgs[msgs.length - 1];
       const currentUser = window._currentUserName || localStorage.getItem('gc-session-name') || '';
       if (latest && latest.autor !== currentUser) {
-        const badge = document.getElementById('chat-badge');
-        if (badge) badge.style.display = 'block';
+        updateChatBadge(true);
         addNotif(`💬 ${latest.autor}: ${latest.texto.slice(0,50)}`, 'chat');
       }
     }
