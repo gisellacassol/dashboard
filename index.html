@@ -444,8 +444,7 @@ tr:hover td { background: var(--bg); }
   button[onclick="openNotaRapidaFlutuante()"] { display: none !important; }
   button[onclick="openChatPanel()"] { display: none !important; }
   button[onclick="openNotifPanel()"] { display: none !important; }
-  #pomodoro-widget { display: none !important; }
-}
+  #pomodoro-widget { display: none !important; }}
 .bottom-nav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 3px; padding: 6px 10px; border: none; background: none;
@@ -1362,7 +1361,7 @@ tr:hover td { background: var(--bg); }
 
 <!-- BOTÃO + -->
 <!-- POMODORO WIDGET -->
-<div id="pomodoro-widget" style="position:fixed;bottom:16rem;right:1rem;z-index:150;">
+<div id="pomodoro-widget" style="position:fixed;bottom:4.5rem;right:1rem;z-index:150;">
   <!-- Display expandido -->
   <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:0;right:62px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
     <!-- Modo label -->
@@ -1397,13 +1396,11 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-<!-- BOTÕES FLUTUANTES LATERAL ESQUERDA: Chat → Notificações -->
-<button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:9rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
-<button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:4.5rem;left:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.12);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:var(--danger);border-radius:50%;"></span></button>
-
-<!-- BOTÕES FLUTUANTES LATERAL DIREITA: Lápis → Pomodoro (widget acima) → + -->
-<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:11rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;cursor:pointer;z-index:150;box-shadow:0 2px 12px rgba(28,20,16,0.15);display:flex;align-items:center;justify-content:center;">✏️</button>
-<button onclick="openQuickAdd()" style="position:fixed;bottom:2rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);">+</button>
+<!-- BOTÕES FLUTUANTES — todos à direita, de cima pra baixo: Chat → Notif → Lápis → Pomodoro → + -->
+<button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:18rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
+<button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:13.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#e74c3c;border:2px solid var(--text);"></span></button>
+<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:9rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">✏️</button>
+<button onclick="openQuickAdd()" title="Adicionar" style="position:fixed;bottom:2rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">+</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -3130,23 +3127,25 @@ function buildCalendar(id, filter) {
     const dayConteudos = showConteudos
       ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'') === _calFilter))
       : [];
-    const allEvents = showEventos ? [...events, ...gcalEventsNative] : [];
+    const allEventsRaw = showEventos ? [...events, ...gcalEventsNative] : [];
+    // Deduplicar por id (gcal ids são strings como 'gcal-...')
+    const seenIds = new Set();
+    const allEvents = allEventsRaw.filter(e => {
+      const k = String(e.id);
+      if (seenIds.has(k)) return false;
+      seenIds.add(k);
+      return true;
+    });
     const _evFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
     const dayEvs = showEventos ? allEvents.filter(e => {
-      // Apply empresa filter for eventos calendar
-      if (id === 'cal-eventos' && _evFilter !== 'all' && !(e.empresa||'').split(',').includes(_evFilter)) return false;
-      if (e.tipo !== 'evento' && e.tipo !== undefined && e.tipo !== null && e.tipo !== '') {
-        if (id === 'cal-eventos') return false;
-      }
+      if (e.tipo !== 'evento') return false;          // só eventos, nunca tarefas/projetos/etc
       const eStart = e.data || '';
       const eEnd = e.dataFim || e.data || '';
       if (!eStart) return false;
-      const inRange = ds >= eStart && ds <= eEnd;
-      if (!inRange) return false;
-      if (id === 'cal-eventos') return e.tipo === 'evento';
-      if (id === 'cal-visao') return e.tipo === 'evento';
-      if (filter !== 'all' && !(e.empresa||'').split(',').includes(filter)) return false;
-      return e.tipo === 'evento';
+      if (!(ds >= eStart && ds <= eEnd)) return false;
+      if (id === 'cal-eventos' && _evFilter !== 'all' && !(e.empresa||'').split(',').includes(_evFilter)) return false;
+      if (id !== 'cal-visao' && id !== 'cal-eventos' && filter !== 'all' && !(e.empresa||'').split(',').includes(filter)) return false;
+      return true;
     }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
