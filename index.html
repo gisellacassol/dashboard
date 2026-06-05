@@ -454,8 +454,8 @@ tr:hover td { background: var(--bg); }
 }
 .bottom-nav-btn.active { color: var(--text); }
 .bottom-nav-btn:active { background: var(--bg); }
-.bottom-nav-icon { font-size: 22px; line-height: 1; }
-.bottom-nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap; }
+.bottom-nav-icon { font-size: 26px; line-height: 1; }
+.bottom-nav-label { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap; }
 .bottom-nav-badge {
   position: absolute; top: 4px; right: 8px;
   width: 8px; height: 8px; border-radius: 50%; background: var(--danger);
@@ -463,16 +463,28 @@ tr:hover td { background: var(--bg); }
 }
 /* ── NOTIFICAÇÕES PANEL ── */
 #notif-panel {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.4); z-index: 400;
-  align-items: flex-end;
+  display: none; position: fixed;
+  bottom: 9.5rem; right: 4.5rem;
+  z-index: 400;
+  width: 320px;
 }
-#notif-panel.open { display: flex; }
+#notif-panel.open { display: block; }
 #notif-panel-inner {
-  background: var(--surface); border-radius: 20px 20px 0 0;
-  padding: 1.2rem; width: 100%; max-height: 70vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 1rem; max-height: 420px; overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(28,20,16,0.18);
 }
 #notif-panel-inner::-webkit-scrollbar { display: none; }
+@media (max-width: 768px) {
+  #notif-panel {
+    position: fixed; inset: auto 0 62px 0;
+    width: 100%; border-radius: 0;
+  }
+  #notif-panel-inner {
+    border-radius: 14px 14px 0 0;
+    max-height: 60vh;
+  }
+}
 .notif-item {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 10px 0; border-bottom: 1px solid var(--border);
@@ -485,15 +497,16 @@ tr:hover td { background: var(--bg); }
 .notif-time { font-size: 11px; color: var(--text-soft); white-space: nowrap; }
 /* ── CHAT PANEL DESKTOP ── */
 #chat-panel {
-  position: fixed; top: 0; right: -380px; bottom: 0;
-  width: 360px; z-index: 400;
+  position: fixed; top: auto; bottom: 4.5rem; right: -340px;
+  width: 300px; height: 400px; z-index: 400;
   background: var(--surface);
-  border-left: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   box-shadow: -4px 0 24px rgba(28,20,16,0.12);
   display: flex; flex-direction: column;
   transition: right 0.28s cubic-bezier(.4,0,.2,1);
 }
-#chat-panel.open { right: 0; }
+#chat-panel.open { right: 4.5rem; }
 /* No mobile mantém comportamento de overlay */
 @media (max-width: 768px) {
   #chat-panel {
@@ -558,7 +571,7 @@ tr:hover td { background: var(--bg); }
   white-space: nowrap;
 }
 @media (max-width: 768px) {
-  #undo-toast { bottom: 72px; }
+  #undo-toast { bottom: 72px; display: none !important; }
 }
 #undo-toast.visible { transform: translateX(-50%) translateY(0); }
 #undo-toast button {
@@ -667,13 +680,13 @@ tr:hover td { background: var(--bg); }
 </div>
 
 <!-- NOTIFICATIONS PANEL -->
-<div id="notif-panel" onclick="if(event.target===this)closeNotifPanel()">
+<div id="notif-panel">
   <div id="notif-panel-inner">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-      <div style="font-family:'DM Serif Display',serif;font-size:18px;">Notificações</div>
-      <button onclick="closeNotifPanel()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-soft);">×</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+      <div style="font-family:'DM Serif Display',serif;font-size:16px;">Notificações</div>
+      <button onclick="closeNotifPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-soft);">×</button>
     </div>
-    <div id="notif-list"><div style="text-align:center;color:var(--text-soft);padding:2rem;font-size:13px;">Nenhuma notificação</div></div>
+    <div id="notif-list"><div style="text-align:center;color:var(--text-soft);padding:1.5rem;font-size:13px;">Nenhuma notificação</div></div>
   </div>
 </div>
 
@@ -739,110 +752,6 @@ tr:hover td { background: var(--bg); }
 <!-- VISÃO GERAL -->
 <div class="page active" id="page-visao">
 
-  <!-- CARDS DAS 3 EMPRESAS -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:2rem;" id="empresa-cards-row">
-
-    <!-- EDITORA CASSOL -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('editora', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('editora')))">
-      <div style="height:4px;background:var(--editora);"></div>
-      <div style="padding:1.1rem 1.2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--editora);display:inline-block;flex-shrink:0;"></span>
-            <span style="font-size:13px;font-weight:500;color:var(--text);">Editora Cassol</span>
-          </div>
-          <span style="font-size:11px;color:var(--text-soft);">→</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-          <div onclick="event.stopPropagation();showPageSection('editora','livros-editora')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Livros</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-livros">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('editora','projetos-editora')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-projetos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('editora','conteudo-tbody-editora')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-conteudos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('editora','section-tarefas-editora')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--editora-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--editora);" id="home-editora-tarefas">—</div>
-          </div>
-        </div>
-        <div id="home-editora-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
-      </div>
-    </div>
-
-    <!-- LÉIA CASSOL -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('leia', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('\'leia\'')))">
-      <div style="height:4px;background:var(--leia);"></div>
-      <div style="padding:1.1rem 1.2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--leia);display:inline-block;flex-shrink:0;"></span>
-            <span style="font-size:13px;font-weight:500;color:var(--text);">Léia Cassol</span>
-          </div>
-          <span style="font-size:11px;color:var(--text-soft);">→</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-          <div onclick="event.stopPropagation();showPageSection('leia','livros-leia')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Livros</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-livros">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('leia','projetos-leia')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-projetos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('leia','conteudo-tbody-leia')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-conteudos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('leia','section-tarefas-leia')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--leia-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--leia);" id="home-leia-tarefas">—</div>
-          </div>
-        </div>
-        <div id="home-leia-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
-      </div>
-    </div>
-
-    <!-- GC ESTRATÉGIAS -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="showPage('gisella', Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes('gisella')))">
-      <div style="height:4px;background:var(--gisella);"></div>
-      <div style="padding:1.1rem 1.2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="width:8px;height:8px;border-radius:50%;background:var(--gisella);display:inline-block;flex-shrink:0;"></span>
-            <span style="font-size:13px;font-weight:500;color:var(--text);">GC Estratégias</span>
-          </div>
-          <span style="font-size:11px;color:var(--text-soft);">→</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-          <div onclick="event.stopPropagation();showPageSection('gisella','mentee-list-rendered')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Mentoradas</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-mentees">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('gisella','projetos-gisella')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Projetos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-projetos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('gisella','conteudo-tbody-gisella')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Conteúdos</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-conteudos">—</div>
-          </div>
-          <div onclick="event.stopPropagation();showPageSection('gisella','section-tarefas-gisella')" style="background:var(--bg);border-radius:8px;padding:8px 10px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--gisella-bg)'" onmouseout="this.style.background='var(--bg)'">
-            <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Tarefas semana</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--gisella);" id="home-gisella-tarefas">—</div>
-          </div>
-        </div>
-        <div id="home-gisella-urgente" style="font-size:11px;color:var(--text-soft);min-height:16px;"></div>
-      </div>
-    </div>
-
-  </div>
-
   <!-- ALERTAS DE PRAZO -->
   <div id="home-alertas" style="margin-bottom:2rem;display:none;">
     <div class="section-title">⚠️ Atenção — prazos próximos</div>
@@ -871,7 +780,6 @@ tr:hover td { background: var(--bg); }
   </div>
   <div class="section">
       <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddLivroTodos()">+ novo livro</button>
     </div>
     <div id="livros-visao"></div>
     <div style="margin-top:8px;">
@@ -916,6 +824,7 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('editora')">+ projeto</button>
     </div>
     <div id="projetos-editora"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('editora')"><span id="parq-arrow-editora">▸</span> Arquivados (<span id="parq-count-editora">0</span>)</button>
@@ -963,6 +872,7 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('leia')">+ projeto</button>
     </div>
     <div id="projetos-leia"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('leia')"><span id="parq-arrow-leia">▸</span> Arquivados (<span id="parq-count-leia">0</span>)</button>
@@ -1009,13 +919,16 @@ tr:hover td { background: var(--bg); }
     <div id="conteudo-tbody-gisella"></div>
   </div>
   <div class="section">
-    <div class="section-title">Plano Diretor · mentoradas</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Plano Diretor · mentoradas</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddMentee()">+ cadastrar mentorada</button>
+    </div>
     <div id="mentee-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
-    <button class="add-btn" onclick="openAddMentee()">+ cadastrar mentorada</button>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('gisella')">+ projeto</button>
     </div>
     <div id="projetos-gisella"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('gisella')"><span id="parq-arrow-gisella">▸</span> Arquivados (<span id="parq-count-gisella">0</span>)</button>
@@ -1029,15 +942,13 @@ tr:hover td { background: var(--bg); }
     <div id="livros-gisella"></div>
   </div>
   <div class="section">
-    <div class="section-title">Esteira de produtos</div>
-    <div class="card" id="steira-list" style="margin-bottom:12px;">
-      <div class="steira-item steira-clickable" onclick="openSteira('Plano Diretor')"><span>Plano Diretor</span><span class="steira-arrow">›</span></div>
-      <div class="steira-item steira-clickable" onclick="openSteira('Curso solo')"><span>Curso solo</span><span class="steira-arrow">›</span></div>
-      <div class="steira-item steira-clickable" onclick="openSteira('Ebook estratégia literária')"><span>Ebook estratégia literária</span><span class="steira-arrow">›</span></div>
-      <div class="steira-item steira-clickable" onclick="openSteira('Plano Diretor 2.0')"><span>Plano Diretor 2.0</span><span class="steira-arrow">›</span></div>
-      <div class="steira-item steira-clickable" onclick="openSteira('Workshop avulso')"><span>Workshop avulso</span><span class="steira-arrow">›</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Esteira de produtos</div>
+      <button class="add-btn" style="margin:0;" onclick="addSteiraItem()">+ adicionar produto</button>
     </div>
-    <button class="add-btn" onclick="addSteiraItem()">+ adicionar produto</button>
+    <div class="card" id="steira-list-wrap" style="margin-bottom:0;">
+      <div id="steira-list"></div>
+    </div>
   </div>
 </div>
 
@@ -1359,9 +1270,8 @@ tr:hover td { background: var(--bg); }
 </main>
 </div>
 
-<!-- BOTÃO + -->
-<!-- POMODORO WIDGET -->
-<div id="pomodoro-widget" style="position:fixed;bottom:4.5rem;right:1rem;z-index:150;">
+<!-- POMODORO WIDGET — topmost floating button -->
+<div id="pomodoro-widget" style="position:fixed;bottom:18rem;right:1rem;z-index:150;">
   <!-- Display expandido -->
   <div id="pomodoro-expanded" style="display:none;position:absolute;bottom:0;right:62px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;box-shadow:0 4px 20px rgba(28,20,16,0.18);width:170px;text-align:center;">
     <!-- Modo label -->
@@ -1396,11 +1306,11 @@ tr:hover td { background: var(--bg); }
   </div>
 </div>
 
-<!-- BOTÕES FLUTUANTES — todos à direita, de cima pra baixo: Chat → Notif → Lápis → Pomodoro → + -->
-<button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:18rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
-<button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:13.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#e74c3c;border:2px solid var(--text);"></span></button>
-<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:9rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">✏️</button>
-<button onclick="openQuickAdd()" title="Adicionar" style="position:fixed;bottom:2rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">+</button>
+<!-- BOTÕES FLUTUANTES — todos à direita, espaçamento igual de 4.5rem entre eles -->
+<button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:13.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
+<button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:9rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#e74c3c;border:2px solid var(--text);"></span></button>
+<button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:4.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">✏️</button>
+<button onclick="openQuickAdd()" title="Adicionar" style="position:fixed;bottom:0rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">+</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -2418,126 +2328,22 @@ function deleteLinkEmpresaModal(emp, id) {
 
 /* ── TAREFAS AUTO MENTORIA ── */
 function limparTarefasEventosRemovidos(allEvents) {
-  // Coletar todas as gcalKeys válidas dos eventos atuais
-  const validKeys = new Set();
-  allEvents.forEach(ev => {
-    if (!ev.start || !ev.title) return;
-    const nome = ev.title.trim();
-    const nomeKey = nome.replace(/\s/g,'_').slice(0,20);
-    validKeys.add('gcal-prep-ev-' + ev.start + '-' + nomeKey);
-    validKeys.add('gcal-enc-ev-'  + ev.start + '-' + nomeKey);
-    // Mentorias
-    const matchParen = nome.match(/\(([^)]+)\)/);
-    const nomeMentee = matchParen ? matchParen[1].trim() : nome.replace(/^[Mm]entoria\s*[-\u2013]?\s*/, '').trim();
-    if (nomeMentee) {
-      validKeys.add('gcal-prep-' + ev.start + '-' + nomeMentee.replace(/\s/g,'_'));
-    }
-  });
-
-  // Remover tarefas automáticas cujo evento gcal não existe mais
+  // Remover TODAS as tarefas automáticas com gcalKey (geradas por eventos do calendário)
   const antes = events.length;
-  events = events.filter(e => {
-    if (!e.gcalKey) return true; // não é automática, manter
-    return validKeys.has(e.gcalKey); // manter só se evento ainda existe
-  });
-
+  events = events.filter(e => !e.gcalKey);
   if (events.length < antes) {
     save('gc-events', events);
     buildTarefas(); buildColabTarefas(); buildPrioridades();
-    console.log('Limpeza gcal: ' + (antes - events.length) + ' tarefa(s) removida(s)');
+    console.log('Limpeza gcal: ' + (antes - events.length) + ' tarefa(s) automáticas removidas');
   }
 }
 
 function criarTarefasEventos(allEvents) {
-  // Cria tarefas automáticas para TODOS os eventos do gcal da GC
-  let changed = false;
-  const _hj = new Date(); _hj.setHours(0,0,0,0); const _hjStr = _hj.toISOString().slice(0,10);
-  allEvents.forEach(ev => {
-    if (!ev.start || !ev.title) return;
-    if (ev.start < _hjStr) return; // ignorar eventos passados
-    const nome = ev.title.trim();
-    const eventDate = new Date(ev.start + 'T12:00:00');
-    const prep = new Date(eventDate); prep.setDate(prep.getDate() - 2);
-    const enc  = new Date(eventDate); enc.setDate(enc.getDate() + 1);
-    const prepStr = prep.toISOString().slice(0,10);
-    const encStr  = enc.toISOString().slice(0,10);
-    const keyPrep = 'gcal-prep-ev-' + ev.start + '-' + nome.replace(/\s/g,'_').slice(0,20);
-    const keyEnc  = 'gcal-enc-ev-'  + ev.start + '-' + nome.replace(/\s/g,'_').slice(0,20);
-    if (!events.some(e => e.gcalKey === keyPrep)) {
-      events.push({ id: Date.now() + Math.floor(Math.random()*9999),
-        titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
-        data: prepStr, responsavel: 'Gisella', gcalKey: keyPrep, arquivada: false });
-      changed = true;
-    }
-    if (!events.some(e => e.gcalKey === keyEnc)) {
-      events.push({ id: Date.now() + Math.floor(Math.random()*9999) + 1,
-        titulo: 'Encerrar ' + nome, empresa: 'gisella', tipo: 'tarefa',
-        data: encStr, responsavel: 'Gisella', gcalKey: keyEnc, arquivada: false });
-      changed = true;
-    }
-  });
-  if (changed) { save('gc-events', events); buildTarefas(); buildColabTarefas(); buildPrioridades(); }
+  // Desabilitado: não criar mais tarefas automáticas de preparar/encerrar eventos
 }
 
 function criarTarefasMentoria(allEvents) {
-  const mentorias = allEvents.filter(ev =>
-    ev.title && ev.title.trim().toLowerCase().startsWith('mentoria')
-  );
-  if (mentorias.length === 0) return;
-
-  let changed = false;
-
-  mentorias.forEach(ev => {
-    // Só processar eventos futuros ou de hoje
-    const _hoje = new Date(); _hoje.setHours(0,0,0,0); const _hojeStr = _hoje.toISOString().slice(0,10);
-    if (ev.start < _hojeStr) return;
-    // Extrair nome — entre parênteses ou após "Mentoria "
-    let nomeMentee = '';
-    const matchParen = ev.title.match(/\(([^)]+)\)/);
-    if (matchParen) {
-      nomeMentee = matchParen[1].trim();
-    } else {
-      nomeMentee = ev.title.replace(/^[Mm]entoria\s*[-\u2013]?\s*/, '').trim();
-    }
-    if (!nomeMentee) return;
-
-    // Encontrar mentorada no sistema
-    const mentee = mentees.find(m =>
-      m.name && m.name.toLowerCase().includes(nomeMentee.toLowerCase().split(' ')[0])
-    );
-    const menteeId = mentee ? mentee.id : null;
-
-    // Calcular datas
-    const eventDate = new Date(ev.start + 'T12:00:00');
-    const before = new Date(eventDate); before.setDate(before.getDate() - 1);
-    const after  = new Date(eventDate); after.setDate(after.getDate() + 1);
-    const beforeStr = before.toISOString().slice(0,10);
-    const afterStr  = after.toISOString().slice(0,10);
-
-    // Chaves únicas para evitar duplicatas
-    const keyPrep = 'gcal-prep-' + ev.start + '-' + nomeMentee.replace(/\s/g,'_');
-    const keyDev  = 'gcal-dev-'  + ev.start + '-' + nomeMentee.replace(/\s/g,'_');
-
-    if (!events.some(e => e.gcalKey === keyPrep)) {
-      events.push({
-        id: Date.now() + Math.floor(Math.random()*1000),
-        titulo: 'Preparar mentoria (' + nomeMentee + ')',
-        empresa: 'gisella', tipo: 'tarefa',
-        data: beforeStr, responsavel: 'Gisella',
-        menteeId, gcalKey: keyPrep, arquivada: false,
-      });
-      changed = true;
-    }
-
-
-  });
-
-  if (changed) {
-    save('gc-events', events);
-    buildTarefas();
-    buildColabTarefas();
-    buildPrioridades();
-  }
+  // Desabilitado: não criar mais tarefas automáticas de preparar mentoria
 }
 
 
@@ -2594,10 +2400,12 @@ function resetFixedChecks(colab) {
   let checks = getFixedChecks(colab);
   const data = getFixedData(colab);
   const today = new Date().toISOString().slice(0,10);
-  // Semana começa no domingo — usar data do último domingo
-  const d = new Date(); 
-  const sunday = new Date(d); sunday.setDate(d.getDate() - d.getDay());
-  const weekKey = sunday.toISOString().slice(0,10); // YYYY-MM-DD do domingo
+  // Semana começa na segunda-feira
+  const d = new Date();
+  const dow = d.getDay(); // 0=dom,1=seg,...,6=sab
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  const weekKey = monday.toISOString().slice(0,10); // YYYY-MM-DD da segunda
   let changed = false;
 
   if (localStorage.getItem('gc-fixed-day-' + colab) !== today) {
@@ -2955,19 +2763,11 @@ function buildConteudoCalSemana() {
       !c.done && c.dataPost === ds &&
       (filter === 'all' || (c.empresa||'') === filter)
     );
-    const dayProds = conteudos.filter(c =>
-      !c.done && c.dataProd === ds &&
-      (filter === 'all' || (c.empresa||'') === filter)
-    );
 
     html += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'}">
       <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
       <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
 
-    dayProds.forEach(c => {
-      const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
-      html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}20;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="Produção: ${c.nome}">✍ ${c.nome}</div>`;
-    });
     dayConts.forEach(c => {
       const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
       html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}15;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${cor};" title="Postagem: ${c.nome}">📤 ${c.nome}</div>`;
@@ -3006,7 +2806,7 @@ function showPage(id, btn) {
   if (id === 'visao') { buildPrioridades(); window.scrollTo({top:0,behavior:'instant'}); }
   if (id === 'tarefas') { buildTarefas(); }
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
-  if (id === 'gisella') setTimeout(countMentoriasmes, 300);
+  if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
   if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
   if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); setTimeout(() => renderNotas('milena'), 300); }
@@ -3149,7 +2949,7 @@ function buildCalendar(id, filter) {
     }) : [];
     let evHtml = '';
     if (feriadoNome) evHtml += `<div class="cal-event" style="background:#FEF3DA;color:#7A5200;font-size:9px;" title="${feriadoNome}">🏖 ${feriadoNome.split(' ')[0]}</div>`;
-    const contColors = {editora:{bg:'rgba(120,20,20,0.12)',color:'#7b1414'},leia:{bg:'rgba(60,10,80,0.12)',color:'#3c0a50'},gisella:{bg:'rgba(140,10,60,0.12)',color:'#8c0a3c'}};
+    const contColors = {editora:{bg:'rgba(120,20,20,0.12)',color:'#7b1414'},leia:{bg:'rgba(60,10,80,0.12)',color:'#3c0a50'},gisella:{bg:'rgba(100,100,100,0.15)',color:'#111111'}};
     const _maxItems = (id === 'cal-visao') ? 99 : 3;
     evHtml += dayConteudos.slice(0,_maxItems).map(c => {
       const cc = contColors[c.empresa||'editora']||contColors.editora;
@@ -3202,6 +3002,18 @@ function refreshCalendars() { Object.keys(CAL_STATE).forEach(id => buildCalendar
 function quickAddDate(ds) { document.getElementById('qa-prazo').value = ds; openQuickAdd(); }
 
 function fmtDate(val) {
+  if (!val) return '—';
+  const [y,m,d] = val.split('-').map(Number);
+  const ms = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((new Date(y,m-1,d) - today) / 86400000);
+  if (diff === 0) return 'hoje'; if (diff === 1) return 'amanhã';
+  if (diff < 0) return `${d} ${ms[m-1]}`;
+  if (diff <= 7) return `${diff} dias`;
+  return `${d} ${ms[m-1]}`;
+}
+
+function fmtDateTarefa(val) {
   if (!val) return '—';
   const [y,m,d] = val.split('-').map(Number);
   const ms = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -3353,7 +3165,7 @@ function deleteEventDirect(id) {
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
   save('gc-events', events);
   save('gc-projetos', projetos);
-  buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
+  buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
   ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   pushUndo(ev.titulo || 'Tarefa', () => {
     events = snapEv; projetos = snapPr;
@@ -3538,6 +3350,11 @@ function submitQuickAdd() {
   buildTarefas();
   buildColabTarefas();
   buildPrioridades();
+  // Notify if task assigned to someone
+  if (tipo === 'tarefa' && !editingEventId) {
+    const resp = getQaVal('qa-responsavel');
+    if (resp) notifyTaskAssigned(getQaVal('qa-titulo').trim(), resp);
+  }
   // Se for edição de tarefa vinculada a projeto, sincronizar nome e responsável
   if (editingEventId && tipo === 'tarefa') {
     projetos.forEach(p => {
@@ -3835,7 +3652,18 @@ function deleteLivro(id) {
   save('gc-livros', livros); renderLivros();
   pushUndo(l.titulo||'Livro', ()=>{ livros=snap; save('gc-livros',livros); renderLivros(); });
 }
-function toggleEtapa(id, i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].feito=!l.etapas[i].feito; save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); buildPrioridades(); } }
+function toggleEtapa(id, i) { 
+  const l=livros.find(x=>x.id===id); 
+  if(l) { 
+    const wasFeito = l.etapas[i].feito;
+    l.etapas[i].feito=!l.etapas[i].feito; 
+    save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); buildPrioridades(); 
+    if (!wasFeito && l.etapas[i].feito) {
+      const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+      notifyTaskCompleted(`[${l.titulo}] ${l.etapas[i].nome}`, userName);
+    }
+  } 
+}
 function setPrazoEtapa(id,i,val) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].prazo=val; save('gc-livros',livros); renderLivros(); } }
 function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
 function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildColabTarefas(); } }
@@ -4103,6 +3931,7 @@ function toggleConteudoEtapa(id, key) {
   if (!c) return;
   if (!c.etapasStatus) c.etapasStatus = {};
   if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+  const wasFeito = c.etapasStatus[key].feito;
   c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
   // Atualizar status geral do conteúdo para o key atual se não feito
   if (!c.etapasStatus[key].feito) {
@@ -4116,6 +3945,12 @@ function toggleConteudoEtapa(id, key) {
   save('gc-conteudos', conteudos);
   renderConteudos();
   buildTarefas();
+  // Notify if completed
+  if (!wasFeito && c.etapasStatus[key].feito) {
+    const etapaNome = CONTEUDO_ETAPAS_PADRAO[CONTEUDO_ETAPAS_KEYS.indexOf(key)] || key;
+    const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+    notifyTaskCompleted(`[${c.nome}] ${etapaNome}`, userName);
+  }
 }
 
 function setConteudoEtapaResp(id, key, resp) {
@@ -4421,8 +4256,85 @@ function deleteMcdEtapa(idx) {
 
 /* ── STEIRA ── */
 let currentSteiraName = null;
+let _steiraListDragSrc = null;
+
+// Migrate old steiraData format to new array-based format with ids
+function initSteiraList() {
+  if (!steiraData._list) {
+    // First run: populate default items or from old keys
+    const defaults = ['Plano Diretor','Curso solo','Ebook estratégia literária','Plano Diretor 2.0','Workshop avulso'];
+    const existing = Object.keys(steiraData).filter(k => k !== '_list' && !k.startsWith('_'));
+    const names = existing.length > 0 ? existing : defaults;
+    steiraData._list = names.map(name => ({ id: name.replace(/\s/g,'_') + '_' + Date.now(), name }));
+    save('gc-steira', steiraData);
+  }
+}
+
+function renderSteiraList() {
+  initSteiraList();
+  const el = document.getElementById('steira-list');
+  if (!el) return;
+  const list = steiraData._list || [];
+  if (list.length === 0) {
+    el.innerHTML = '<div style="padding:1rem;color:var(--text-soft);font-size:13px;text-align:center;">Nenhum produto cadastrado.</div>';
+    return;
+  }
+  el.innerHTML = list.map((item, idx) => `
+    <div class="steira-item" draggable="true"
+      ondragstart="_steiraListDragSrc=${idx};event.dataTransfer.effectAllowed='move';"
+      ondragover="event.preventDefault()"
+      ondrop="event.preventDefault();steiraListDrop(${idx})">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;" onclick="openSteiraById('${item.id}')">
+        <span style="cursor:grab;color:var(--text-soft);font-size:12px;">⠿</span>
+        <span style="font-size:13px;font-weight:500;">${item.name}</span>
+        ${steiraData[item.id]&&steiraData[item.id].link ? `<span id="steira-link-${item.id}" style="font-size:11px;color:var(--gisella);">🔗</span>` : `<span id="steira-link-${item.id}" style="display:none;font-size:11px;color:var(--gisella);">🔗</span>`}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <button onclick="event.stopPropagation();renameSteiraItem('${item.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 5px;" title="Editar nome">✎</button>
+        <button onclick="event.stopPropagation();duplicateSteiraItem('${item.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 5px;" title="Duplicar">⧉</button>
+        <button onclick="event.stopPropagation();deleteSteiraItem('${item.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 5px;" title="Excluir">×</button>
+        <span class="steira-arrow" style="cursor:pointer;" onclick="openSteiraById('${item.id}')">›</span>
+      </div>
+    </div>`).join('');
+}
+
+function steiraListDrop(toIdx) {
+  const fromIdx = _steiraListDragSrc;
+  if (fromIdx === null || fromIdx === toIdx) return;
+  const list = steiraData._list;
+  const [moved] = list.splice(fromIdx, 1);
+  list.splice(toIdx, 0, moved);
+  _steiraListDragSrc = null;
+  save('gc-steira', steiraData);
+  renderSteiraList();
+}
+
+function openSteiraById(id) {
+  initSteiraList();
+  const item = (steiraData._list||[]).find(x => x.id === id);
+  if (!item) return;
+  currentSteiraName = id;
+  const d = steiraData[id]||{};
+  document.getElementById('ms-title').textContent = item.name;
+  document.getElementById('ms-nome').value=d.nome||item.name;
+  document.getElementById('ms-fase').value=d.fase||'';
+  document.getElementById('ms-dores').value=d.dores||'';
+  document.getElementById('ms-preco').value=d.preco||'';
+  document.getElementById('ms-modelo').value=d.modelo||'';
+  document.getElementById('ms-formato').value=d.formato||'';
+  document.getElementById('ms-notes').value=d.notes||'';
+  document.getElementById('ms-link').value=d.link||'';
+  const linkOpen = document.getElementById('ms-link-open');
+  if (linkOpen) { linkOpen.href=d.link||'#'; linkOpen.style.display=d.link?'inline':'none'; }
+  openModal('modal-steira');
+}
 
 function openSteira(nome) {
+  // Legacy compatibility: find item by name
+  initSteiraList();
+  const item = (steiraData._list||[]).find(x => x.name === nome);
+  if (item) { openSteiraById(item.id); return; }
+  // Fallback: use name as id
   currentSteiraName = nome;
   const d = steiraData[nome]||{};
   document.getElementById('ms-title').textContent = nome;
@@ -4448,26 +4360,59 @@ function saveSteira() {
     notes:document.getElementById('ms-notes').value,
     link:document.getElementById('ms-link').value.trim()
   };
-  save('gc-steira',steiraData);
-  // Update link indicator in list
-  const linkSpan = document.getElementById('steira-link-' + currentSteiraName);
-  if (linkSpan) {
-    const lnk = steiraData[currentSteiraName].link;
-    if (lnk) { linkSpan.textContent = '🔗 link'; linkSpan.style.display='inline'; }
-    else { linkSpan.style.display='none'; }
+  // Update name in list
+  const item = (steiraData._list||[]).find(x => x.id === currentSteiraName);
+  if (item && document.getElementById('ms-nome').value.trim()) {
+    item.name = document.getElementById('ms-nome').value.trim();
   }
+  save('gc-steira',steiraData);
+  renderSteiraList();
   closeModal('modal-steira');
 }
 
 function addSteiraItem() {
   const nome = prompt('Nome do produto:');
   if (!nome||!nome.trim()) return;
-  const list = document.getElementById('steira-list');
-  const div = document.createElement('div');
-  div.className = 'steira-item steira-clickable';
-  div.onclick = ()=>openSteira(nome.trim());
-  div.innerHTML = `<span>${nome.trim()}</span><span class="steira-arrow">›</span>`;
-  list.appendChild(div);
+  initSteiraList();
+  const id = 'steira_' + Date.now();
+  steiraData._list.push({ id, name: nome.trim() });
+  save('gc-steira', steiraData);
+  renderSteiraList();
+}
+
+function renameSteiraItem(id) {
+  initSteiraList();
+  const item = (steiraData._list||[]).find(x => x.id === id);
+  if (!item) return;
+  const newName = prompt('Novo nome:', item.name);
+  if (!newName || !newName.trim()) return;
+  item.name = newName.trim();
+  if (steiraData[id]) steiraData[id].nome = newName.trim();
+  save('gc-steira', steiraData);
+  renderSteiraList();
+}
+
+function duplicateSteiraItem(id) {
+  initSteiraList();
+  const item = (steiraData._list||[]).find(x => x.id === id);
+  if (!item) return;
+  const newId = 'steira_' + Date.now();
+  const newItem = { id: newId, name: item.name + ' (cópia)' };
+  steiraData._list.push(newItem);
+  if (steiraData[id]) steiraData[newId] = { ...steiraData[id], nome: newItem.name };
+  save('gc-steira', steiraData);
+  renderSteiraList();
+}
+
+function deleteSteiraItem(id) {
+  initSteiraList();
+  const item = (steiraData._list||[]).find(x => x.id === id);
+  if (!item) return;
+  if (!confirm('Excluir "' + item.name + '"?')) return;
+  steiraData._list = steiraData._list.filter(x => x.id !== id);
+  delete steiraData[id];
+  save('gc-steira', steiraData);
+  renderSteiraList();
 }
 
 /* ── TAREFAS ── */
@@ -4542,7 +4487,7 @@ function buildTarefas() {
         ${empBadgesHtml(e.empresa)}
         ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
       </td>
-      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDateTarefa(e.data):'—'}</td>
     </tr>`;
   }
 
@@ -4785,7 +4730,8 @@ function buildEventosList() {
     if (labelEl) labelEl.textContent = MESES_PT[calM] + ' ' + calY;
     // Filter proximos to current calendar month
     const proximos = evList.filter(e=>(e.data||'')>=mesInicio && (e.data||'')<=mesFim);
-    const passados = evList.filter(e=>(e.data||'')<today).reverse().slice(0,20);
+    // Passados: only from current calendar month, before today
+    const passados = evList.filter(e=>(e.data||'')>=mesInicio && (e.data||'')<today && (e.data||'')<=mesFim).reverse().slice(0,20);
     proxEl.innerHTML = proximos.length ? proximos.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum evento em '+MESES_PT[calM]+'.</div>';
     if (passEl) passEl.innerHTML = passados.length ? passados.map(evRow).join('') : '<div style="color:var(--text-soft);font-size:13px;padding:8px 0;">Nenhum.</div>';
     return;
@@ -5151,7 +5097,7 @@ function buildColabTarefas() {
           ${empBadgesHtml(t.empresa)}
           ${t.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${t.responsavel==='Gisella'?'var(--gisella-bg)':t.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.responsavel==='Gisella'?'var(--gisella)':t.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${t.responsavel}</span>`:''}
         </td>
-        <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDate(t.data):'—'}</td>
+        <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDateTarefa(t.data):'—'}</td>
       </tr>`;
     }
 
@@ -5469,7 +5415,7 @@ function buildPrioridades() {
         <button onclick="deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;">×</button>
       </td>
       <td><span class="badge ${EMP_BADGE[e.empresa]||'b-gray'}">${EMP_LABEL[e.empresa]||e.empresa}</span></td>
-      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDateTarefa(e.data):'—'}</td>
     </tr>`;
   }
 
@@ -5521,7 +5467,7 @@ function buildPrioridades() {
           const e = item.e;
           const EMP_BADGE2 = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
           const EMP_LABEL2 = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
-          return `<tr style="opacity:0.5;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onchange="toggleTarefaArquivada(${e.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${e.titulo}</td><td><span class="badge ${EMP_BADGE2[e.empresa]||'b-gray'}">${EMP_LABEL2[e.empresa]||e.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDate(e.data):'—'}</td></tr>`;
+          return `<tr style="opacity:0.5;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onchange="toggleTarefaArquivada(${e.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${e.titulo}</td><td><span class="badge ${EMP_BADGE2[e.empresa]||'b-gray'}">${EMP_LABEL2[e.empresa]||e.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDateTarefa(e.data):'—'}</td></tr>`;
         } else {
           const c = item.c;
           return `<tr style="opacity:0.5;" onclick="openConteudo(${c.id})"><td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${c.nome} <span style="font-size:10px;color:var(--text-soft);">✍</span></td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`;
@@ -5950,7 +5896,7 @@ function buildTarefasEmpresa(emp) {
         ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : ''}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
-      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDate(e.data):'—'}</td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDateTarefa(e.data):'—'}</td>
       <td>${e.responsavel?`<span style="font-size:11px;padding:1px 6px;border-radius:10px;background:var(--bg);color:var(--text-mid);">${e.responsavel}</span>`:''}</td>
     </tr>`;
   }
@@ -6214,16 +6160,8 @@ function deleteNota(colab, idx) {
 // Nota rápida via botão flutuante — detecta colaborador logado
 function openNotaRapidaFlutuante() {
   const user = localStorage.getItem('gc-session-user') || 'gisella';
-  // Navegar para a página do colaborador se não estiver lá
-  const colabPage = user === 'gisella' ? 'colab-gisella' : user === 'milena' ? 'colab-milena' : 'colab-luiggi';
-  const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
-  showPage(colabPage, navBtn);
-  setTimeout(() => {
-    openNotaModal(user, null);
-    // Scroll to notas section
-    const el = document.getElementById(user + '-notas-lista');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 100);
+  // Abrir modal sem navegar para outra página
+  openNotaModal(user, null);
 }
 
 /* ── POMODORO ── */
@@ -6444,6 +6382,19 @@ let _notifs = [];
 function openNotifPanel() {
   buildNotifList();
   document.getElementById('notif-panel').classList.add('open');
+  // Close when clicking outside
+  setTimeout(() => {
+    function outsideClick(e) {
+      const panel = document.getElementById('notif-panel');
+      const btn = document.getElementById('notif-float-btn');
+      const mobileBtn = document.getElementById('bnav-notif');
+      if (panel && !panel.contains(e.target) && e.target !== btn && e.target !== mobileBtn) {
+        closeNotifPanel();
+        document.removeEventListener('click', outsideClick);
+      }
+    }
+    document.addEventListener('click', outsideClick);
+  }, 50);
 }
 
 function closeNotifPanel() {
@@ -6476,15 +6427,40 @@ function buildNotifList() {
   const el = document.getElementById('notif-list');
   if (!el) return;
   if (_notifs.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:var(--text-soft);padding:2rem;font-size:13px;">Nenhuma notificação</div>';
+    el.innerHTML = '<div style="text-align:center;color:var(--text-soft);padding:1.5rem;font-size:13px;">Nenhuma notificação</div>';
     return;
   }
-  el.innerHTML = _notifs.map(n => `
+  const todayStr = new Date().toISOString().slice(0,10);
+  const user = (localStorage.getItem('gc-session-user')||'').toLowerCase();
+  const userName = user ? (user[0].toUpperCase() + user.slice(1)) : '';
+
+  // Collect today's tasks for the first 'info' notif
+  const tarefasHoje = (events||[]).filter(e =>
+    !e.arquivada && e.tipo === 'tarefa' && e.data === todayStr &&
+    (!userName || !e.responsavel || e.responsavel === userName)
+  );
+
+  el.innerHTML = _notifs.map((n, idx) => {
+    // Show tasks below the daily task notification
+    let tasksHtml = '';
+    if (n.tipo === 'info' && n.text && n.text.includes('tarefa') && idx === 0 && tarefasHoje.length > 0) {
+      tasksHtml = `<div style="margin-top:6px;padding-left:18px;">` +
+        tarefasHoje.slice(0, 5).map(t =>
+          `<div style="font-size:11px;color:var(--text-mid);padding:2px 0;border-bottom:1px solid var(--border);">• ${t.titulo}</div>`
+        ).join('') +
+        (tarefasHoje.length > 5 ? `<div style="font-size:10px;color:var(--text-soft);margin-top:2px;">+${tarefasHoje.length-5} mais</div>` : '') +
+        '</div>';
+    }
+    return `
     <div class="notif-item" onclick="this.querySelector('.notif-dot').classList.add('read')">
       <span class="notif-dot ${n.read?'read':''}"></span>
-      <span class="notif-text">${n.text}</span>
+      <div style="flex:1;">
+        <div class="notif-text">${n.text}</div>
+        ${tasksHtml}
+      </div>
       <span class="notif-time">${n.ts}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function checkUrgentTasksNotif() {
@@ -6516,12 +6492,27 @@ function scheduleDailyNotif() {
   const now = new Date();
   const target10 = new Date(now); target10.setHours(10, 0, 0, 0);
   if (target10 <= now) target10.setDate(target10.getDate() + 1);
-  const target13 = new Date(now); target13.setHours(13, 0, 0, 0);
-  if (target13 <= now) target13.setDate(target13.getDate() + 1);
 
   setTimeout(() => {
-    checkUrgentTasksNotif();
-    setInterval(checkUrgentTasksNotif, 24*60*60*1000);
+    // Send push with today's task count
+    const todayStr = new Date().toISOString().slice(0,10);
+    const user = (localStorage.getItem('gc-session-user')||'').toLowerCase();
+    const userName = user ? (user[0].toUpperCase() + user.slice(1)) : '';
+    const hoje = (events||[]).filter(e =>
+      !e.arquivada && e.tipo === 'tarefa' && e.data === todayStr &&
+      (!userName || !e.responsavel || e.responsavel === userName)
+    );
+    const count = hoje.length;
+    const msg = count > 0
+      ? `📋 Você tem ${count} tarefa${count>1?'s':''} para hoje`
+      : '✅ Nenhuma tarefa para hoje!';
+    addNotif(msg, 'info');
+    if (Notification && Notification.permission === 'granted') {
+      new Notification('Central GC · Tarefas do dia', { body: msg });
+    }
+    setInterval(() => {
+      checkUrgentTasksNotif();
+    }, 24*60*60*1000);
   }, target10 - now);
 }
 
@@ -6631,8 +6622,38 @@ function setupChatListener() {
   });
 }
 
-/* ── POMODORO SOUND NOTIFICATION ── */
-// Enhanced pomodoro finish with Web Notifications
+/* ── PUSH NOTIFICATIONS — task assignment & completion ── */
+function notifyTaskAssigned(tarefa, responsavel) {
+  const currentUser = (localStorage.getItem('gc-session-user') || '').toLowerCase();
+  const currentName = (window._currentUserName || '').toLowerCase();
+  // If the task was assigned to another collaborator, notify
+  if (responsavel && responsavel.toLowerCase() !== currentName && responsavel.toLowerCase() !== currentUser) {
+    const msg = `📋 Nova tarefa atribuída a ${responsavel}: "${tarefa}"`;
+    addNotif(msg, 'tarefa');
+  }
+}
+
+function notifyTaskCompleted(tarefa, completedBy) {
+  // Notify when a collaborator completes a task
+  const currentUser = (window._currentUserName || localStorage.getItem('gc-session-name') || '').toLowerCase();
+  if (completedBy && completedBy.toLowerCase() !== currentUser) {
+    const msg = `✅ ${completedBy} concluiu: "${tarefa}"`;
+    addNotif(msg, 'tarefa');
+  }
+}
+
+// Intercept toggleTarefaArquivada to add completion notification
+const _origToggleTarefaArquivada = toggleTarefaArquivada;
+function toggleTarefaArquivada(id) {
+  const e = events.find(x=>x.id===id);
+  const wasArchived = e ? e.arquivada : false;
+  _origToggleTarefaArquivada(id);
+  if (e && !wasArchived) {
+    // Just got archived = completed
+    const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+    notifyTaskCompleted(e.titulo, userName);
+  }
+}
 
 /* ── MODAL COMENTÁRIOS RÁPIDO ── */
 let _comModalEventId = null;
@@ -6737,12 +6758,13 @@ function openDayModal(ds, items) {
     if (item.type === 'conteudo') {
       const c = item.c;
       const cor = contColors[c.empresa||'editora'];
-      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px;background:var(--bg);border-radius:8px;cursor:pointer;" onclick="closeModal('modal-dia-cal');openConteudo(${c.id})">
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px;background:var(--bg);border-radius:8px;">
         <span style="font-size:14px;flex-shrink:0;">✍</span>
-        <div style="flex:1;">
+        <div style="flex:1;cursor:pointer;" onclick="closeModal('modal-dia-cal');openConteudo(${c.id})">
           <div style="font-weight:500;">${c.nome}</div>
           <div style="font-size:11px;color:${cor};margin-top:2px;">${EMP_LABEL[c.empresa]||c.empresa} · conteúdo</div>
         </div>
+        <button onclick="event.stopPropagation();if(confirm('Excluir conteúdo?')){deleteConteudo(${c.id});closeModal('modal-dia-cal');}" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;" title="Excluir">×</button>
       </div>`;
     } else {
       const e = item.e;
@@ -6958,6 +6980,7 @@ function initApp(cloudData) {
   buildHomeCards();
   ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
   ['gisella','milena','luiggi'].forEach(renderNotas);
+  renderSteiraList();
 
   // Initialize chat + notifications
   loadChatMessages().then(() => {});
