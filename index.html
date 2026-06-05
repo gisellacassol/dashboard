@@ -2328,22 +2328,100 @@ function deleteLinkEmpresaModal(emp, id) {
 
 /* ── TAREFAS AUTO MENTORIA ── */
 function limparTarefasEventosRemovidos(allEvents) {
-  // Remover TODAS as tarefas automáticas com gcalKey (geradas por eventos do calendário)
+  // Coletar todas as gcalKeys válidas dos eventos atuais
+  const validKeys = new Set();
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    const nomeKey = ev.title.trim().replace(/\s/g,'_').slice(0, 30);
+    validKeys.add('gcal-prep-'  + ev.start + '-' + nomeKey);
+    validKeys.add('gcal-dia-'   + ev.start + '-' + nomeKey);
+    validKeys.add('gcal-enc-'   + ev.start + '-' + nomeKey);
+  });
+
+  // Remover tarefas automáticas cujo evento gcal não existe mais
   const antes = events.length;
-  events = events.filter(e => !e.gcalKey);
+  events = events.filter(e => {
+    if (!e.gcalKey) return true;       // não é automática, manter
+    return validKeys.has(e.gcalKey);   // manter só se evento ainda existe
+  });
+
   if (events.length < antes) {
     save('gc-events', events);
     buildTarefas(); buildColabTarefas(); buildPrioridades();
-    console.log('Limpeza gcal: ' + (antes - events.length) + ' tarefa(s) automáticas removidas');
+    console.log('Limpeza gcal: ' + (antes - events.length) + ' tarefa(s) removida(s)');
   }
 }
 
 function criarTarefasEventos(allEvents) {
-  // Desabilitado: não criar mais tarefas automáticas de preparar/encerrar eventos
+  // Cria 3 tarefas automáticas por evento da agenda GC:
+  //  - "Preparar [evento]"  → 1 dia antes
+  //  - "[evento]"           → no dia do evento  (como tarefa)
+  //  - "Encerrar [evento]"  → 1 dia depois
+  let changed = false;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const hojeStr = hoje.toISOString().slice(0,10);
+
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    if (ev.start < hojeStr) return; // só eventos futuros ou de hoje
+
+    const nome = ev.title.trim();
+    const nomeKey = nome.replace(/\s/g,'_').slice(0, 30);
+
+    const diaEvento  = new Date(ev.start + 'T12:00:00');
+    const diaPrep    = new Date(diaEvento); diaPrep.setDate(diaEvento.getDate() - 1);
+    const diaEnc     = new Date(diaEvento); diaEnc.setDate(diaEvento.getDate() + 1);
+
+    const strEvento  = diaEvento.toISOString().slice(0,10);
+    const strPrep    = diaPrep.toISOString().slice(0,10);
+    const strEnc     = diaEnc.toISOString().slice(0,10);
+
+    const keyPrep    = 'gcal-prep-' + ev.start + '-' + nomeKey;
+    const keyDia     = 'gcal-dia-'  + ev.start + '-' + nomeKey;
+    const keyEnc     = 'gcal-enc-'  + ev.start + '-' + nomeKey;
+
+    if (!events.some(e => e.gcalKey === keyPrep)) {
+      events.push({
+        id: Date.now() + Math.floor(Math.random() * 9999),
+        titulo: 'Preparar ' + nome,
+        empresa: 'gisella', tipo: 'tarefa',
+        data: strPrep, responsavel: 'Gisella',
+        gcalKey: keyPrep, arquivada: false,
+      });
+      changed = true;
+    }
+
+    if (!events.some(e => e.gcalKey === keyDia)) {
+      events.push({
+        id: Date.now() + Math.floor(Math.random() * 9999) + 1,
+        titulo: nome,
+        empresa: 'gisella', tipo: 'tarefa',
+        data: strEvento, responsavel: 'Gisella',
+        gcalKey: keyDia, arquivada: false,
+      });
+      changed = true;
+    }
+
+    if (!events.some(e => e.gcalKey === keyEnc)) {
+      events.push({
+        id: Date.now() + Math.floor(Math.random() * 9999) + 2,
+        titulo: 'Encerrar ' + nome,
+        empresa: 'gisella', tipo: 'tarefa',
+        data: strEnc, responsavel: 'Gisella',
+        gcalKey: keyEnc, arquivada: false,
+      });
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    save('gc-events', events);
+    buildTarefas(); buildColabTarefas(); buildPrioridades();
+  }
 }
 
 function criarTarefasMentoria(allEvents) {
-  // Desabilitado: não criar mais tarefas automáticas de preparar mentoria
+  // Desabilitado: mentorias já são cobertas por criarTarefasEventos
 }
 
 
