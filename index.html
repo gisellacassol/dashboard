@@ -832,7 +832,7 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('editora')">+ projeto</button>
+
     </div>
     <div id="projetos-editora"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('editora')"><span id="parq-arrow-editora">▸</span> Arquivados (<span id="parq-count-editora">0</span>)</button>
@@ -880,7 +880,7 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('leia')">+ projeto</button>
+
     </div>
     <div id="projetos-leia"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('leia')"><span id="parq-arrow-leia">▸</span> Arquivados (<span id="parq-count-leia">0</span>)</button>
@@ -936,13 +936,14 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Marco 0 · mentoradas</div>
+      <button class="add-btn" style="margin:0;" onclick="openAddMentee()">+ cadastrar mentorada</button>
     </div>
     <div id="marco0-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddProjeto('gisella')">+ projeto</button>
+
     </div>
     <div id="projetos-gisella"></div>
     <button class="archived-toggle" onclick="toggleProjetosArquivados('gisella')"><span id="parq-arrow-gisella">▸</span> Arquivados (<span id="parq-count-gisella">0</span>)</button>
@@ -1455,13 +1456,6 @@ tr:hover td { background: var(--bg); }
           <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="qa-l-os" type="text" placeholder="Número da OS"></div>
           <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="qa-l-ano" type="text" placeholder="Ex: 2026"></div>
           <div class="form-group"><label class="form-label">Data de lançamento</label><input class="form-input" id="qa-l-lancamento" type="date"></div>
-          <div class="form-group"><label class="form-label">Empresas</label>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora</span></label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-leia" style="accent-color:var(--leia);"> <span style="color:var(--leia);">Léia</span></label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="qa-l-emp-gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC</span></label>
-            </div>
-          </div>
         </div>
         <div class="form-group"><label class="form-label">Sinopse</label><textarea class="notes-area" id="qa-l-sinopse" style="min-height:70px;"></textarea></div>
       </div>
@@ -2944,7 +2938,15 @@ function showPageSection(pageId, sectionId) {
   }, 80);
 }
 
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  // Re-open mentee modal after quickadd if we were adding a mentee task
+  if (id === 'modal-quickadd' && window._postQuickAddMenteeId) {
+    const mid = window._postQuickAddMenteeId;
+    window._postQuickAddMenteeId = null;
+    setTimeout(() => openMenteeModal(mid), 80);
+  }
+}
 
 function updateQaFields() {
   const tipo = document.getElementById('qa-tipo').value;
@@ -3244,16 +3246,16 @@ function openQuickAdd() {
   // Esconder comentários ao criar nova tarefa
   const comWrapNew = document.getElementById('qa-comentarios-wrap');
   if (comWrapNew) comWrapNew.style.display = 'none';
-  // Populate mentee author selector
+  // Populate mentee author selector (always, regardless of tipo)
   const autorSel = document.getElementById('qa-especificacao-autor');
   const autorWrap = document.getElementById('qa-especificacao-autor-wrap');
-  if (autorSel && autorWrap) {
-    autorWrap.style.display = 'block';
-    const menteesSorted2 = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  if (autorSel) {
+    const menteesSorted2 = [...(mentees||[])].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
     autorSel.innerHTML = '<option value="">Não se aplica</option>' +
       menteesSorted2.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
     autorSel.value = '';
   }
+  if (autorWrap) autorWrap.style.display = 'block';
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
 }
@@ -3342,10 +3344,15 @@ function deleteEventDirect(id) {
   if (!ev) return;
   const snapEv = [...events];
   const snapPr = projetos.map(p => ({...p, tarefas: [...(p.tarefas||[])]}));
+  // Remove from mentee tasks too
+  mentees.forEach(m => {
+    if (m.tasks) m.tasks = m.tasks.filter(t => t.id !== id.toString());
+  });
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
   save('gc-events', events);
   save('gc-projetos', projetos);
+  save('gc-mentees', mentees);
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
   ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   pushUndo(ev.titulo || 'Tarefa', () => {
@@ -3471,7 +3478,10 @@ function submitQuickAdd() {
       editingEventId = null;
     } else { conteudos.push(c); }
     save('gc-conteudos', conteudos); renderConteudos();
+    refreshCalendars();
+    buildConteudoCalSemana();
     buildCalendar('cal-conteudo', 'all');
+    buildVisaoConteudos();
     closeModal('modal-quickadd'); return;
   }
 
@@ -3987,17 +3997,19 @@ function openAddMenteeTask() {
   if (!currentMenteeId) return;
   const m = mentees.find(x => x.id === currentMenteeId);
   if (!m) return;
-  // Show inline task input in the modal instead of closing it
-  const el = document.getElementById('mm-tasks-list');
-  const inputHtml = `<div id="mm-task-add-row" style="display:flex;gap:8px;margin-bottom:10px;">
-    <input class="form-input" id="mm-task-input-inline" type="text" placeholder="Nova tarefa..." style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMenteeTaskInline();}">
-    <button class="btn btn-primary" onclick="addMenteeTaskInline()" style="font-size:12px;padding:6px 12px;">+ Add</button>
-    <button class="btn" onclick="cancelMenteeTaskAdd()" style="font-size:12px;padding:6px 10px;">×</button>
-  </div>`;
-  const existing = document.getElementById('mm-task-add-row');
-  if (existing) { document.getElementById('mm-task-input-inline')?.focus(); return; }
-  el.insertAdjacentHTML('beforebegin', inputHtml);
-  setTimeout(() => document.getElementById('mm-task-input-inline')?.focus(), 50);
+  // Open quickadd modal pre-set to tarefa, with mentee context
+  window._addingToMenteeId = currentMenteeId;
+  closeModal('modal-mentee');
+  openQuickAdd();
+  setTimeout(() => {
+    document.getElementById('qa-tipo').value = 'tarefa';
+    document.getElementById('qa-emp-gisella').checked = true;
+    updateQaFields();
+    const titulo = document.getElementById('qa-titulo');
+    if (titulo) { titulo.placeholder = `Tarefa para ${m.name}...`; titulo.focus(); }
+    // When this quickadd closes, reopen mentee modal
+    window._postQuickAddMenteeId = currentMenteeId;
+  }, 80);
 }
 
 function cancelMenteeTaskAdd() {
@@ -4011,15 +4023,17 @@ function addMenteeTaskInline() {
   const input = document.getElementById('mm-task-input-inline');
   const titulo = (input?.value||'').trim();
   if (!titulo) { input?.focus(); return; }
+  const resp  = document.getElementById('mm-task-resp-inline')?.value || '';
+  const prazo = document.getElementById('mm-task-prazo-inline')?.value || '';
   if (!m.tasks) m.tasks=[];
-  const newEv = {id:Date.now(), empresa:'gisella', titulo:`[${m.name}] ${titulo}`, tipo:'tarefa', data:'', menteeId:m.id};
+  const newEv = {id:Date.now(), empresa:'gisella', titulo:`[${m.name}] ${titulo}`, tipo:'tarefa',
+    data:prazo, responsavel:resp, menteeId:m.id};
   events.push(newEv);
-  m.tasks.push({id:newEv.id.toString(), titulo, done:false});
+  m.tasks.push({id:newEv.id.toString(), titulo, done:false, resp, prazo});
   save('gc-mentees',mentees); save('gc-events',events);
   cancelMenteeTaskAdd();
   renderMenteeTasks(m);
   buildTarefas(); buildColabTarefas();
-  // Also render marco0 if mentee has marco0 tasks
   renderMarco0List();
 }
 
@@ -4281,6 +4295,52 @@ function toggleConteudoEtapaCep(key) {
   renderCepLista();
 }
 
+function sortConteudosByPriority(lista) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+  return [...lista].sort((a, b) => {
+    const da = a.dataPost || '';
+    const db = b.dataPost || '';
+    // sem data vai pro final
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    // atrasadas primeiro, depois cronológico
+    return da.localeCompare(db);
+  });
+}
+
+function conteudoPriorityLabel(c) {
+  if (!c.dataPost) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+  const diff = Math.round((new Date(c.dataPost+'T00:00:00') - today) / 86400000);
+  if (diff < 0) return { label: 'Atrasados', color: 'var(--danger)' };
+  if (diff === 0) return { label: 'Hoje', color: 'var(--gisella)' };
+  if (diff === 1) return { label: 'Amanhã', color: 'var(--warn)' };
+  if (diff <= 7) return { label: 'Esta semana', color: 'var(--text-mid)' };
+  return { label: 'Próximos', color: 'var(--text-soft)' };
+}
+
+function cardsHtmlGrouped(lista, showEmpresa) {
+  if (lista.length === 0)
+    return '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo. Use o botão + para adicionar.</div>';
+  const sorted = sortConteudosByPriority(lista);
+  let html = '';
+  let currentLabel = null;
+  sorted.forEach(c => {
+    const lbl = conteudoPriorityLabel(c);
+    const lblText = lbl ? lbl.label : 'Sem data';
+    const lblColor = lbl ? lbl.color : 'var(--text-soft)';
+    if (lblText !== currentLabel) {
+      currentLabel = lblText;
+      html += `<div style="font-size:11px;font-weight:500;color:${lblColor};text-transform:uppercase;letter-spacing:0.09em;padding:8px 0 4px;">${lblText}</div>`;
+    }
+    html += conteudoCardHtml(c, showEmpresa);
+  });
+  return html;
+}
+
 function renderConteudos() {
   const ativos = conteudos.filter(c=>!c.done);
   const arquivados = conteudos.filter(c=>c.done);
@@ -4288,7 +4348,7 @@ function renderConteudos() {
   function cardsHtml(lista, showEmpresa) {
     return lista.length === 0
       ? '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo. Use o botão + para adicionar.</div>'
-      : lista.map(c => conteudoCardHtml(c, showEmpresa)).join('');
+      : cardsHtmlGrouped(lista, showEmpresa);
   }
 
   // Aba conteúdo unificada
@@ -4385,7 +4445,9 @@ function saveConteudo() {
   const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
   if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
   else conteudos.push({id:Date.now(), done:false, ...data});
-  save('gc-conteudos',conteudos); renderConteudos(); closeModal('modal-conteudo');
+  save('gc-conteudos',conteudos); renderConteudos();
+  refreshCalendars(); buildConteudoCalSemana(); buildVisaoConteudos();
+  closeModal('modal-conteudo');
 }
 
 function deleteConteudo(id) {
@@ -4866,6 +4928,9 @@ function toggleTarefaArquivada(id) {
   buildTarefas();
   buildColabTarefas();
   buildPrioridades();
+  ['editora','leia','gisella'].forEach(emp => {
+    if (document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp);
+  });
 }
 
 function toggleTarefasArquivadas() {
@@ -5813,8 +5878,8 @@ const GCAL_ID_LEIA       = 'assessorialeiacassol@gmail.com';
 // ATENÇÃO: substitua os IDs abaixo pelos IDs reais das agendas compartilhadas
 // O ID fica em: Google Calendar → Configurações da agenda → Integrar agenda → ID da agenda
 const GCAL_SHARED_CALS = [
-  { id: 'aceleracaomht@group.calendar.google.com', label: 'Aceleração', color: '#7c3aed', bg: 'rgba(124,58,237,0.13)' },
-  { id: 'advanced@group.calendar.google.com',      label: 'Advanced',   color: '#0369a1', bg: 'rgba(3,105,161,0.13)'  },
+  { id: '1116bdbd4eeaffd1739e5e36020151faabaf15a8c2bd6a5b5472838d82e008bc@group.calendar.google.com', label: 'Aceleração', color: '#7c3aed', bg: 'rgba(124,58,237,0.13)' },
+  { id: 'c_3881641b8772cba2844122f540de939114ccd88a9feafa8b5636ac594216f114@group.calendar.google.com', label: 'Advanced',   color: '#0369a1', bg: 'rgba(3,105,161,0.13)'  },
 ];
 let gcalSharedCache = []; // cache mesclado das agendas compartilhadas
 
@@ -5863,13 +5928,6 @@ async function loadGcal() {
   // Busca 6 meses ao redor de hoje para cobrir navegação nos calendários
   const rangeStart = new Date(); rangeStart.setMonth(rangeStart.getMonth() - 2); rangeStart.setDate(1);
   const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 4); rangeEnd.setDate(1);
-
-  // Warn if placeholder IDs are still in place
-  GCAL_SHARED_CALS.forEach(cal => {
-    if (cal.id.includes('group.calendar.google.com') && (cal.id.includes('aceleracaomht') || cal.id.includes('advanced@group'))) {
-      console.warn(`⚠️ Calendário compartilhado "${cal.label}" ainda usa ID provisório. Substitua em GCAL_SHARED_CALS no código.`);
-    }
-  });
 
   try {
     // Buscar agenda principal + agendas compartilhadas em paralelo
@@ -7429,20 +7487,23 @@ function showApp(user, displayName) {
     hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
     if (window.innerWidth > 768) closeMobileNav();
   });
-  // If a collaborator (not admin/visao), redirect to their own page
+  // If collaborator with NO saved page, redirect to their colab page
   if (['gisella','milena','luiggi'].includes(user)) {
-    const colabPage = 'colab-' + user;
-    setTimeout(() => {
-      const el = document.getElementById('page-' + colabPage);
-      const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
-      if (el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        if (btn) btn.classList.add('active');
-        localStorage.setItem('gc-current-page', colabPage);
-      }
-    }, 50);
+    const savedPg = localStorage.getItem('gc-current-page');
+    if (!savedPg) {
+      const colabPage = 'colab-' + user;
+      setTimeout(() => {
+        const el = document.getElementById('page-' + colabPage);
+        const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
+        if (el) {
+          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+          document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+          el.classList.add('active');
+          if (btn) btn.classList.add('active');
+          localStorage.setItem('gc-current-page', colabPage);
+        }
+      }, 50);
+    }
   }
   // Set chat author selector
   window._currentUser = user;
