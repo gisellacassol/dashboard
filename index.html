@@ -1373,11 +1373,6 @@ tr:hover td { background: var(--bg); }
         </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
-        <div class="form-group" id="qa-especificacao-autor-wrap" style="display:none;"><label class="form-label">Especificação de autor</label>
-          <select class="form-select" id="qa-especificacao-autor">
-            <option value="">Não se aplica</option>
-          </select>
-        </div>
         <!-- COMENTÁRIOS -->
         <div id="qa-comentarios-wrap" style="display:none;margin-top:4px;">
           <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Comentários</div>
@@ -1484,11 +1479,7 @@ tr:hover td { background: var(--bg); }
         <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
         <div class="form-group" id="qa-c-copy-wrap"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
         <div class="form-group"><label class="form-label">Observação</label><textarea class="notes-area" id="qa-observacao-conteudo" style="min-height:40px;"></textarea></div>
-        <!-- Emanda etapas -->
-        <div id="qa-emanda-etapas" style="display:none;">
-          <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Lista de etapas Emanda</div>
-          <div id="qa-emanda-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
-        </div>
+
         <input type="hidden" id="qa-c-dataprod"><input type="hidden" id="qa-c-legenda"><input type="hidden" id="qa-c-status" value="copy"><input type="hidden" id="qa-responsavel-conteudo" value="">
       </div>
 
@@ -1557,6 +1548,11 @@ tr:hover td { background: var(--bg); }
           </div>
         </div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Título *</label><input class="form-input" id="nl-titulo" type="text" placeholder="Título do livro"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Tipo de autoria</label>
+          <select class="form-select" id="nl-tipo-autoria">
+            <option value="">Não se aplica</option>
+          </select>
+        </div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresas</label>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="nl-emp-editora" value="editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
@@ -1580,6 +1576,28 @@ tr:hover td { background: var(--bg); }
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Sinopse</label><textarea class="notes-area" id="nl-sinopse" style="min-height:70px;"></textarea></div>
       </div>
       <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-livro')">Cancelar</button><button type="submit" class="btn btn-primary">Criar livro</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL CADASTRAR MENTORADA -->
+<div class="modal-overlay" id="modal-add-mentee">
+  <div class="modal" style="width:460px;">
+    <button class="modal-close" onclick="closeModal('modal-add-mentee')">×</button>
+    <div class="modal-title">Cadastrar mentorada</div>
+    <form onsubmit="event.preventDefault();submitAddMentee();" style="margin-top:1rem;">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input class="form-input" id="new-mentee-name" type="text" placeholder="Nome completo da mentorada" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link do Google Docs</label>
+        <input class="form-input" id="new-mentee-docs" type="url" placeholder="https://docs.google.com/...">
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="closeModal('modal-add-mentee')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Cadastrar</button>
+      </div>
     </form>
   </div>
 </div>
@@ -2731,9 +2749,11 @@ async function loadGcalLeia() {
 function load(key, def) {
   try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
+const _lastLocalSave = {};
 function save(key, val) {
   localStorage.setItem(key, JSON.stringify(val));
-  if (window.fbSave) window.fbSave(key, val);
+  _lastLocalSave[key] = Date.now();
+  if (window.fbSave) window.fbSave(key, val).catch(e => console.warn('fbSave err:', key, e));
   autoSave();
 }
 
@@ -2963,21 +2983,12 @@ function updateQaConteudoRede() {
   const organico = document.getElementById('qa-c-organico-wrap');
   const tipoWrap = document.getElementById('qa-c-tipo-wrap');
   const copyWrap = document.getElementById('qa-c-copy-wrap');
-  const emandaEtapas = document.getElementById('qa-emanda-etapas');
   if (organico) organico.style.display = isEmanda ? 'none' : '';
   if (tipoWrap) tipoWrap.style.display = isEmanda ? 'none' : '';
   if (copyWrap) copyWrap.style.display = isEmanda ? 'none' : '';
-  if (emandaEtapas) emandaEtapas.style.display = isEmanda ? 'block' : 'none';
   if (isEmanda) {
     const tipoSel = document.getElementById('qa-c-tipo');
     if (tipoSel) tipoSel.value = 'emailmkt';
-    // Render checklist preview
-    const cl = document.getElementById('qa-emanda-checklist');
-    if (cl) {
-      cl.innerHTML = EMANDA_ETAPAS_PADRAO.map(e =>
-        `<div style="font-size:12px;color:var(--text-mid);padding:3px 0;border-bottom:1px solid var(--border);">☐ ${e}</div>`
-      ).join('');
-    }
   }
 }
 
@@ -3246,16 +3257,13 @@ function openQuickAdd() {
   // Esconder comentários ao criar nova tarefa
   const comWrapNew = document.getElementById('qa-comentarios-wrap');
   if (comWrapNew) comWrapNew.style.display = 'none';
-  // Populate mentee author selector (always, regardless of tipo)
-  const autorSel = document.getElementById('qa-especificacao-autor');
-  const autorWrap = document.getElementById('qa-especificacao-autor-wrap');
-  if (autorSel) {
-    const menteesSorted2 = [...(mentees||[])].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
-    autorSel.innerHTML = '<option value="">Não se aplica</option>' +
-      menteesSorted2.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-    autorSel.value = '';
+  // Populate livro tipo-autoria selector (if livro tab is opened)
+  const tipoAutoriaSel2 = document.getElementById('nl-tipo-autoria');
+  if (tipoAutoriaSel2 && mentees && mentees.length > 0 && tipoAutoriaSel2.options.length <= 1) {
+    const ms2 = [...mentees].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    tipoAutoriaSel2.innerHTML = '<option value="">Não se aplica</option>' +
+      ms2.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
   }
-  if (autorWrap) autorWrap.style.display = 'block';
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
 }
@@ -3339,7 +3347,7 @@ function deleteComentarioTarefa(idx) {
   renderComentariosTarefa(ev);
 }
 
-function deleteEventDirect(id) {
+async function deleteEventDirect(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
   const snapEv = [...events];
@@ -3350,14 +3358,26 @@ function deleteEventDirect(id) {
   });
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
-  save('gc-events', events);
-  save('gc-projetos', projetos);
-  save('gc-mentees', mentees);
+  // Salvar localmente imediatamente
+  localStorage.setItem('gc-events', JSON.stringify(events));
+  localStorage.setItem('gc-projetos', JSON.stringify(projetos));
+  localStorage.setItem('gc-mentees', JSON.stringify(mentees));
+  // Aguardar Firebase confirmar antes de continuar (evita reversão no reload)
+  if (window.fbSave) {
+    try {
+      await Promise.all([
+        window.fbSave('gc-events', events),
+        window.fbSave('gc-projetos', projetos),
+        window.fbSave('gc-mentees', mentees),
+      ]);
+    } catch(e) { console.warn('fbSave delete error:', e); }
+  }
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
   ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
-  pushUndo(ev.titulo || 'Tarefa', () => {
+  pushUndo(ev.titulo || 'Tarefa', async () => {
     events = snapEv; projetos = snapPr;
-    save('gc-events', events); save('gc-projetos', projetos);
+    localStorage.setItem('gc-events', JSON.stringify(events));
+    if (window.fbSave) await window.fbSave('gc-events', events);
     buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
     ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   });
@@ -3531,17 +3551,8 @@ function submitQuickAdd() {
         save('gc-mentees', mentees); renderMenteeList();
       }
     }
-    // Auto-link to mentee from "Especificação de autor" field
-    const autorSelVal = document.getElementById('qa-especificacao-autor')?.value;
-    if (tipo === 'tarefa' && autorSelVal && !window._addingToMenteeId) {
-      const mAutor = mentees.find(x => x.id.toString() === autorSelVal);
-      if (mAutor) {
-        if (!mAutor.tasks) mAutor.tasks = [];
-        mAutor.tasks.push({id: newEv.id.toString(), titulo, done: false});
-        newEv.menteeId = mAutor.id;
-        save('gc-mentees', mentees); renderMenteeList();
-      }
-    }
+    // Auto-link to mentee from _addingToMenteeId context
+
   }
   window._addingToProjetoId = null;
   window._addingToMenteeId = null;
@@ -3597,6 +3608,13 @@ function openAddLivro(emp) {
     const cb = document.getElementById('nl-emp-'+e);
     if (cb) cb.checked = (e === emp);
   });
+  // Populate tipo de autoria
+  const tas = document.getElementById('nl-tipo-autoria');
+  if (tas) {
+    const ms = [...(mentees||[])].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    tas.innerHTML = '<option value="">Não se aplica</option>' + ms.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    tas.value = '';
+  }
   openModal('modal-livro');
   setTimeout(() => document.getElementById('nl-titulo').focus(), 50);
 }
@@ -3617,9 +3635,11 @@ function submitAddLivro() {
   const etapasUsar = tipopub === 'reimpressao' ? ETAPAS_REIMP : ETAPAS_DEFAULT;
   const menteeOpt = document.querySelector('input[name="nl-mentee-opt"]:checked')?.value;
   const menteeIdSel = menteeOpt === 'sim' ? parseInt(document.getElementById('nl-mentee-id')?.value||'0')||null : null;
+  const tipoAutoriaVal = document.getElementById('nl-tipo-autoria')?.value || '';
+  const tipoAutoriaMenteeId = tipoAutoriaVal ? parseInt(tipoAutoriaVal)||null : null;
   const livro = {
     id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
-    tipopub, menteeId: menteeIdSel,
+    tipopub, menteeId: menteeIdSel, tipoAutoriaMenteeId: tipoAutoriaMenteeId,
     info: {
       autor: document.getElementById('nl-autor').value.trim(),
       ilustrador: document.getElementById('nl-ilustrador').value.trim(),
@@ -3642,7 +3662,7 @@ function submitAddLivro() {
   let _newLivroId = null;
   if (editingLivroId) {
     const i = livros.findIndex(x=>x.id===editingLivroId);
-    if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; livros[i].tipopub = tipopub; }
+    if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; livros[i].tipopub = tipopub; livros[i].tipoAutoriaMenteeId = tipoAutoriaMenteeId; }
     editingLivroId = null;
   } else {
     livro.id = Date.now();
@@ -3677,6 +3697,14 @@ function submitAddLivro() {
   const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
   const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
   const menteeWrap = document.getElementById('nl-mentee-wrap'); if(menteeWrap) menteeWrap.style.display='none';
+  // Populate tipo-autoria with mentees
+  const tipoAutoriaSel = document.getElementById('nl-tipo-autoria');
+  if (tipoAutoriaSel) {
+    const ms = [...(mentees||[])].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    tipoAutoriaSel.innerHTML = '<option value="">Não se aplica</option>' +
+      ms.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    tipoAutoriaSel.value = '';
+  }
 }
 
 const EMP_BADGE_L = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
@@ -3844,6 +3872,13 @@ function openLivroFicha(id) {
   document.getElementById('nl-sinopse').value = info.sinopse||'';
   document.querySelector('#modal-livro .modal-title').textContent = 'Ficha Técnica · ' + l.titulo;
   document.querySelector('#modal-livro .btn-primary').textContent = 'Salvar alterações';
+  // Populate and set tipo de autoria
+  const tasEdit = document.getElementById('nl-tipo-autoria');
+  if (tasEdit) {
+    const ms = [...(mentees||[])].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    tasEdit.innerHTML = '<option value="">Não se aplica</option>' + ms.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    tasEdit.value = l.tipoAutoriaMenteeId ? l.tipoAutoriaMenteeId.toString() : '';
+  }
   openModal('modal-livro');
 }
 function deleteLivro(id) {
@@ -3907,13 +3942,13 @@ function renderMarco0List() {
     const pendentes = tarefas.filter(t=>!t.done).length;
     const total = tarefas.length;
     if (total === 0) return '';
-    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id});setTimeout(()=>{const tabBtn=document.querySelectorAll('.modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
+    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id});setTimeout(()=>{const tabBtn=document.querySelectorAll('#modal-mentee .modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
         <div style="font-size:11px;color:var(--text-soft);margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''} · ${total} total</div>
       </div>
-      <span class="steira-arrow">›</span>
+      <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id})" title="Descadastrar">×</button>
     </div>`;
   }).filter(Boolean).join('') || '<div style="font-size:13px;color:var(--text-soft);padding:8px;">Nenhuma tarefa registrada para as mentoradas.</div>';
 }
@@ -4079,10 +4114,20 @@ function deleteMenteeTask(tid) {
 }
 
 function openAddMentee() {
-  const name = prompt('Nome da mentorada:');
-  if (!name||!name.trim()) return;
-  mentees.push({id:Date.now(), name:name.trim(), status:'ok', notes:'', sessions:[], tasks:[]});
-  save('gc-mentees',mentees); renderMenteeList();
+  document.getElementById('new-mentee-name').value = '';
+  document.getElementById('new-mentee-docs').value = '';
+  openModal('modal-add-mentee');
+  setTimeout(() => document.getElementById('new-mentee-name').focus(), 80);
+}
+
+function submitAddMentee() {
+  const name = document.getElementById('new-mentee-name').value.trim();
+  if (!name) { document.getElementById('new-mentee-name').focus(); return; }
+  const docsLink = document.getElementById('new-mentee-docs').value.trim();
+  mentees.push({ id: Date.now(), name, status: 'ok', notes: '', sessions: [], tasks: [], docsLink });
+  save('gc-mentees', mentees);
+  renderMenteeList();
+  closeModal('modal-add-mentee');
 }
 
 function deleteMentee(id) {
@@ -4795,6 +4840,7 @@ function buildTarefas() {
     return `<tr style="${isArquivada?'opacity:0.5;':''}">
       <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
         <input type="checkbox" ${isArquivada?'checked':''}
+            onclick="event.stopPropagation();"
             onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
             style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;"
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
@@ -4923,8 +4969,21 @@ function toggleTarefaGroup(key) {
 function toggleTarefaArquivada(id) {
   const e = events.find(x=>x.id===id);
   if (!e) return;
+  const wasArquivada = !!e.arquivada;
   e.arquivada = !e.arquivada;
-  save('gc-events', events);
+  // Save locally immediately — Firebase async
+  localStorage.setItem('gc-events', JSON.stringify(events));
+  if (window.fbSave) window.fbSave('gc-events', events).catch(err => console.warn('fbSave toggle error:', err));
+  // Open the completed sub-group so user sees where task went
+  if (!wasArquivada) {
+    const today2 = new Date(); today2.setHours(0,0,0,0);
+    const key = e.data
+      ? (Math.round((new Date(e.data+'T00:00:00')-today2)/86400000) < 0 ? 'atrasadas'
+        : Math.round((new Date(e.data+'T00:00:00')-today2)/86400000) === 0 ? 'hoje'
+        : Math.round((new Date(e.data+'T00:00:00')-today2)/86400000) <= 7 ? 'semana' : 'proximas')
+      : 'proximas';
+    openGroups['arq-'+key] = true;
+  }
   buildTarefas();
   buildColabTarefas();
   buildPrioridades();
@@ -5199,8 +5258,8 @@ function renderProjetos() {
     if (!el) return;
     const lista = ativos.filter(p=>(p.empresa||'').split(',').includes(emp));
     el.innerHTML = lista.length===0
-      ? `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto. <button class="add-btn" onclick="openAddProjeto('${emp}')" style="display:inline-flex;margin-top:8px;">+ novo projeto</button></div>`
-      : lista.map(p=>projetoHtml(p,false)).join('') + `<button class="add-btn" onclick="openAddProjeto('${emp}')" style="margin-top:8px;">+ novo projeto</button>`;
+      ? `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>`
+      : lista.map(p=>projetoHtml(p,false)).join('');
     const archEl = document.getElementById('projetos-arquivados-'+emp);
     const cntEl = document.getElementById('parq-count-'+emp);
     const arch = finalizados.filter(p=>p.empresa===emp);
@@ -6262,6 +6321,7 @@ function buildTarefasEmpresa(emp) {
     return `<tr style="${isArq?'opacity:0.5;':''}">
       <td style="width:44px;text-align:center;" onclick="event.stopPropagation();">
         <input type="checkbox" ${isArq?'checked':''}
+            onclick="event.stopPropagation();"
             onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
             style="accent-color:${cor};width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;">
       </td>
@@ -7021,10 +7081,9 @@ function notifyTaskCompleted(tarefa, completedBy) {
 const _origToggleTarefaArquivada = toggleTarefaArquivada;
 function toggleTarefaArquivada(id) {
   const e = events.find(x=>x.id===id);
-  const wasArchived = e ? e.arquivada : false;
+  const wasArchived = e ? !!e.arquivada : false;
   _origToggleTarefaArquivada(id);
   if (e && !wasArchived) {
-    // Just got archived = completed
     const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
     notifyTaskCompleted(e.titulo, userName);
   }
@@ -7372,7 +7431,7 @@ function initApp(cloudData) {
   // Escutar mudanças em tempo real de outros dispositivos
   if (window.fbListen) {
     [
-      ['gc-events',    v => { events    = v; buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
+      ['gc-events',    v => { if (_lastLocalSave['gc-events'] && Date.now() - _lastLocalSave['gc-events'] < 6000) return; events = v; buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
       ['gc-livros',    v => { livros    = v; renderLivros(); buildTarefas(); }],
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
       ['gc-projetos',  v => { projetos  = v; renderProjetos(); buildTarefas(); }],
