@@ -47,7 +47,7 @@
   };
 
   window.fbLoadAll = async function() {
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
     const results = {};
     await Promise.all(KEYS.map(async key => {
       const res = await window.fbGet(key);
@@ -932,14 +932,14 @@ tr:hover td { background: var(--bg); }
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Plano Diretor · mentoradas</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddMentee()">+ cadastrar mentorada</button>
+      <button class="add-btn" style="margin:0;" onclick="openAddMentee('planodiretor')">+ cadastrar mentorada</button>
     </div>
     <div id="mentee-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Marco 0 · mentoradas</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddMentee()">+ cadastrar mentorada</button>
+      <button class="add-btn" style="margin:0;" onclick="openAddMentee('marco0')">+ cadastrar mentorada</button>
     </div>
     <div id="marco0-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
   </div>
@@ -2060,7 +2060,7 @@ function switchMenteeTab(tab, btn) {
   if (el) el.classList.add('active');
   if (tab === 'livros') renderMenteeLivros();
   if (tab === 'tarefas') {
-    const m = mentees.find(x=>x.id===currentMenteeId);
+    const m = getMenteeArray().find(x=>x.id===currentMenteeId);
     if (m) renderMenteeTasks(m);
   }
 }
@@ -2098,7 +2098,7 @@ async function uploadLocalToFirebase() {
     return;
   }
 
-  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
+  const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
 
   // Verificar se há dados no localStorage
   const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -2799,7 +2799,8 @@ function mergeMentees(saved) {
   return result;
 }
 
-let mentees = MENTEES_DEFAULT;
+let mentees      = load('gc-mentees',       MENTEES_DEFAULT);
+let menteesMarco0 = load('gc-mentees-marco0', []);
 let livros = load('gc-livros', []);
 let conteudos = load('gc-conteudos', []);
 let steiraData = load('gc-steira', {});
@@ -3368,6 +3369,7 @@ function deleteEventDirect(id) {
   localStorage.setItem('gc-events',   JSON.stringify(events));
   localStorage.setItem('gc-projetos', JSON.stringify(projetos));
   localStorage.setItem('gc-mentees',  JSON.stringify(mentees));
+  localStorage.setItem('gc-mentees-marco0', JSON.stringify(menteesMarco0));
   _lastLocalSave['gc-events'] = _lastLocalSave['gc-projetos'] = _lastLocalSave['gc-mentees'] = Date.now();
 
   // Atualizar UI imediatamente
@@ -3566,7 +3568,7 @@ function submitQuickAdd() {
         m.tasks.push({id: newEv.id.toString(), titulo, done: false});
         newEv.menteeId = window._addingToMenteeId;
         save('gc-events', events);
-        save('gc-mentees', mentees);
+        saveMenteeArray();
         buildTarefas(); buildColabTarefas(); buildPrioridades();
         renderMenteeList();
         window._addingToMenteeId = null;
@@ -3929,6 +3931,18 @@ function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.
 
 /* ── MENTEES ── */
 let currentMenteeId = null;
+let currentMenteeProgram = 'planodiretor'; // 'planodiretor' | 'marco0'
+
+function getMenteeArray() {
+  return currentMenteeProgram === 'marco0' ? menteesMarco0 : mentees;
+}
+function saveMenteeArray() {
+  if (currentMenteeProgram === 'marco0') {
+    save('gc-mentees-marco0', menteesMarco0);
+  } else {
+    save('gc-mentees', mentees);
+  }
+}
 
 function getInitials(name) { return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase(); }
 
@@ -3948,7 +3962,7 @@ function renderMenteeList() {
         ${m.docsLink ? `<a href="${m.docsLink}" target="_blank" onclick="event.stopPropagation();" style="font-size:11px;color:var(--gisella);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">📄 docs</a>` : ''}
         ${pendentes > 0 ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} tarefa${pendentes>1?'s':''}</span>` : ''}
       </div>
-      <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id})" title="Descadastrar">×</button>
+      <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id},'planodiretor')" title="Descadastrar">×</button>
     </div>`;
   }).join('');
   renderMarco0List();
@@ -3957,7 +3971,7 @@ function renderMenteeList() {
 function renderMarco0List() {
   const el = document.getElementById('marco0-list-rendered');
   if (!el) return;
-  const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const menteesSorted = [...menteesMarco0].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
   if (menteesSorted.length === 0) {
     el.innerHTML = '<div style="font-size:13px;color:var(--text-soft);padding:8px;">Nenhuma mentorada cadastrada.</div>';
     return;
@@ -3969,19 +3983,21 @@ function renderMarco0List() {
     const badge = total > 0
       ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''}</span>`
       : `<span style="font-size:10px;color:var(--text-soft);">sem tarefas</span>`;
-    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id});setTimeout(()=>{const tabBtn=document.querySelectorAll('#modal-mentee .modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
+    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id},'marco0');setTimeout(()=>{const tabBtn=document.querySelectorAll('#modal-mentee .modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
         <div style="margin-top:2px;">${badge}</div>
       </div>
-      <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id})" title="Descadastrar">×</button>
+      <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id},'marco0')" title="Descadastrar">×</button>
     </div>`;
   }).join('');
 }
 
-function openMenteeModal(id) {
-  const m = mentees.find(x=>x.id===id);
+function openMenteeModal(id, program) {
+  currentMenteeProgram = program || 'planodiretor';
+  const arr = getMenteeArray();
+  const m = arr.find(x=>x.id===id);
   if (!m) return;
   currentMenteeId = id;
   document.getElementById('mm-avatar').textContent = getInitials(m.name);
@@ -4003,12 +4019,12 @@ function openMenteeModal(id) {
 }
 
 function saveMenteeField() {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m) return;
   m.notes = document.getElementById('mm-notes').value;
   m.docsLink = document.getElementById('mm-docs').value.trim();
-  save('gc-mentees', mentees);
-  renderMenteeList();
+  saveMenteeArray();
+  if (currentMenteeProgram === 'marco0') renderMarco0List(); else renderMenteeList();
 }
 
 const MS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -4025,22 +4041,22 @@ function renderMenteeSessions(m) {
 }
 
 function addMenteeSession() {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m) return;
   const notes = document.getElementById('mm-snotes').value.trim();
   if (!notes) { document.getElementById('mm-snotes').focus(); return; }
   if (!m.sessions) m.sessions=[];
   m.sessions.push({id:Date.now().toString(), date:document.getElementById('mm-sdate').value, notes});
-  save('gc-mentees',mentees);
+  saveMenteeArray();
   document.getElementById('mm-snotes').value='';
   renderMenteeSessions(m);
 }
 
 function deleteSession(sid) {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m) return;
   m.sessions = m.sessions.filter(s=>s.id!==sid);
-  save('gc-mentees',mentees);
+  saveMenteeArray();
   renderMenteeSessions(m);
 }
 
@@ -4080,7 +4096,7 @@ function cancelMenteeTaskAdd() {
 }
 
 function addMenteeTaskInline() {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m) return;
   const input = document.getElementById('mm-task-input-inline');
   const titulo = (input?.value||'').trim();
@@ -4092,7 +4108,7 @@ function addMenteeTaskInline() {
     data:prazo, responsavel:resp, menteeId:m.id};
   events.push(newEv);
   m.tasks.push({id:newEv.id.toString(), titulo, done:false, resp, prazo});
-  save('gc-mentees',mentees); save('gc-events',events);
+  saveMenteeArray(); save('gc-events',events);
   cancelMenteeTaskAdd();
   renderMenteeTasks(m);
   buildTarefas(); buildColabTarefas();
@@ -4100,7 +4116,7 @@ function addMenteeTaskInline() {
 }
 
 function addMenteeTask() {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m) return;
   const titulo = document.getElementById('mm-task-input').value.trim();
   if (!titulo) return;
@@ -4109,7 +4125,7 @@ function addMenteeTask() {
   m.tasks.push(task);
   // Also add to global events
   events.push({id:Date.now()+1, empresa:'gisella', titulo:`[${m.name}] ${titulo}`, data:'', menteeId:m.id});
-  save('gc-mentees',mentees); save('gc-events',events);
+  saveMenteeArray(); save('gc-events',events);
   document.getElementById('mm-task-input').value='';
   renderMenteeTasks(m); buildTarefas();
 buildColabTarefas();
@@ -4118,7 +4134,7 @@ initKanban();
 }
 
 function toggleMenteeTask(tid) {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m||!m.tasks) return;
   const t = m.tasks.find(x=>x.id===tid);
   if (t) {
@@ -4132,17 +4148,22 @@ function toggleMenteeTask(tid) {
 }
 
 function deleteMenteeTask(tid) {
-  const m = mentees.find(x=>x.id===currentMenteeId);
+  const m = getMenteeArray().find(x=>x.id===currentMenteeId);
   if (!m||!m.tasks) return;
   m.tasks = m.tasks.filter(x=>x.id!==tid);
   events = events.filter(x=>x.id.toString()!==tid);
-  save('gc-mentees',mentees); save('gc-events',events);
+  saveMenteeArray(); save('gc-events',events);
   renderMenteeTasks(m); buildTarefas(); buildColabTarefas();
 }
 
-function openAddMentee() {
+let _addingMenteeProgram = 'planodiretor';
+
+function openAddMentee(program) {
+  _addingMenteeProgram = program || 'planodiretor';
   document.getElementById('new-mentee-name').value = '';
   document.getElementById('new-mentee-docs').value = '';
+  const title = document.querySelector('#modal-add-mentee .modal-title');
+  if (title) title.textContent = program === 'marco0' ? 'Cadastrar mentorada · Marco 0' : 'Cadastrar mentorada · Plano Diretor';
   openModal('modal-add-mentee');
   setTimeout(() => document.getElementById('new-mentee-name').focus(), 80);
 }
@@ -4151,17 +4172,41 @@ function submitAddMentee() {
   const name = document.getElementById('new-mentee-name').value.trim();
   if (!name) { document.getElementById('new-mentee-name').focus(); return; }
   const docsLink = document.getElementById('new-mentee-docs').value.trim();
-  mentees.push({ id: Date.now(), name, status: 'ok', notes: '', sessions: [], tasks: [], docsLink });
-  save('gc-mentees', mentees);
-  renderMenteeList();
+  const newMentee = { id: Date.now(), name, status: 'ok', notes: '', sessions: [], tasks: [], docsLink };
+  if (_addingMenteeProgram === 'marco0') {
+    menteesMarco0.push(newMentee);
+    save('gc-mentees-marco0', menteesMarco0);
+    renderMarco0List();
+  } else {
+    mentees.push(newMentee);
+    save('gc-mentees', mentees);
+    renderMenteeList();
+  }
   closeModal('modal-add-mentee');
 }
 
-function deleteMentee(id) {
-  const m = mentees.find(x=>x.id===id);
+function deleteMentee(id, program) {
+  const prog = program || 'planodiretor';
+  const arr  = prog === 'marco0' ? menteesMarco0 : mentees;
+  const m    = arr.find(x=>x.id===id);
   if (!m) return;
-  mentees = mentees.filter(x=>x.id!==id);
-  save('gc-mentees',mentees); renderMenteeList();
+  const snap = [...arr];
+  if (prog === 'marco0') {
+    menteesMarco0 = menteesMarco0.filter(x=>x.id!==id);
+    save('gc-mentees-marco0', menteesMarco0);
+    renderMarco0List();
+  } else {
+    mentees = mentees.filter(x=>x.id!==id);
+    save('gc-mentees', mentees);
+    renderMenteeList();
+  }
+  pushUndo(m.name, () => {
+    if (prog === 'marco0') {
+      menteesMarco0 = snap; save('gc-mentees-marco0', menteesMarco0); renderMarco0List();
+    } else {
+      mentees = snap; save('gc-mentees', mentees); renderMenteeList();
+    }
+  });
 }
 
 /* ── CONTEUDO ── */
@@ -7418,6 +7463,11 @@ function initApp(cloudData) {
       const val = entry?.value ?? entry;
       if (val) { mentees = mergeMentees(val); localStorage.setItem('gc-mentees', JSON.stringify(mentees)); }
     }
+    if (cloudData['gc-mentees-marco0']) {
+      const entry = cloudData['gc-mentees-marco0'];
+      const val = entry?.value ?? entry;
+      if (val) { menteesMarco0 = val; localStorage.setItem('gc-mentees-marco0', JSON.stringify(menteesMarco0)); }
+    }
   }
 
   // Restaurar página salva
@@ -7436,6 +7486,7 @@ function initApp(cloudData) {
   initCalendars();
   renderLivros();
   renderMenteeList();
+  renderMarco0List();
   renderConteudos();
   buildTarefas();
   buildColabTarefas();
@@ -7468,7 +7519,8 @@ function initApp(cloudData) {
       ['gc-livros',    v => { livros    = v; renderLivros(); buildTarefas(); }],
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
       ['gc-projetos',  v => { projetos  = v; renderProjetos(); buildTarefas(); }],
-      ['gc-mentees',   v => { mentees   = v; renderMenteeList(); }],
+      ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
+      ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
       ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
       ['gc-notas-milena',  v => { localStorage.setItem('gc-notas-milena',  JSON.stringify(v)); renderNotas('milena');  }],
       ['gc-notas-luiggi',  v => { localStorage.setItem('gc-notas-luiggi',  JSON.stringify(v)); renderNotas('luiggi');  }],
@@ -7511,7 +7563,7 @@ function startWithFirebase() {
         // (e.g. first time a new key is added to the schema)
         if (!cloudData) return;
         let changed = false;
-        const SYNC_KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees',
+        const SYNC_KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0',
           'gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'];
         SYNC_KEYS.forEach(key => {
           if (!localStorage.getItem(key) && cloudData[key]?.value) {
@@ -7525,7 +7577,8 @@ function startWithFirebase() {
           livros    = load('gc-livros', []);
           conteudos = load('gc-conteudos', []);
           projetos  = load('gc-projetos', []);
-          mentees   = load('gc-mentees', MENTEES_DEFAULT);
+          mentees      = load('gc-mentees',       MENTEES_DEFAULT);
+          menteesMarco0 = load('gc-mentees-marco0', []);
           renderLivros(); renderMenteeList(); renderConteudos();
           buildTarefas(); buildColabTarefas(); renderProjetos();
         }
