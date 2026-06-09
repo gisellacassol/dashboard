@@ -26,9 +26,12 @@
 
   window.fbSave = async function(key, val) {
     try {
-      await setDoc(doc(db, 'dados', key), { value: JSON.stringify(val) });
-      console.log('fbSave OK:', key);
-      return true;
+      const ts = Date.now();
+      await setDoc(doc(db, 'dados', key), { value: JSON.stringify(val), ts });
+      // Only after Firebase confirms, update the local "last known Firebase ts"
+      // This makes shouldUse return false (local wins) for this exact save
+      localStorage.setItem('_fbts_' + key, ts.toString());
+      return ts; // return the ts so callers can store it locally too
     } catch(e) {
       console.warn('fbSave ERRO:', key, e.code, e.message);
       return false;
@@ -38,7 +41,7 @@
   window.fbGet = async function(key) {
     try {
       const snap = await getDoc(doc(db, 'dados', key));
-      if (snap.exists()) return JSON.parse(snap.data().value);
+      if (snap.exists()) return { value: JSON.parse(snap.data().value), ts: snap.data().ts || 0 };
       return null;
     } catch(e) { return null; }
   };
@@ -47,8 +50,8 @@
     const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
     const results = {};
     await Promise.all(KEYS.map(async key => {
-      const val = await window.fbGet(key);
-      if (val !== null) results[key] = val;
+      const res = await window.fbGet(key);
+      if (res !== null) results[key] = res; // { value, ts }
     }));
     return results;
   };
@@ -2751,9 +2754,13 @@ function load(key, def) {
 }
 const _lastLocalSave = {};
 function save(key, val) {
+  const pendingTs = Date.now();
   localStorage.setItem(key, JSON.stringify(val));
-  _lastLocalSave[key] = Date.now();
+  // Mark as pending with negative ts — Firebase cannot win until it confirms
+  localStorage.setItem('_fbts_' + key, (-pendingTs).toString());
+  _lastLocalSave[key] = pendingTs;
   if (window.fbSave) window.fbSave(key, val).catch(e => console.warn('fbSave err:', key, e));
+  // fbSave will overwrite _fbts_ with positive ts after confirming
   autoSave();
 }
 
@@ -3361,12 +3368,18 @@ function deleteEventDirect(id) {
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
 
-  // Salvar localmente imediatamente
+  // Salvar localmente imediatamente — UI responde na hora
   localStorage.setItem('gc-events',   JSON.stringify(events));
   localStorage.setItem('gc-projetos', JSON.stringify(projetos));
   localStorage.setItem('gc-mentees',  JSON.stringify(mentees));
+  // Marca local como "pendente Firebase" com timestamp negativo para Firebase NUNCA ganhar antes de confirmar
+  const _pendingTs = Date.now();
+  localStorage.setItem('_fbts_gc-events',   (-_pendingTs).toString());
+  localStorage.setItem('_fbts_gc-projetos', (-_pendingTs).toString());
+  localStorage.setItem('_fbts_gc-mentees',  (-_pendingTs).toString());
+  _lastLocalSave['gc-events'] = _lastLocalSave['gc-projetos'] = _lastLocalSave['gc-mentees'] = _pendingTs;
 
-  // Atualizar UI imediatamente (não espera Firebase)
+  // Atualizar UI imediatamente
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
   ['editora','leia','gisella'].forEach(emp => { if (document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
 
@@ -3385,11 +3398,14 @@ function deleteEventDirect(id) {
     ['editora','leia','gisella'].forEach(emp => { if (document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   });
 
-  // Firebase em background — sem await para não travar UI
+  // Firebase em background — quando confirmar, atualiza _fbts_ com o ts real
   if (window.fbSave) {
-    window.fbSave('gc-events',   events)  .catch(e => console.warn('fbSave events:', e));
-    window.fbSave('gc-projetos', projetos).catch(e => console.warn('fbSave projetos:', e));
-    window.fbSave('gc-mentees',  mentees) .catch(e => console.warn('fbSave mentees:', e));
+    Promise.all([
+      window.fbSave('gc-events',   events),
+      window.fbSave('gc-projetos', projetos),
+      window.fbSave('gc-mentees',  mentees),
+    ]).catch(e => console.warn('fbSave delete error:', e));
+    // fbSave já atualiza _fbts_ após confirmar — nada mais necessário
   }
 }
 
@@ -7371,35 +7387,75 @@ function buildHomeCards() {
 
 
 function initApp(cloudData) {
-  // Se vieram dados da nuvem, sobrescrever variáveis locais
+  // cloudData keys now contain { value, ts } objects
+  // Only overwrite local data if Firebase version is STRICTLY NEWER than what we last saved locally
+  function shouldUse(key, fbEntry) {
+    if (!fbEntry) return false;
+    const fbTs = fbEntry.ts || 0;
+    const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
+    // Negative localTs = pending local save not yet confirmed by Firebase → local always wins
+    if (localTs < 0) return false;
+    // No local record = first load, use Firebase
+    if (localTs === 0) return true;
+    // Firebase only wins if strictly newer than our last confirmed save
+    return fbTs > localTs;
+  }
+
   if (cloudData) {
-    if (cloudData['gc-events'])      { events     = cloudData['gc-events'].map(e => ({...e, tipo: e.tipo || 'tarefa'}));      localStorage.setItem('gc-events',      JSON.stringify(events)); }
-    if (cloudData['gc-livros'])      { livros      = cloudData['gc-livros'];      localStorage.setItem('gc-livros',      JSON.stringify(livros)); }
-    if (cloudData['gc-conteudos'])   { conteudos   = cloudData['gc-conteudos'];   localStorage.setItem('gc-conteudos',   JSON.stringify(conteudos)); }
-    if (cloudData['gc-projetos'])    { projetos    = cloudData['gc-projetos'];    localStorage.setItem('gc-projetos',    JSON.stringify(projetos)); }
-    // Sempre mescla: preserva sessões/notas existentes, garante todos os 19
+    if (shouldUse('gc-events', cloudData['gc-events'])) {
+      events = cloudData['gc-events'].value.map(e => ({...e, tipo: e.tipo || 'tarefa'}));
+      localStorage.setItem('gc-events', JSON.stringify(events));
+    }
+    if (shouldUse('gc-livros', cloudData['gc-livros'])) {
+      livros = cloudData['gc-livros'].value;
+      localStorage.setItem('gc-livros', JSON.stringify(livros));
+    }
+    if (shouldUse('gc-conteudos', cloudData['gc-conteudos'])) {
+      conteudos = cloudData['gc-conteudos'].value;
+      localStorage.setItem('gc-conteudos', JSON.stringify(conteudos));
+    }
+    if (shouldUse('gc-projetos', cloudData['gc-projetos'])) {
+      projetos = cloudData['gc-projetos'].value;
+      localStorage.setItem('gc-projetos', JSON.stringify(projetos));
+    }
+    // Notas — sempre usa Firebase se existir
     ['gisella','milena','luiggi'].forEach(c => {
       const key = 'gc-notas-' + c;
-      if (cloudData[key] && cloudData[key].length > 0) {
-        localStorage.setItem(key, JSON.stringify(cloudData[key]));
+      if (cloudData[key]?.value?.length > 0) {
+        localStorage.setItem(key, JSON.stringify(cloudData[key].value));
       }
     });
-    if (cloudData['gc-mentees']) {
-      mentees = mergeMentees(cloudData['gc-mentees']);
+    if (cloudData['gc-mentees']?.value) {
+      if (shouldUse('gc-mentees', cloudData['gc-mentees'])) {
+        mentees = mergeMentees(cloudData['gc-mentees'].value);
+      }
     }
     localStorage.setItem('gc-mentees', JSON.stringify(mentees));
     window.fbSave('gc-mentees', mentees);
-    if (cloudData['gc-kanban'])      { kanbanData  = cloudData['gc-kanban'];      localStorage.setItem('gc-kanban',      JSON.stringify(kanbanData)); }
-    if (cloudData['gc-steira'])      { steiraData  = cloudData['gc-steira'];      localStorage.setItem('gc-steira',      JSON.stringify(steiraData)); }
-    if (cloudData['gc-colab-ordem']) { colabOrdem  = cloudData['gc-colab-ordem']; localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem)); }
-    // Fixed tasks, checks e notas
+    if (shouldUse('gc-kanban', cloudData['gc-kanban'])) {
+      kanbanData = cloudData['gc-kanban'].value;
+      localStorage.setItem('gc-kanban', JSON.stringify(kanbanData));
+    }
+    if (shouldUse('gc-steira', cloudData['gc-steira'])) {
+      steiraData = cloudData['gc-steira'].value;
+      localStorage.setItem('gc-steira', JSON.stringify(steiraData));
+    }
+    if (shouldUse('gc-colab-ordem', cloudData['gc-colab-ordem'])) {
+      colabOrdem = cloudData['gc-colab-ordem'].value;
+      localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem));
+    }
     ['gisella','milena','luiggi'].forEach(c => {
-      if (cloudData['gc-fixed-'+c])        localStorage.setItem('gc-fixed-'+c,        JSON.stringify(cloudData['gc-fixed-'+c]));
-      if (cloudData['gc-fixed-checks-'+c]) localStorage.setItem('gc-fixed-checks-'+c, JSON.stringify(cloudData['gc-fixed-checks-'+c]));
+      if (cloudData['gc-fixed-'+c]?.value)        localStorage.setItem('gc-fixed-'+c,        JSON.stringify(cloudData['gc-fixed-'+c].value));
+      if (cloudData['gc-fixed-checks-'+c]?.value) localStorage.setItem('gc-fixed-checks-'+c, JSON.stringify(cloudData['gc-fixed-checks-'+c].value));
     });
-    // Links
-    if (cloudData['gc-links'])         { links        = cloudData['gc-links'];         localStorage.setItem('gc-links',         JSON.stringify(links)); }
-    if (cloudData['gc-links-empresa']) { linksEmpresa = cloudData['gc-links-empresa']; localStorage.setItem('gc-links-empresa', JSON.stringify(linksEmpresa)); }
+    if (shouldUse('gc-links', cloudData['gc-links'])) {
+      links = cloudData['gc-links'].value;
+      localStorage.setItem('gc-links', JSON.stringify(links));
+    }
+    if (shouldUse('gc-links-empresa', cloudData['gc-links-empresa'])) {
+      linksEmpresa = cloudData['gc-links-empresa'].value;
+      localStorage.setItem('gc-links-empresa', JSON.stringify(linksEmpresa));
+    }
   }
 
   // Restaurar página salva
