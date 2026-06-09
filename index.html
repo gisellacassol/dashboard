@@ -2383,7 +2383,52 @@ function deleteLinkEmpresaModal(emp, id) {
 }
 
 /* ── TAREFAS AUTO MENTORIA ── */
-// Criação automática de tarefas por evento do calendário: REMOVIDA
+// Criação de tarefas por evento do calendário (one-time, não automática)
+function criarTarefasEventosUmaVez(allEvents, dataMinima) {
+  // Cria "Preparar X", "X" e "Encerrar X" para eventos a partir de dataMinima
+  // Não roda automaticamente — só quando chamada explicitamente
+  let changed = false;
+  const minDate = dataMinima || '2025-06-08';
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    if (ev.start < minDate) return;
+    const nome = ev.title.trim();
+    const nomeKey = nome.replace(/\s/g,'_').slice(0, 30);
+    const diaEvento = new Date(ev.start + 'T12:00:00');
+    const diaPrep   = new Date(diaEvento); diaPrep.setDate(diaEvento.getDate() - 1);
+    const diaEnc    = new Date(diaEvento); diaEnc.setDate(diaEvento.getDate() + 1);
+    const strEvento = diaEvento.toISOString().slice(0,10);
+    const strPrep   = diaPrep.toISOString().slice(0,10);
+    const strEnc    = diaEnc.toISOString().slice(0,10);
+    const keyPrep   = 'gcal-prep-' + ev.start + '-' + nomeKey;
+    const keyDia    = 'gcal-dia-'  + ev.start + '-' + nomeKey;
+    const keyEnc    = 'gcal-enc-'  + ev.start + '-' + nomeKey;
+    if (!events.some(e => e.gcalKey === keyPrep)) {
+      events.push({ id: Date.now()+Math.floor(Math.random()*9999),
+        titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
+        data: strPrep, responsavel: 'Gisella', gcalKey: keyPrep, arquivada: false });
+      changed = true;
+    }
+    if (!events.some(e => e.gcalKey === keyDia)) {
+      events.push({ id: Date.now()+Math.floor(Math.random()*9999)+1,
+        titulo: nome, empresa: 'gisella', tipo: 'tarefa',
+        data: strEvento, responsavel: 'Gisella', gcalKey: keyDia, arquivada: false });
+      changed = true;
+    }
+    if (!events.some(e => e.gcalKey === keyEnc)) {
+      events.push({ id: Date.now()+Math.floor(Math.random()*9999)+2,
+        titulo: 'Encerrar ' + nome, empresa: 'gisella', tipo: 'tarefa',
+        data: strEnc, responsavel: 'Gisella', gcalKey: keyEnc, arquivada: false });
+      changed = true;
+    }
+  });
+  if (changed) {
+    save('gc-events', events);
+    buildTarefas(); buildColabTarefas(); buildPrioridades();
+    console.log('Tarefas de evento criadas:', events.filter(e=>e.gcalKey).length);
+  }
+  return changed;
+}
 
 
 
@@ -2438,22 +2483,26 @@ function saveFixedChecks(colab, obj) {
 function resetFixedChecks(colab) {
   let checks = getFixedChecks(colab);
   const data = getFixedData(colab);
-  const today = new Date().toISOString().slice(0,10);
+  // Use local Brazil timezone date to avoid UTC mismatch
+  const now = new Date();
+  const today = now.toLocaleDateString('sv-SE'); // YYYY-MM-DD in local tz
   // Semana começa na segunda-feira
-  const d = new Date();
-  const dow = d.getDay(); // 0=dom,1=seg,...,6=sab
-  const monday = new Date(d);
-  monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-  const weekKey = monday.toISOString().slice(0,10); // YYYY-MM-DD da segunda
+  const dow = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+  const weekKey = monday.toLocaleDateString('sv-SE');
   let changed = false;
 
-  if (localStorage.getItem('gc-fixed-day-' + colab) !== today) {
+  // Store day/week keys INSIDE checks to survive Firebase sync
+  if (checks['_day'] !== today) {
     data.daily.forEach(t => { checks['d-'+t.id] = false; });
+    checks['_day'] = today;
     localStorage.setItem('gc-fixed-day-' + colab, today);
     changed = true;
   }
-  if (localStorage.getItem('gc-fixed-week-' + colab) !== weekKey) {
+  if (checks['_week'] !== weekKey) {
     data.weekly.forEach(t => { checks['w-'+t.id] = false; });
+    checks['_week'] = weekKey;
     localStorage.setItem('gc-fixed-week-' + colab, weekKey);
     changed = true;
   }
@@ -4974,11 +5023,14 @@ function toggleTarefaArquivada(id) {
   if (!e) return;
   const wasArquivada = !!e.arquivada;
   e.arquivada = !e.arquivada;
-  // Save locally immediately — Firebase async
+  // Save locally immediately
   localStorage.setItem('gc-events', JSON.stringify(events));
   if (window.fbSave) window.fbSave('gc-events', events).catch(err => console.warn('fbSave toggle error:', err));
-  // Open the completed sub-group so user sees where task went
+  // Notification when completing
   if (!wasArquivada) {
+    const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
+    if (typeof notifyTaskCompleted === 'function') notifyTaskCompleted(e.titulo, userName);
+    // Open the completed sub-group so user sees where task went
     const today2 = new Date(); today2.setHours(0,0,0,0);
     const key = e.data
       ? (Math.round((new Date(e.data+'T00:00:00')-today2)/86400000) < 0 ? 'atrasadas'
@@ -6032,6 +6084,11 @@ async function loadGcal() {
     renderGcal();
     countMentoriasmes();
     countMentoriasSemana();
+    // Criar tarefas de eventos uma única vez (a partir de 08/06/2025)
+    if (!localStorage.getItem('gc-tarefas-eventos-criadas-v2')) {
+      const criou = criarTarefasEventosUmaVez(mapped, '2025-06-08');
+      if (criou) localStorage.setItem('gc-tarefas-eventos-criadas-v2', '1');
+    }
   } catch(e) {
     el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro de rede: ${e.message}</div>`;
   }
@@ -7074,18 +7131,6 @@ function notifyTaskCompleted(tarefa, completedBy) {
   if (completedBy && completedBy.toLowerCase() !== currentUser) {
     const msg = `✅ ${completedBy} concluiu: "${tarefa}"`;
     addNotif(msg, 'tarefa');
-  }
-}
-
-// Intercept toggleTarefaArquivada to add completion notification
-const _origToggleTarefaArquivada = toggleTarefaArquivada;
-function toggleTarefaArquivada(id) {
-  const e = events.find(x=>x.id===id);
-  const wasArchived = e ? !!e.arquivada : false;
-  _origToggleTarefaArquivada(id);
-  if (e && !wasArchived) {
-    const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
-    notifyTaskCompleted(e.titulo, userName);
   }
 }
 
