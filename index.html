@@ -2384,6 +2384,17 @@ function deleteLinkEmpresaModal(emp, id) {
 
 /* ── TAREFAS AUTO MENTORIA ── */
 // Criação automática de tarefas por evento do calendário GC
+// Lista negra de gcalKeys excluídos manualmente — nunca recriar
+function getGcalBlacklist() {
+  try { return new Set(JSON.parse(localStorage.getItem('gc-gcal-blacklist') || '[]')); }
+  catch(e) { return new Set(); }
+}
+function addToGcalBlacklist(key) {
+  const bl = getGcalBlacklist();
+  bl.add(key);
+  localStorage.setItem('gc-gcal-blacklist', JSON.stringify([...bl]));
+}
+
 function criarTarefasEventos(allEvents) {
   let changed = false;
   const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -2402,19 +2413,20 @@ function criarTarefasEventos(allEvents) {
     const keyPrep = 'gcal-prep-' + ev.start + '-' + nomeKey;
     const keyDia  = 'gcal-dia-'  + ev.start + '-' + nomeKey;
     const keyEnc  = 'gcal-enc-'  + ev.start + '-' + nomeKey;
-    if (!events.some(e => e.gcalKey === keyPrep)) {
+    const _bl = getGcalBlacklist();
+    if (!events.some(e => e.gcalKey === keyPrep) && !_bl.has(keyPrep)) {
       events.push({ id: Date.now()+Math.floor(Math.random()*9999),
         titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
         data: strPrep, responsavel: 'Gisella', gcalKey: keyPrep, arquivada: false });
       changed = true;
     }
-    if (!events.some(e => e.gcalKey === keyDia)) {
+    if (!events.some(e => e.gcalKey === keyDia) && !_bl.has(keyDia)) {
       events.push({ id: Date.now()+Math.floor(Math.random()*9999)+1,
         titulo: nome, empresa: 'gisella', tipo: 'tarefa',
         data: strEvento, responsavel: 'Gisella', gcalKey: keyDia, arquivada: false });
       changed = true;
     }
-    if (!events.some(e => e.gcalKey === keyEnc)) {
+    if (!events.some(e => e.gcalKey === keyEnc) && !_bl.has(keyEnc)) {
       events.push({ id: Date.now()+Math.floor(Math.random()*9999)+2,
         titulo: 'Encerrar ' + nome, empresa: 'gisella', tipo: 'tarefa',
         data: strEnc, responsavel: 'Gisella', gcalKey: keyEnc, arquivada: false });
@@ -3334,6 +3346,9 @@ function deleteEventDirect(id) {
   const snapEv = [...events];
   const snapPr = projetos.map(p => ({...p, tarefas: [...(p.tarefas||[])]}));
   const snapMentees = mentees.map(m => ({...m, tasks: [...(m.tasks||[])]}));
+
+  // If this is a gcal auto-task, blacklist its key so it's never recreated
+  if (ev.gcalKey) addToGcalBlacklist(ev.gcalKey);
 
   // Remove from mentee tasks
   mentees.forEach(m => {
