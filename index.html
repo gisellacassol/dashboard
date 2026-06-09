@@ -2383,26 +2383,25 @@ function deleteLinkEmpresaModal(emp, id) {
 }
 
 /* ── TAREFAS AUTO MENTORIA ── */
-// Criação de tarefas por evento do calendário (one-time, não automática)
-function criarTarefasEventosUmaVez(allEvents, dataMinima) {
-  // Cria "Preparar X", "X" e "Encerrar X" para eventos a partir de dataMinima
-  // Não roda automaticamente — só quando chamada explicitamente
+// Criação automática de tarefas por evento do calendário GC
+function criarTarefasEventos(allEvents) {
   let changed = false;
-  const minDate = dataMinima || '2025-06-08';
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const hojeStr = hoje.toISOString().slice(0,10);
   allEvents.forEach(ev => {
     if (!ev.start || !ev.title) return;
-    if (ev.start < minDate) return;
+    if (ev.start < hojeStr) return;
     const nome = ev.title.trim();
-    const nomeKey = nome.replace(/\s/g,'_').slice(0, 30);
+    const nomeKey = nome.replace(/\s+/g,'_').slice(0, 30);
     const diaEvento = new Date(ev.start + 'T12:00:00');
     const diaPrep   = new Date(diaEvento); diaPrep.setDate(diaEvento.getDate() - 1);
     const diaEnc    = new Date(diaEvento); diaEnc.setDate(diaEvento.getDate() + 1);
     const strEvento = diaEvento.toISOString().slice(0,10);
     const strPrep   = diaPrep.toISOString().slice(0,10);
     const strEnc    = diaEnc.toISOString().slice(0,10);
-    const keyPrep   = 'gcal-prep-' + ev.start + '-' + nomeKey;
-    const keyDia    = 'gcal-dia-'  + ev.start + '-' + nomeKey;
-    const keyEnc    = 'gcal-enc-'  + ev.start + '-' + nomeKey;
+    const keyPrep = 'gcal-prep-' + ev.start + '-' + nomeKey;
+    const keyDia  = 'gcal-dia-'  + ev.start + '-' + nomeKey;
+    const keyEnc  = 'gcal-enc-'  + ev.start + '-' + nomeKey;
     if (!events.some(e => e.gcalKey === keyPrep)) {
       events.push({ id: Date.now()+Math.floor(Math.random()*9999),
         titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
@@ -2425,9 +2424,24 @@ function criarTarefasEventosUmaVez(allEvents, dataMinima) {
   if (changed) {
     save('gc-events', events);
     buildTarefas(); buildColabTarefas(); buildPrioridades();
-    console.log('Tarefas de evento criadas:', events.filter(e=>e.gcalKey).length);
   }
-  return changed;
+}
+
+function limparTarefasEventosRemovidos(allEvents) {
+  const validKeys = new Set();
+  allEvents.forEach(ev => {
+    if (!ev.start || !ev.title) return;
+    const nomeKey = ev.title.trim().replace(/\s+/g,'_').slice(0, 30);
+    validKeys.add('gcal-prep-' + ev.start + '-' + nomeKey);
+    validKeys.add('gcal-dia-'  + ev.start + '-' + nomeKey);
+    validKeys.add('gcal-enc-'  + ev.start + '-' + nomeKey);
+  });
+  const antes = events.length;
+  events = events.filter(e => !e.gcalKey || validKeys.has(e.gcalKey));
+  if (events.length < antes) {
+    save('gc-events', events);
+    buildTarefas(); buildColabTarefas(); buildPrioridades();
+  }
 }
 
 
@@ -6084,11 +6098,9 @@ async function loadGcal() {
     renderGcal();
     countMentoriasmes();
     countMentoriasSemana();
-    // Criar tarefas de eventos uma única vez (a partir de 08/06/2025)
-    if (!localStorage.getItem('gc-tarefas-eventos-criadas-v2')) {
-      const criou = criarTarefasEventosUmaVez(mapped, '2025-06-08');
-      if (criou) localStorage.setItem('gc-tarefas-eventos-criadas-v2', '1');
-    }
+    limparTarefasEventosRemovidos(mapped);
+    criarTarefasEventos(mapped);
+
   } catch(e) {
     el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro de rede: ${e.message}</div>`;
   }
@@ -7443,14 +7455,7 @@ function initApp(cloudData) {
     }
   }
 
-  // Limpar tarefas automáticas do calendário (gcalKey) — funcionalidade removida
-  const beforeClean = events.length;
-  events = events.filter(e => !e.gcalKey);
-  if (events.length < beforeClean) {
-    localStorage.setItem('gc-events', JSON.stringify(events));
-    if (window.fbSave) window.fbSave('gc-events', events).catch(()=>{});
-    console.log('Limpeza: ' + (beforeClean - events.length) + ' tarefa(s) automática(s) removida(s)');
-  }
+  // (gcalKey tasks are managed by criarTarefasEventos / limparTarefasEventosRemovidos)
 
   // Restaurar página salva
   const savedPage = localStorage.getItem('gc-current-page');
