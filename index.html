@@ -2754,13 +2754,9 @@ function load(key, def) {
 }
 const _lastLocalSave = {};
 function save(key, val) {
-  const pendingTs = Date.now();
   localStorage.setItem(key, JSON.stringify(val));
-  // Mark as pending with negative ts — Firebase cannot win until it confirms
-  localStorage.setItem('_fbts_' + key, (-pendingTs).toString());
-  _lastLocalSave[key] = pendingTs;
+  _lastLocalSave[key] = Date.now();
   if (window.fbSave) window.fbSave(key, val).catch(e => console.warn('fbSave err:', key, e));
-  // fbSave will overwrite _fbts_ with positive ts after confirming
   autoSave();
 }
 
@@ -3368,16 +3364,11 @@ function deleteEventDirect(id) {
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
 
-  // Salvar localmente imediatamente — UI responde na hora
+  // Salvar localmente imediatamente — localStorage é a fonte da verdade
   localStorage.setItem('gc-events',   JSON.stringify(events));
   localStorage.setItem('gc-projetos', JSON.stringify(projetos));
   localStorage.setItem('gc-mentees',  JSON.stringify(mentees));
-  // Marca local como "pendente Firebase" com timestamp negativo para Firebase NUNCA ganhar antes de confirmar
-  const _pendingTs = Date.now();
-  localStorage.setItem('_fbts_gc-events',   (-_pendingTs).toString());
-  localStorage.setItem('_fbts_gc-projetos', (-_pendingTs).toString());
-  localStorage.setItem('_fbts_gc-mentees',  (-_pendingTs).toString());
-  _lastLocalSave['gc-events'] = _lastLocalSave['gc-projetos'] = _lastLocalSave['gc-mentees'] = _pendingTs;
+  _lastLocalSave['gc-events'] = _lastLocalSave['gc-projetos'] = _lastLocalSave['gc-mentees'] = Date.now();
 
   // Atualizar UI imediatamente
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
@@ -3967,21 +3958,26 @@ function renderMarco0List() {
   const el = document.getElementById('marco0-list-rendered');
   if (!el) return;
   const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
-  // Show mentees that have marco0 tasks (tasks with [Marco 0] tag or tasks at all)
+  if (menteesSorted.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text-soft);padding:8px;">Nenhuma mentorada cadastrada.</div>';
+    return;
+  }
   el.innerHTML = menteesSorted.map(m => {
     const tarefas = (m.tasks||[]);
     const pendentes = tarefas.filter(t=>!t.done).length;
     const total = tarefas.length;
-    if (total === 0) return '';
+    const badge = total > 0
+      ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''}</span>`
+      : `<span style="font-size:10px;color:var(--text-soft);">sem tarefas</span>`;
     return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id});setTimeout(()=>{const tabBtn=document.querySelectorAll('#modal-mentee .modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
-        <div style="font-size:11px;color:var(--text-soft);margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''} · ${total} total</div>
+        <div style="margin-top:2px;">${badge}</div>
       </div>
       <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id})" title="Descadastrar">×</button>
     </div>`;
-  }).filter(Boolean).join('') || '<div style="font-size:13px;color:var(--text-soft);padding:8px;">Nenhuma tarefa registrada para as mentoradas.</div>';
+  }).join('');
 }
 
 function openMenteeModal(id) {
@@ -7387,74 +7383,40 @@ function buildHomeCards() {
 
 
 function initApp(cloudData) {
-  // cloudData keys now contain { value, ts } objects
-  // Only overwrite local data if Firebase version is STRICTLY NEWER than what we last saved locally
-  function shouldUse(key, fbEntry) {
-    if (!fbEntry) return false;
-    const fbTs = fbEntry.ts || 0;
-    const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
-    // Negative localTs = pending local save not yet confirmed by Firebase → local always wins
-    if (localTs < 0) return false;
-    // No local record = first load, use Firebase
-    if (localTs === 0) return true;
-    // Firebase only wins if strictly newer than our last confirmed save
-    return fbTs > localTs;
-  }
-
+  // cloudData is only provided when there's NO local data (first time load)
+  // In all other cases, localStorage is the source of truth
   if (cloudData) {
-    if (shouldUse('gc-events', cloudData['gc-events'])) {
-      events = cloudData['gc-events'].value.map(e => ({...e, tipo: e.tipo || 'tarefa'}));
-      localStorage.setItem('gc-events', JSON.stringify(events));
-    }
-    if (shouldUse('gc-livros', cloudData['gc-livros'])) {
-      livros = cloudData['gc-livros'].value;
-      localStorage.setItem('gc-livros', JSON.stringify(livros));
-    }
-    if (shouldUse('gc-conteudos', cloudData['gc-conteudos'])) {
-      conteudos = cloudData['gc-conteudos'].value;
-      localStorage.setItem('gc-conteudos', JSON.stringify(conteudos));
-    }
-    if (shouldUse('gc-projetos', cloudData['gc-projetos'])) {
-      projetos = cloudData['gc-projetos'].value;
-      localStorage.setItem('gc-projetos', JSON.stringify(projetos));
-    }
-    // Notas — sempre usa Firebase se existir
+    const apply = (key, setter) => {
+      const entry = cloudData[key];
+      const val = entry?.value ?? entry; // support both {value, ts} and raw formats
+      if (val != null) {
+        setter(val);
+        localStorage.setItem(key, JSON.stringify(val));
+      }
+    };
+    apply('gc-events',      v => { events    = v.map(e => ({...e, tipo: e.tipo||'tarefa'})); });
+    apply('gc-livros',      v => { livros     = v; });
+    apply('gc-conteudos',   v => { conteudos  = v; });
+    apply('gc-projetos',    v => { projetos   = v; });
+    apply('gc-kanban',      v => { kanbanData = v; });
+    apply('gc-steira',      v => { steiraData = v; });
+    apply('gc-colab-ordem', v => { colabOrdem = v; });
+    apply('gc-links',       v => { links      = v; });
+    apply('gc-links-empresa', v => { linksEmpresa = v; });
     ['gisella','milena','luiggi'].forEach(c => {
       const key = 'gc-notas-' + c;
-      if (cloudData[key]?.value?.length > 0) {
-        localStorage.setItem(key, JSON.stringify(cloudData[key].value));
-      }
+      const entry = cloudData[key];
+      const val = entry?.value ?? entry;
+      if (val?.length > 0) localStorage.setItem(key, JSON.stringify(val));
+      ['gc-fixed-'+c, 'gc-fixed-checks-'+c].forEach(k => {
+        const e2 = cloudData[k]; const v2 = e2?.value ?? e2;
+        if (v2) localStorage.setItem(k, JSON.stringify(v2));
+      });
     });
-    if (cloudData['gc-mentees']?.value) {
-      if (shouldUse('gc-mentees', cloudData['gc-mentees'])) {
-        mentees = mergeMentees(cloudData['gc-mentees'].value);
-      }
-    }
-    localStorage.setItem('gc-mentees', JSON.stringify(mentees));
-    window.fbSave('gc-mentees', mentees);
-    if (shouldUse('gc-kanban', cloudData['gc-kanban'])) {
-      kanbanData = cloudData['gc-kanban'].value;
-      localStorage.setItem('gc-kanban', JSON.stringify(kanbanData));
-    }
-    if (shouldUse('gc-steira', cloudData['gc-steira'])) {
-      steiraData = cloudData['gc-steira'].value;
-      localStorage.setItem('gc-steira', JSON.stringify(steiraData));
-    }
-    if (shouldUse('gc-colab-ordem', cloudData['gc-colab-ordem'])) {
-      colabOrdem = cloudData['gc-colab-ordem'].value;
-      localStorage.setItem('gc-colab-ordem', JSON.stringify(colabOrdem));
-    }
-    ['gisella','milena','luiggi'].forEach(c => {
-      if (cloudData['gc-fixed-'+c]?.value)        localStorage.setItem('gc-fixed-'+c,        JSON.stringify(cloudData['gc-fixed-'+c].value));
-      if (cloudData['gc-fixed-checks-'+c]?.value) localStorage.setItem('gc-fixed-checks-'+c, JSON.stringify(cloudData['gc-fixed-checks-'+c].value));
-    });
-    if (shouldUse('gc-links', cloudData['gc-links'])) {
-      links = cloudData['gc-links'].value;
-      localStorage.setItem('gc-links', JSON.stringify(links));
-    }
-    if (shouldUse('gc-links-empresa', cloudData['gc-links-empresa'])) {
-      linksEmpresa = cloudData['gc-links-empresa'].value;
-      localStorage.setItem('gc-links-empresa', JSON.stringify(linksEmpresa));
+    if (cloudData['gc-mentees']) {
+      const entry = cloudData['gc-mentees'];
+      const val = entry?.value ?? entry;
+      if (val) { mentees = mergeMentees(val); localStorage.setItem('gc-mentees', JSON.stringify(mentees)); }
     }
   }
 
@@ -7530,29 +7492,69 @@ document.body.insertAdjacentHTML('beforeend',
 );
 
 function startWithFirebase() {
-  if (window.fbLoadAll) {
-    window.fbLoadAll()
-      .then(cloudData => {
-        const ov = document.getElementById('loading-overlay');
-        if (ov) ov.remove();
-        initApp(cloudData);
-      })
-      .catch(err => {
-        console.warn('Firebase falhou, usando localStorage:', err);
-        const ov = document.getElementById('loading-overlay');
-        if (ov) ov.remove();
-        initApp(null);
-      });
+  const ov = document.getElementById('loading-overlay');
+
+  // Check if we have local data
+  const hasLocal = !!localStorage.getItem('gc-events');
+
+  if (hasLocal) {
+    // Start immediately with local data — no waiting for Firebase
+    if (ov) ov.remove();
+    initApp(null); // null = use localStorage only
+
+    // Then sync from Firebase in background — only to fill missing keys on other devices
+    // We do NOT overwrite local data here — Firebase is write-only from this device's perspective
+    // Other devices pushing data is handled by the 'upload to firebase' button
+    if (window.fbLoadAll) {
+      window.fbLoadAll().then(cloudData => {
+        // Only use Firebase data for keys we have NO local data for
+        // (e.g. first time a new key is added to the schema)
+        if (!cloudData) return;
+        let changed = false;
+        const SYNC_KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees',
+          'gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'];
+        SYNC_KEYS.forEach(key => {
+          if (!localStorage.getItem(key) && cloudData[key]?.value) {
+            localStorage.setItem(key, JSON.stringify(cloudData[key].value));
+            changed = true;
+          }
+        });
+        if (changed) {
+          // Reload data into memory for any newly filled keys
+          events    = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
+          livros    = load('gc-livros', []);
+          conteudos = load('gc-conteudos', []);
+          projetos  = load('gc-projetos', []);
+          mentees   = load('gc-mentees', MENTEES_DEFAULT);
+          renderLivros(); renderMenteeList(); renderConteudos();
+          buildTarefas(); buildColabTarefas(); renderProjetos();
+        }
+      }).catch(() => {}); // silent fail — we already have local data
+    }
   } else {
-    setTimeout(startWithFirebase, 100);
+    // No local data: must load from Firebase (first time or cleared storage)
+    if (window.fbLoadAll) {
+      window.fbLoadAll()
+        .then(cloudData => {
+          if (ov) ov.remove();
+          initApp(cloudData);
+        })
+        .catch(err => {
+          console.warn('Firebase falhou, usando localStorage:', err);
+          if (ov) ov.remove();
+          initApp(null);
+        });
+    } else {
+      setTimeout(startWithFirebase, 100);
+    }
   }
 }
 
-// Timeout de segurança: 6s
+// Timeout de segurança: 4s — se Firebase não responder, usa local
 setTimeout(() => {
   const ov = document.getElementById('loading-overlay');
   if (ov) { ov.remove(); initApp(null); }
-}, 6000);
+}, 4000);
 
 
 /* ── LOGIN ── */
