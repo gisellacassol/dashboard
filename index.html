@@ -2871,9 +2871,18 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('open');
   // Re-open mentee modal after quickadd if we were adding a mentee task
   if (id === 'modal-quickadd' && window._postQuickAddMenteeId) {
-    const mid = window._postQuickAddMenteeId;
+    const mid  = window._postQuickAddMenteeId;
+    const prog = window._postQuickAddMenteeProgram || 'planodiretor';
     window._postQuickAddMenteeId = null;
-    setTimeout(() => openMenteeModal(mid), 80);
+    window._postQuickAddMenteeProgram = null;
+    setTimeout(() => {
+      openMenteeModal(mid, prog);
+      // Switch to tarefas tab so user sees the new task
+      setTimeout(() => {
+        const tabBtn = document.querySelectorAll('#modal-mentee .modal-tab')[2];
+        if (tabBtn) switchMenteeTab('tarefas', tabBtn);
+      }, 120);
+    }, 80);
   }
 }
 
@@ -3467,16 +3476,21 @@ function submitQuickAdd() {
       }
     }
     if (tipo === 'tarefa' && window._addingToMenteeId) {
-      const m = mentees.find(x => x.id === window._addingToMenteeId);
+      const prog = window._addingToMenteeProgram || 'planodiretor';
+      const arr  = prog === 'marco0' ? menteesMarco0 : mentees;
+      const m    = arr.find(x => x.id === window._addingToMenteeId);
       if (m) {
         if (!m.tasks) m.tasks = [];
-        m.tasks.push({id: newEv.id.toString(), titulo, done: false});
+        m.tasks.push({id: newEv.id.toString(), titulo, done: false,
+          resp: newEv.responsavel || '', prazo: newEv.data || ''});
         newEv.menteeId = window._addingToMenteeId;
         save('gc-events', events);
-        saveMenteeArray();
+        if (prog === 'marco0') save('gc-mentees-marco0', menteesMarco0);
+        else save('gc-mentees', mentees);
         buildTarefas(); buildColabTarefas(); buildPrioridades();
-        renderMenteeList();
+        renderMenteeList(); renderMarco0List();
         window._addingToMenteeId = null;
+        window._addingToMenteeProgram = null;
         window._addingToProjetoId = null;
         closeModal('modal-quickadd');
         return;
@@ -3968,20 +3982,28 @@ function deleteSession(sid) {
 function renderMenteeTasks(m) {
   const el = document.getElementById('mm-tasks-list');
   if (!m.tasks||m.tasks.length===0) { el.innerHTML='<div style="font-size:13px;color:var(--text-soft);margin-bottom:8px;">Nenhuma tarefa vinculada.</div>'; return; }
-  el.innerHTML = m.tasks.map(t=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      <input type="checkbox" ${t.done?'checked':''} onchange="toggleMenteeTask('${t.id}')" style="accent-color:var(--gisella);width:14px;height:14px;">
-      <span style="flex:1;${t.done?'text-decoration:line-through;color:var(--text-soft);':''}">${t.titulo}</span>
-      <button onclick="deleteMenteeTask('${t.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;">×</button>
-    </div>`).join('');
+  el.innerHTML = m.tasks.map(t => {
+    // Sync done state from global events
+    const ev = events.find(x => x.id.toString() === t.id);
+    const done = ev ? !!ev.arquivada : !!t.done;
+    const resp  = t.resp  || ev?.responsavel || '';
+    const prazo = t.prazo || ev?.data        || '';
+    const prazoLabel = prazo ? ` · <span style="color:var(--text-soft);font-size:11px;">${prazo}</span>` : '';
+    const respLabel  = resp  ? ` · <span style="font-size:11px;font-weight:500;color:var(--gisella);">${resp}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      <input type="checkbox" ${done?'checked':''} onclick="event.stopPropagation();" onchange="toggleMenteeTask('${t.id}')" style="accent-color:var(--gisella);width:14px;height:14px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;${done?'text-decoration:line-through;color:var(--text-soft);':''}">${t.titulo}${respLabel}${prazoLabel}</span>
+      <button onclick="deleteMenteeTask('${t.id}')" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;">×</button>
+    </div>`;
+  }).join('');
 }
 
 function openAddMenteeTask() {
   if (!currentMenteeId) return;
-  const m = mentees.find(x => x.id === currentMenteeId);
+  const m = getMenteeArray().find(x => x.id === currentMenteeId);
   if (!m) return;
-  // Open quickadd modal pre-set to tarefa, with mentee context
   window._addingToMenteeId = currentMenteeId;
+  window._addingToMenteeProgram = currentMenteeProgram;
   closeModal('modal-mentee');
   openQuickAdd();
   setTimeout(() => {
@@ -3990,8 +4012,8 @@ function openAddMenteeTask() {
     updateQaFields();
     const titulo = document.getElementById('qa-titulo');
     if (titulo) { titulo.placeholder = `Tarefa para ${m.name}...`; titulo.focus(); }
-    // When this quickadd closes, reopen mentee modal
     window._postQuickAddMenteeId = currentMenteeId;
+    window._postQuickAddMenteeProgram = currentMenteeProgram;
   }, 80);
 }
 
@@ -4763,13 +4785,16 @@ function deleteSteiraItem(id) {
 }
 
 /* ── TAREFAS ── */
+// openGroups persiste entre rebuilds para manter estado dos grupos abertos
+const openGroups = {};
+
 function buildTarefas() {
   const el = document.getElementById('tarefas-container');
   if (!el) return;
 
   // Salvar estado dos grupos abertos ANTES de rebuildar
-  const openGroups = {};
-  ['proxSemana','proximas','arq-hoje','arq-semana','arq-proxSemana','arq-proximas'].forEach(k => {
+  ['atrasadas','hoje','semana','proxSemana','proximas',
+   'arq-atrasadas','arq-hoje','arq-semana','arq-proxSemana','arq-proximas'].forEach(k => {
     const el2 = document.getElementById('tgrp-' + k);
     if (el2) openGroups[k] = el2.style.display !== 'none';
   });
@@ -4941,6 +4966,7 @@ function toggleTarefaGroup(key) {
   const open = el.style.display === 'none';
   el.style.display = open ? 'block' : 'none';
   if (arrow) arrow.textContent = open ? '▾' : '▸';
+  openGroups[key] = open; // persist state
 }
 
 function toggleTarefaArquivada(id) {
