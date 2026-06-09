@@ -3347,40 +3347,50 @@ function deleteComentarioTarefa(idx) {
   renderComentariosTarefa(ev);
 }
 
-async function deleteEventDirect(id) {
+function deleteEventDirect(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
   const snapEv = [...events];
   const snapPr = projetos.map(p => ({...p, tarefas: [...(p.tarefas||[])]}));
-  // Remove from mentee tasks too
+  const snapMentees = mentees.map(m => ({...m, tasks: [...(m.tasks||[])]}));
+
+  // Remove from mentee tasks
   mentees.forEach(m => {
     if (m.tasks) m.tasks = m.tasks.filter(t => t.id !== id.toString());
   });
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
+
   // Salvar localmente imediatamente
-  localStorage.setItem('gc-events', JSON.stringify(events));
+  localStorage.setItem('gc-events',   JSON.stringify(events));
   localStorage.setItem('gc-projetos', JSON.stringify(projetos));
-  localStorage.setItem('gc-mentees', JSON.stringify(mentees));
-  // Aguardar Firebase confirmar antes de continuar (evita reversão no reload)
-  if (window.fbSave) {
-    try {
-      await Promise.all([
-        window.fbSave('gc-events', events),
-        window.fbSave('gc-projetos', projetos),
-        window.fbSave('gc-mentees', mentees),
-      ]);
-    } catch(e) { console.warn('fbSave delete error:', e); }
-  }
+  localStorage.setItem('gc-mentees',  JSON.stringify(mentees));
+
+  // Atualizar UI imediatamente (não espera Firebase)
   buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards(); buildPrioridades();
-  ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
-  pushUndo(ev.titulo || 'Tarefa', async () => {
-    events = snapEv; projetos = snapPr;
-    localStorage.setItem('gc-events', JSON.stringify(events));
-    if (window.fbSave) await window.fbSave('gc-events', events);
+  ['editora','leia','gisella'].forEach(emp => { if (document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
+
+  // Undo disponível imediatamente
+  pushUndo(ev.titulo || 'Tarefa', () => {
+    events = snapEv; projetos = snapPr; mentees = snapMentees;
+    localStorage.setItem('gc-events',   JSON.stringify(events));
+    localStorage.setItem('gc-projetos', JSON.stringify(projetos));
+    localStorage.setItem('gc-mentees',  JSON.stringify(mentees));
+    if (window.fbSave) {
+      window.fbSave('gc-events',   events);
+      window.fbSave('gc-projetos', projetos);
+      window.fbSave('gc-mentees',  mentees);
+    }
     buildTarefas(); buildColabTarefas(); renderProjetos(); buildHomeCards();
-    ['editora','leia','gisella'].forEach(emp => { if(document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
+    ['editora','leia','gisella'].forEach(emp => { if (document.getElementById('tarefas-empresa-'+emp)) buildTarefasEmpresa(emp); });
   });
+
+  // Firebase em background — sem await para não travar UI
+  if (window.fbSave) {
+    window.fbSave('gc-events',   events)  .catch(e => console.warn('fbSave events:', e));
+    window.fbSave('gc-projetos', projetos).catch(e => console.warn('fbSave projetos:', e));
+    window.fbSave('gc-mentees',  mentees) .catch(e => console.warn('fbSave mentees:', e));
+  }
 }
 
 function deleteCurrentEvent() {
@@ -3548,12 +3558,16 @@ function submitQuickAdd() {
         if (!m.tasks) m.tasks = [];
         m.tasks.push({id: newEv.id.toString(), titulo, done: false});
         newEv.menteeId = window._addingToMenteeId;
-        save('gc-mentees', mentees); renderMenteeList();
+        save('gc-events', events);
+        save('gc-mentees', mentees);
+        buildTarefas(); buildColabTarefas(); buildPrioridades();
+        renderMenteeList();
+        window._addingToMenteeId = null;
+        window._addingToProjetoId = null;
+        closeModal('modal-quickadd');
+        return;
       }
     }
-    // Auto-link to mentee from _addingToMenteeId context
-
-  }
   window._addingToProjetoId = null;
   window._addingToMenteeId = null;
 
@@ -5937,8 +5951,8 @@ const GCAL_ID_LEIA       = 'assessorialeiacassol@gmail.com';
 // ATENÇÃO: substitua os IDs abaixo pelos IDs reais das agendas compartilhadas
 // O ID fica em: Google Calendar → Configurações da agenda → Integrar agenda → ID da agenda
 const GCAL_SHARED_CALS = [
-  { id: '1116bdbd4eeaffd1739e5e36020151faabaf15a8c2bd6a5b5472838d82e008bc@group.calendar.google.com', label: 'Aceleração', color: '#7c3aed', bg: 'rgba(124,58,237,0.13)' },
-  { id: 'c_3881641b8772cba2844122f540de939114ccd88a9feafa8b5636ac594216f114@group.calendar.google.com', label: 'Advanced',   color: '#0369a1', bg: 'rgba(3,105,161,0.13)'  },
+  { id: '1116bdbd4eeaffd1739e5e36020151faabaf15a8c2bd6a5b5472838d82e008bc@group.calendar.google.com', label: 'Aceleração', color: '#5a6272', bg: 'rgba(90,98,114,0.13)' },
+  { id: 'c_3881641b8772cba2844122f540de939114ccd88a9feafa8b5636ac594216f114@group.calendar.google.com', label: 'Advanced',   color: '#5a6272', bg: 'rgba(90,98,114,0.13)'  },
 ];
 let gcalSharedCache = []; // cache mesclado das agendas compartilhadas
 
@@ -7431,7 +7445,7 @@ function initApp(cloudData) {
   // Escutar mudanças em tempo real de outros dispositivos
   if (window.fbListen) {
     [
-      ['gc-events',    v => { if (_lastLocalSave['gc-events'] && Date.now() - _lastLocalSave['gc-events'] < 6000) return; events = v; buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
+      ['gc-events',    v => { if (_lastLocalSave['gc-events'] && Date.now() - _lastLocalSave['gc-events'] < 15000) return; events = v; buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
       ['gc-livros',    v => { livros    = v; renderLivros(); buildTarefas(); }],
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
       ['gc-projetos',  v => { projetos  = v; renderProjetos(); buildTarefas(); }],
