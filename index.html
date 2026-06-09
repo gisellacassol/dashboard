@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Central · Grupo Cassol</title>
 <!-- Firebase SDK -->
 <script type="module">
@@ -201,6 +201,7 @@ tr:hover td { background: var(--bg); }
 .rede-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; }
 .rede-instagram { background: #FCEAF2; color: #8C2B5A; } .rede-tiktok { background: #E8F8F8; color: #0A5F5F; }
 .rede-youtube { background: #FCEAEA; color: #8C1A1A; } .rede-substack { background: #FEF3DA; color: #7A5200; }
+.rede-emanda { background: #E8F5FF; color: #0A3D7A; }
 .status-badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
 .s-copy { background: #EAF0FC; color: #1A3D8C; } .s-gravado { background: #FEF3DA; color: #7A5200; }
 .s-edicao { background: #FCEAF2; color: #8C2B5A; } .s-aprovado { background: #E6F5EE; color: #1A6B4A; }
@@ -404,6 +405,13 @@ tr:hover td { background: var(--bg); }
 
   /* Login */
   .login-box { padding: 2rem 1.25rem; }
+
+  /* Fix: mobile gray screen - ensure modals close cleanly */
+  .modal-overlay { -webkit-overflow-scrolling: touch; }
+  /* Fix: tap highlight */
+  * { -webkit-tap-highlight-color: transparent; }
+  /* Fix: interactive elements clickable on iOS */
+  button, a, [onclick], .nav-item, .mentee-list-item, .check-item, .steira-item, .livro-card { cursor: pointer; touch-action: manipulation; }
 }
 
 @media (max-width: 480px) {
@@ -927,6 +935,12 @@ tr:hover td { background: var(--bg); }
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Marco 0 · mentoradas</div>
+    </div>
+    <div id="marco0-list-rendered" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Projetos</div>
       <button class="add-btn" style="margin:0;" onclick="openAddProjeto('gisella')">+ projeto</button>
     </div>
@@ -1358,6 +1372,11 @@ tr:hover td { background: var(--bg); }
         </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
+        <div class="form-group" id="qa-especificacao-autor-wrap" style="display:none;"><label class="form-label">Especificação de autor</label>
+          <select class="form-select" id="qa-especificacao-autor">
+            <option value="">Não se aplica</option>
+          </select>
+        </div>
         <!-- COMENTÁRIOS -->
         <div id="qa-comentarios-wrap" style="display:none;margin-top:4px;">
           <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Comentários</div>
@@ -1451,15 +1470,15 @@ tr:hover td { background: var(--bg); }
       <div id="qa-fields-conteudo" style="display:none;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group"><label class="form-label">Rede social</label>
-            <select class="form-select" id="qa-c-rede">
-              <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option>
+            <select class="form-select" id="qa-c-rede" onchange="updateQaConteudoRede()">
+              <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option><option value="emanda">Emanda</option>
             </select></div>
-          <div class="form-group"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
+          <div class="form-group" id="qa-c-organico-wrap"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
             <select class="form-select" id="qa-c-organico">
               <option value="organico">Orgânico</option>
               <option value="anuncio">Anúncio</option>
             </select></div>
-          <div class="form-group"><label class="form-label">Formato de conteúdo</label>
+          <div class="form-group" id="qa-c-tipo-wrap"><label class="form-label">Formato de conteúdo</label>
             <select class="form-select" id="qa-c-tipo">
               <option value="reel">Reel</option><option value="foto">Foto</option><option value="dump">Dump</option><option value="card">Card</option><option value="carrossel">Carrossel</option><option value="story">Story</option><option value="emailmkt">Email mkt</option><option value="video">Vídeo</option>
             </select></div>
@@ -1469,8 +1488,13 @@ tr:hover td { background: var(--bg); }
           <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="qa-c-hora" type="time"></div>
         </div>
         <div class="form-group"><label class="form-label">Link</label><input class="form-input" id="qa-c-link" type="url" placeholder="https://..."></div>
-        <div class="form-group"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
+        <div class="form-group" id="qa-c-copy-wrap"><label class="form-label">Copy</label><textarea class="notes-area" id="qa-c-copy" style="min-height:60px;"></textarea></div>
         <div class="form-group"><label class="form-label">Observação</label><textarea class="notes-area" id="qa-observacao-conteudo" style="min-height:40px;"></textarea></div>
+        <!-- Emanda etapas -->
+        <div id="qa-emanda-etapas" style="display:none;">
+          <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Lista de etapas Emanda</div>
+          <div id="qa-emanda-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
         <input type="hidden" id="qa-c-dataprod"><input type="hidden" id="qa-c-legenda"><input type="hidden" id="qa-c-status" value="copy"><input type="hidden" id="qa-responsavel-conteudo" value="">
       </div>
 
@@ -1679,15 +1703,15 @@ tr:hover td { background: var(--bg); }
           </div></div>
         <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="mc-responsavel" type="text"></div>
         <div class="form-group"><label class="form-label">Rede social</label>
-          <select class="form-select" id="mc-rede">
-            <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option>
+          <select class="form-select" id="mc-rede" onchange="updateMcRede()">
+            <option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="youtube">YouTube</option><option value="substack">Substack</option><option value="emanda">Emanda</option>
           </select></div>
-        <div class="form-group"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
+        <div class="form-group" id="mc-organico-wrap"><label class="form-label">Tipo (Orgânico / Anúncio)</label>
           <select class="form-select" id="mc-organico">
             <option value="organico">Orgânico</option>
             <option value="anuncio">Anúncio</option>
           </select></div>
-        <div class="form-group"><label class="form-label">Formato</label>
+        <div class="form-group" id="mc-tipo-wrap"><label class="form-label">Formato</label>
           <select class="form-select" id="mc-tipo">
             <option value="reel">Reel</option><option value="foto">Foto</option><option value="dump">Dump</option><option value="card">Card</option><option value="carrossel">Carrossel</option><option value="story">Story</option><option value="emailmkt">Email mkt</option><option value="video">Vídeo</option>
           </select></div>
@@ -1699,7 +1723,7 @@ tr:hover td { background: var(--bg); }
         <div class="form-group"><label class="form-label">Data de postagem</label><input class="form-input" id="mc-datapost" type="date"></div>
         <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="mc-hora" type="time"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link</label><input class="form-input" id="mc-link" type="url" placeholder="https://..."></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Copy</label><textarea class="notes-area" id="mc-copy" style="min-height:70px;"></textarea></div>
+        <div class="form-group" id="mc-copy-wrap" style="grid-column:1/-1;"><label class="form-label">Copy</label><textarea class="notes-area" id="mc-copy" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Legenda</label><textarea class="notes-area" id="mc-legenda" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Observação</label><textarea class="notes-area" id="mc-observacao" style="min-height:50px;"></textarea></div>
       </div>
@@ -2020,6 +2044,10 @@ function switchMenteeTab(tab, btn) {
   const el = document.getElementById('mtab-' + tab);
   if (el) el.classList.add('active');
   if (tab === 'livros') renderMenteeLivros();
+  if (tab === 'tarefas') {
+    const m = mentees.find(x=>x.id===currentMenteeId);
+    if (m) renderMenteeTasks(m);
+  }
 }
 
 function renderMenteeLivros() {
@@ -2032,7 +2060,20 @@ function renderMenteeLivros() {
     el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro vinculado a esta mentorada.</div>';
     return;
   }
-  el.innerHTML = livrosDaMentee.map(l => livroCardHtml(l, false)).join('');
+  el.innerHTML = livrosDaMentee.map(l => {
+    const done = (l.etapas||[]).filter(e=>e.feito).length;
+    const pct = (l.etapas||[]).length ? Math.round(done/(l.etapas||[]).length*100) : 0;
+    const navBtn = `Array.from(document.querySelectorAll('.nav-item')).find(b=>(b.getAttribute('onclick')||'').includes("'livros'"))`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;"
+      onclick="closeModal('modal-mentee');setTimeout(()=>{const nb=${navBtn};showPage('livros',nb);setTimeout(()=>{toggleLivro(${l.id});const card=document.querySelector('[onclick*=\\'toggleLivro(${l.id})\\']');if(card){card.scrollIntoView({behavior:'smooth',block:'start'});}},250);},100);">
+      <span style="font-size:16px;">📖</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.titulo}</div>
+        <div style="font-size:11px;color:var(--text-soft);margin-top:2px;">${pct}% concluído</div>
+      </div>
+      <span style="font-size:12px;color:var(--gisella);font-weight:600;">abrir →</span>
+    </div>`;
+  }).join('');
 }
 
 /* ── UPLOAD LOCAL → FIREBASE ── */
@@ -2911,6 +2952,46 @@ function updateQaFields() {
     const el = document.getElementById('qa-fields-' + t);
     if (el) el.style.display = t === tipo ? 'block' : 'none';
   });
+  if (tipo === 'conteudo') updateQaConteudoRede();
+}
+
+function updateQaConteudoRede() {
+  const rede = document.getElementById('qa-c-rede')?.value;
+  const isEmanda = rede === 'emanda';
+  const organico = document.getElementById('qa-c-organico-wrap');
+  const tipoWrap = document.getElementById('qa-c-tipo-wrap');
+  const copyWrap = document.getElementById('qa-c-copy-wrap');
+  const emandaEtapas = document.getElementById('qa-emanda-etapas');
+  if (organico) organico.style.display = isEmanda ? 'none' : '';
+  if (tipoWrap) tipoWrap.style.display = isEmanda ? 'none' : '';
+  if (copyWrap) copyWrap.style.display = isEmanda ? 'none' : '';
+  if (emandaEtapas) emandaEtapas.style.display = isEmanda ? 'block' : 'none';
+  if (isEmanda) {
+    const tipoSel = document.getElementById('qa-c-tipo');
+    if (tipoSel) tipoSel.value = 'emailmkt';
+    // Render checklist preview
+    const cl = document.getElementById('qa-emanda-checklist');
+    if (cl) {
+      cl.innerHTML = EMANDA_ETAPAS_PADRAO.map(e =>
+        `<div style="font-size:12px;color:var(--text-mid);padding:3px 0;border-bottom:1px solid var(--border);">☐ ${e}</div>`
+      ).join('');
+    }
+  }
+}
+
+function updateMcRede() {
+  const rede = document.getElementById('mc-rede')?.value;
+  const isEmanda = rede === 'emanda';
+  const organico = document.getElementById('mc-organico-wrap');
+  const tipoWrap = document.getElementById('mc-tipo-wrap');
+  const copyWrap = document.getElementById('mc-copy-wrap');
+  if (organico) organico.style.display = isEmanda ? 'none' : '';
+  if (tipoWrap) tipoWrap.style.display = isEmanda ? 'none' : '';
+  if (copyWrap) copyWrap.style.display = isEmanda ? 'none' : '';
+  if (isEmanda) {
+    const tipoSel = document.getElementById('mc-tipo');
+    if (tipoSel) tipoSel.value = 'emailmkt';
+  }
 }
 
 function updateDocsLink() {
@@ -2978,6 +3059,7 @@ function buildCalendar(id, filter) {
       startTime: ev.startTime,
       gcal: true,
       link: ev.link,
+      _sharedCal: ev._sharedCal || null,
     })),
     ...(gcalLeiaCache || []).map(ev => ({
       id: 'gcal-leia-' + ev.start + '-' + (ev.title||'x').slice(0,10).replace(/\s/g,''),
@@ -3036,8 +3118,16 @@ function buildCalendar(id, filter) {
     evHtml += dayEvs.slice(0,_maxItems).map(e => {
       if (e._gcal || e.gcal) {
         const time = e.startTime ? `${e.startTime} ` : '';
-        const gcalColor = e.empresa === 'leia' ? 'var(--leia-bg);color:var(--leia);border-left:2px solid var(--leia)' : 'var(--gisella-bg);color:var(--gisella);border-left:2px solid var(--gisella)';
-        return `<div class="cal-event" style="background:${gcalColor};cursor:default;" title="${e.titulo} (Google Calendar)">${time}${e.titulo}</div>`;
+        let gcalBg, gcalColor, gcalBorder;
+        if (e._sharedCal) {
+          gcalBg = e._sharedCal.bg; gcalColor = e._sharedCal.color; gcalBorder = e._sharedCal.color;
+        } else if (e.empresa === 'leia') {
+          gcalBg = 'var(--leia-bg)'; gcalColor = 'var(--leia)'; gcalBorder = 'var(--leia)';
+        } else {
+          gcalBg = 'var(--gisella-bg)'; gcalColor = 'var(--gisella)'; gcalBorder = 'var(--gisella)';
+        }
+        const calLabel = e._sharedCal ? `[${e._sharedCal.label}] ` : '';
+        return `<div class="cal-event" style="background:${gcalBg};color:${gcalColor};border-left:2px solid ${gcalBorder};cursor:default;" title="${e.titulo}${e._sharedCal?' ['+e._sharedCal.label+']':''} (Google Calendar)">${time}${calLabel}${e.titulo}</div>`;
       }
       return `<div class="cal-event ev-${e.empresa}" onclick="event.stopPropagation();openEditEvent(${e.id})" style="cursor:pointer;">${e.titulo}</div>`;
     }).join('');
@@ -3054,7 +3144,10 @@ function buildCalendar(id, filter) {
   const rem = (first + days) % 7;
   if (rem > 0) for (let i = 1; i <= 7-rem; i++) html += `<div class="cal-day other-month"><div class="cal-num">${i}</div></div>`;
   html += '</div>';
-  if (filter === 'all') html += `<div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--leia);"></div>Léia</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>GC</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);opacity:0.5;border:1px solid var(--gisella);"></div>Google Cal</div></div>`;
+  const sharedLegend = GCAL_SHARED_CALS.map(cal =>
+    `<div class="cal-legend-item"><div class="cal-legend-dot" style="background:${cal.color};"></div>${cal.label}</div>`
+  ).join('');
+  if (filter === 'all') html += `<div class="cal-legend"><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--editora);"></div>Editora</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--leia);"></div>Léia</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);"></div>GC</div><div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--gisella);opacity:0.5;border:1px solid var(--gisella);"></div>Google Cal</div>${sharedLegend}</div>`;
   el.innerHTML = html;
 }
 
@@ -3151,6 +3244,16 @@ function openQuickAdd() {
   // Esconder comentários ao criar nova tarefa
   const comWrapNew = document.getElementById('qa-comentarios-wrap');
   if (comWrapNew) comWrapNew.style.display = 'none';
+  // Populate mentee author selector
+  const autorSel = document.getElementById('qa-especificacao-autor');
+  const autorWrap = document.getElementById('qa-especificacao-autor-wrap');
+  if (autorSel && autorWrap) {
+    autorWrap.style.display = 'block';
+    const menteesSorted2 = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+    autorSel.innerHTML = '<option value="">Não se aplica</option>' +
+      menteesSorted2.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    autorSel.value = '';
+  }
   openModal('modal-quickadd');
   setTimeout(() => document.getElementById('qa-titulo').focus(), 50);
 }
@@ -3415,6 +3518,17 @@ function submitQuickAdd() {
         if (!m.tasks) m.tasks = [];
         m.tasks.push({id: newEv.id.toString(), titulo, done: false});
         newEv.menteeId = window._addingToMenteeId;
+        save('gc-mentees', mentees); renderMenteeList();
+      }
+    }
+    // Auto-link to mentee from "Especificação de autor" field
+    const autorSelVal = document.getElementById('qa-especificacao-autor')?.value;
+    if (tipo === 'tarefa' && autorSelVal && !window._addingToMenteeId) {
+      const mAutor = mentees.find(x => x.id.toString() === autorSelVal);
+      if (mAutor) {
+        if (!mAutor.tasks) mAutor.tasks = [];
+        mAutor.tasks.push({id: newEv.id.toString(), titulo, done: false});
+        newEv.menteeId = mAutor.id;
         save('gc-mentees', mentees); renderMenteeList();
       }
     }
@@ -3758,15 +3872,40 @@ function renderMenteeList() {
   if (!el) return;
   const cntM2 = document.getElementById('cnt-mentoradas'); if(cntM2) cntM2.textContent = mentees.length;
   const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
-  el.innerHTML = menteesSorted.map(m => `
-    <div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
+  el.innerHTML = menteesSorted.map(m => {
+    const pendentes = (m.tasks||[]).filter(t=>!t.done).length;
+    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
         ${m.docsLink ? `<a href="${m.docsLink}" target="_blank" onclick="event.stopPropagation();" style="font-size:11px;color:var(--gisella);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">📄 docs</a>` : ''}
+        ${pendentes > 0 ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} tarefa${pendentes>1?'s':''}</span>` : ''}
       </div>
       <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id})" title="Descadastrar">×</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  renderMarco0List();
+}
+
+function renderMarco0List() {
+  const el = document.getElementById('marco0-list-rendered');
+  if (!el) return;
+  const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
+  // Show mentees that have marco0 tasks (tasks with [Marco 0] tag or tasks at all)
+  el.innerHTML = menteesSorted.map(m => {
+    const tarefas = (m.tasks||[]);
+    const pendentes = tarefas.filter(t=>!t.done).length;
+    const total = tarefas.length;
+    if (total === 0) return '';
+    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id});setTimeout(()=>{const tabBtn=document.querySelectorAll('.modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
+      <div class="avatar">${getInitials(m.name)}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="mentee-name">${m.name}</div>
+        <div style="font-size:11px;color:var(--text-soft);margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''} · ${total} total</div>
+      </div>
+      <span class="steira-arrow">›</span>
+    </div>`;
+  }).filter(Boolean).join('') || '<div style="font-size:13px;color:var(--text-soft);padding:8px;">Nenhuma tarefa registrada para as mentoradas.</div>';
 }
 
 function openMenteeModal(id) {
@@ -3782,19 +3921,13 @@ function openMenteeModal(id) {
   document.getElementById('mm-snotes').value = '';
   renderMenteeSessions(m);
   renderMenteeTasks(m);
+  renderMenteeLivros();
   // Reset tabs
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.modal-tab-content').forEach(t=>t.classList.remove('active'));
   document.querySelector('.modal-tab').classList.add('active');
   document.getElementById('mtab-notas').classList.add('active');
   openModal('modal-mentee');
-}
-
-function switchMenteeTab(tab, btn) {
-  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.modal-tab-content').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('mtab-'+tab).classList.add('active');
 }
 
 function saveMenteeField() {
@@ -3854,13 +3987,40 @@ function openAddMenteeTask() {
   if (!currentMenteeId) return;
   const m = mentees.find(x => x.id === currentMenteeId);
   if (!m) return;
-  closeModal('modal-mentee');
-  openQuickAdd();
-  document.getElementById('qa-tipo').value = 'tarefa';
-  document.getElementById('qa-empresa').value = 'gisella';
-  window._addingToMenteeId = currentMenteeId;
-  // Add mentee name to title placeholder
-  document.getElementById('qa-titulo').placeholder = 'Tarefa';
+  // Show inline task input in the modal instead of closing it
+  const el = document.getElementById('mm-tasks-list');
+  const inputHtml = `<div id="mm-task-add-row" style="display:flex;gap:8px;margin-bottom:10px;">
+    <input class="form-input" id="mm-task-input-inline" type="text" placeholder="Nova tarefa..." style="flex:1;font-size:13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addMenteeTaskInline();}">
+    <button class="btn btn-primary" onclick="addMenteeTaskInline()" style="font-size:12px;padding:6px 12px;">+ Add</button>
+    <button class="btn" onclick="cancelMenteeTaskAdd()" style="font-size:12px;padding:6px 10px;">×</button>
+  </div>`;
+  const existing = document.getElementById('mm-task-add-row');
+  if (existing) { document.getElementById('mm-task-input-inline')?.focus(); return; }
+  el.insertAdjacentHTML('beforebegin', inputHtml);
+  setTimeout(() => document.getElementById('mm-task-input-inline')?.focus(), 50);
+}
+
+function cancelMenteeTaskAdd() {
+  const row = document.getElementById('mm-task-add-row');
+  if (row) row.remove();
+}
+
+function addMenteeTaskInline() {
+  const m = mentees.find(x=>x.id===currentMenteeId);
+  if (!m) return;
+  const input = document.getElementById('mm-task-input-inline');
+  const titulo = (input?.value||'').trim();
+  if (!titulo) { input?.focus(); return; }
+  if (!m.tasks) m.tasks=[];
+  const newEv = {id:Date.now(), empresa:'gisella', titulo:`[${m.name}] ${titulo}`, tipo:'tarefa', data:'', menteeId:m.id};
+  events.push(newEv);
+  m.tasks.push({id:newEv.id.toString(), titulo, done:false});
+  save('gc-mentees',mentees); save('gc-events',events);
+  cancelMenteeTaskAdd();
+  renderMenteeTasks(m);
+  buildTarefas(); buildColabTarefas();
+  // Also render marco0 if mentee has marco0 tasks
+  renderMarco0List();
 }
 
 function addMenteeTask() {
@@ -3885,14 +4045,23 @@ function toggleMenteeTask(tid) {
   const m = mentees.find(x=>x.id===currentMenteeId);
   if (!m||!m.tasks) return;
   const t = m.tasks.find(x=>x.id===tid);
-  if (t) { t.done=!t.done; save('gc-mentees',mentees); renderMenteeTasks(m); }
+  if (t) {
+    t.done=!t.done;
+    // Sync with global events
+    const ev = events.find(x=>x.id.toString()===tid);
+    if (ev) { ev.arquivada = t.done; save('gc-events',events); buildTarefas(); buildColabTarefas(); }
+    save('gc-mentees',mentees);
+    renderMenteeTasks(m);
+  }
 }
 
 function deleteMenteeTask(tid) {
   const m = mentees.find(x=>x.id===currentMenteeId);
   if (!m||!m.tasks) return;
   m.tasks = m.tasks.filter(x=>x.id!==tid);
-  save('gc-mentees',mentees); renderMenteeTasks(m);
+  events = events.filter(x=>x.id.toString()!==tid);
+  save('gc-mentees',mentees); save('gc-events',events);
+  renderMenteeTasks(m); buildTarefas(); buildColabTarefas();
 }
 
 function openAddMentee() {
@@ -3912,7 +4081,7 @@ function deleteMentee(id) {
 /* ── CONTEUDO ── */
 let currentConteudoId = null;
 const ST_MAP = {copy:{l:'Copy',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Em edição',c:'s-edicao'},aprovado:{l:'Aprovado',c:'s-aprovado'},agendado:{l:'Agendado',c:'s-agendado'},postado:{l:'Postado',c:'s-postado'},turbinar:{l:'Turbinar',c:'s-turbinar'},metricas:{l:'Métricas',c:'s-metricas'},turbinar2:{l:'Turbinar nov.',c:'s-turbinar'}};
-const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack'};
+const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda'};
 const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo'};
 const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
 const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
@@ -3920,6 +4089,20 @@ const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
 // Etapas padrão de um conteúdo (baseadas no fluxo de status)
 const CONTEUDO_ETAPAS_PADRAO = ['Copy','Gravado','Em edição','Aprovado','Agendado','Postado','Turbinar','Métricas'];
 const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado','turbinar','metricas'];
+const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
+const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
+function getConteudoEtapasByRede(c) {
+  if ((c.rede||'') === 'emanda') {
+    if (!c.etapasStatus) c.etapasStatus = {};
+    return EMANDA_ETAPAS_PADRAO.map((nome, i) => ({
+      key: EMANDA_ETAPAS_KEYS[i], nome,
+      feito: !!c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.feito,
+      resp:  c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.resp  || '',
+      prazo: c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.prazo || '',
+    }));
+  }
+  return null; // use default
+}
 
 function getConteudoEtapas(c) {
   // Se conteúdo já tem etapas customizadas, usa elas
@@ -4161,6 +4344,7 @@ function openNewConteudo() {
   ['mc-nome','mc-responsavel','mc-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
   setEmpresasChecked('mc-emp-', 'gisella');
   document.getElementById('mc-rede').value='instagram';
+  updateMcRede();
   document.getElementById('mc-tipo').value='reel';
   document.getElementById('mc-status').value='copy';
   document.getElementById('mc-dataprod').value='';
@@ -4181,7 +4365,8 @@ function openConteudo(id) {
   document.getElementById('mc-nome').value=c.nome;
   setEmpresasChecked('mc-emp-', c.empresa || 'editora');
   document.getElementById('mc-responsavel').value=c.responsavel||'';
-  document.getElementById('mc-rede').value=c.rede;
+  document.getElementById('mc-rede').value=c.rede||'instagram';
+  updateMcRede();
   document.getElementById('mc-tipo').value=c.tipo;
   document.getElementById('mc-status').value=c.status;
   document.getElementById('mc-dataprod').value=c.dataProd||'';
@@ -5103,27 +5288,32 @@ function buildColabTarefas() {
 
     const tasks = [];
 
-    // From events
+    // Build set of eventIds already covered by events array (avoid duplicates)
+    const coveredEventIds = new Set();
+
+    // From events (primary source)
     events.filter(e => e.responsavel === colab && e.titulo).forEach(e => {
-      tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', responsavel: e.responsavel||'', projetoId: e.projetoId||null, arquivada: e.arquivada||false});
+      coveredEventIds.add(e.id);
+      tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', responsavel: e.responsavel||'', projetoId: e.projetoId||null, arquivada: e.arquivada||false, urgente: e.urgente||false});
     });
 
-    // From livros
+    // From livros (etapas not in events)
     livros.forEach(l => {
       l.etapas.forEach((e,i) => {
         const tid = `livro-${l.id}-${i}`;
         if (e.resp === colab && !e.feito) {
-          tasks.push({id: tid, titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', responsavel: colab, arquivada: false});
+          tasks.push({id: tid, titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', responsavel: colab, arquivada: false, urgente: false});
         }
       });
     });
 
-    // From projetos
+    // From projetos — ONLY tasks without eventId (to avoid duplicates with events)
     projetos.forEach(p => {
       (p.tarefas||[]).forEach((t,i) => {
+        if (t.eventId && coveredEventIds.has(t.eventId)) return; // already in events
         const tid = `proj-${p.id}-${i}`;
         if (t.resp === colab && !t.feito) {
-          tasks.push({id: tid, titulo: `[${p.nome}] ${t.nome}`, empresa: p.empresa, data: p.fim||'', responsavel: colab, arquivada: false});
+          tasks.push({id: tid, titulo: `[${p.nome}] ${t.nome}`, empresa: p.empresa, data: p.fim||'', responsavel: colab, arquivada: false, urgente: false});
         }
       });
     });
@@ -5168,7 +5358,7 @@ function buildColabTarefas() {
           </div>
         </td>
         <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
-          ${t.titulo}
+          ${t.urgente ? '<span title="Urgente" style="font-size:13px;vertical-align:middle;margin-right:3px;">❗</span>' : ''}${t.titulo}
           ${editBtn}${delBtn}
         </td>
         <td>
@@ -5616,9 +5806,17 @@ function livrosDrop(e, id) {
 
 
 /* ---- GOOGLE CALENDAR ---- */
-const GCAL_API_KEY  = 'AIzaSyBSQ7t6xtS6va7yaXMVvOKchCl1pkq_Whw';
-const GCAL_ID       = 'gcestrategiasliterarias@gmail.com';
-const GCAL_ID_LEIA  = 'assessorialeiacassol@gmail.com';
+const GCAL_API_KEY       = 'AIzaSyBSQ7t6xtS6va7yaXMVvOKchCl1pkq_Whw';
+const GCAL_ID            = 'gcestrategiasliterarias@gmail.com';
+const GCAL_ID_LEIA       = 'assessorialeiacassol@gmail.com';
+// Agendas compartilhadas — Aceleração Mulher High Ticket e Advanced
+// ATENÇÃO: substitua os IDs abaixo pelos IDs reais das agendas compartilhadas
+// O ID fica em: Google Calendar → Configurações da agenda → Integrar agenda → ID da agenda
+const GCAL_SHARED_CALS = [
+  { id: 'aceleracaomht@group.calendar.google.com', label: 'Aceleração', color: '#7c3aed', bg: 'rgba(124,58,237,0.13)' },
+  { id: 'advanced@group.calendar.google.com',      label: 'Advanced',   color: '#0369a1', bg: 'rgba(3,105,161,0.13)'  },
+];
+let gcalSharedCache = []; // cache mesclado das agendas compartilhadas
 
 // Semana atual: domingo da semana corrente
 const GCAL_MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -5630,6 +5828,28 @@ let gcalWeekStart = (function() {
   return d;
 })();
 let gcalEvents = [];
+
+function mapGcalItems(items, calLabel) {
+  return (items || []).map(ev => {
+    const start     = ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date;
+    const end       = ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date;
+    const startTime = ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null;
+    const endTime   = ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null;
+    return { title: ev.summary||'(sem título)', start, end, startTime, endTime,
+             description: ev.description||'', location: ev.location||'',
+             link: ev.htmlLink||'', calLabel: calLabel||null };
+  });
+}
+
+async function fetchGcalRange(calId, rangeStart, rangeEnd) {
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`
+    + `?key=${GCAL_API_KEY}&timeMin=${rangeStart.toISOString()}&timeMax=${rangeEnd.toISOString()}`
+    + `&singleEvents=true&orderBy=startTime&maxResults=250`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.items || [];
+}
 
 async function loadGcal() {
   const el = document.getElementById('gcal-container');
@@ -5644,33 +5864,48 @@ async function loadGcal() {
   const rangeStart = new Date(); rangeStart.setMonth(rangeStart.getMonth() - 2); rangeStart.setDate(1);
   const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 4); rangeEnd.setDate(1);
 
-  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(GCAL_ID)}/events`
-    + `?key=${GCAL_API_KEY}&timeMin=${rangeStart.toISOString()}&timeMax=${rangeEnd.toISOString()}`
-    + `&singleEvents=true&orderBy=startTime&maxResults=250`;
+  // Warn if placeholder IDs are still in place
+  GCAL_SHARED_CALS.forEach(cal => {
+    if (cal.id.includes('group.calendar.google.com') && (cal.id.includes('aceleracaomht') || cal.id.includes('advanced@group'))) {
+      console.warn(`⚠️ Calendário compartilhado "${cal.label}" ainda usa ID provisório. Substitua em GCAL_SHARED_CALS no código.`);
+    }
+  });
 
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      const err = await res.json();
-      el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro ao carregar agenda: ${(err.error||{}).message||res.status}<br><small>Verifique se o calendário está público e a API Key está correta.</small></div>`;
+    // Buscar agenda principal + agendas compartilhadas em paralelo
+    const fetchPromises = [
+      fetchGcalRange(GCAL_ID, rangeStart, rangeEnd),
+      ...GCAL_SHARED_CALS.map(cal => fetchGcalRange(cal.id, rangeStart, rangeEnd).catch(() => null)),
+    ];
+    const results = await Promise.all(fetchPromises);
+
+    if (!results[0]) {
+      el.innerHTML = '<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro ao carregar agenda GC. Verifique se o calendário está público e a API Key está correta.</div>';
       return;
     }
-    const data = await res.json();
-    const mapped = (data.items || []).map(ev => {
-      const start     = ev.start.dateTime ? ev.start.dateTime.slice(0,10) : ev.start.date;
-      const end       = ev.end.dateTime   ? ev.end.dateTime.slice(0,10)   : ev.end.date;
-      const startTime = ev.start.dateTime ? ev.start.dateTime.slice(11,16) : null;
-      const endTime   = ev.end.dateTime   ? ev.end.dateTime.slice(11,16)   : null;
-      return { title: ev.summary||'(sem título)', start, end, startTime, endTime,
-               description: ev.description||'', location: ev.location||'', link: ev.htmlLink||'' };
+
+    // Mapear agenda principal
+    const mapped = mapGcalItems(results[0], null);
+
+    // Mapear agendas compartilhadas e mesclar
+    gcalSharedCache = [];
+    GCAL_SHARED_CALS.forEach((cal, idx) => {
+      const items = results[idx + 1];
+      if (items) {
+        const sharedMapped = mapGcalItems(items, cal.label).map(ev => ({
+          ...ev, _sharedCal: cal,
+        }));
+        gcalSharedCache = gcalSharedCache.concat(sharedMapped);
+      }
     });
 
-    // Salvar cache global e filtrar para a semana atual
-    window.gcalEventsCache = mapped;
-    gcalEvents = mapped.filter(ev => ev.start >= gcalWeekStart.toISOString().slice(0,10)
-      && ev.start <= weekEnd.toISOString().slice(0,10));
+    // Cache global = principal + compartilhadas (para calendário mensal e semanal)
+    window.gcalEventsCache = [...mapped, ...gcalSharedCache];
+    gcalEvents = window.gcalEventsCache.filter(ev =>
+      ev.start >= gcalWeekStart.toISOString().slice(0,10) &&
+      ev.start <= weekEnd.toISOString().slice(0,10));
 
-    // Detectar eventos de mentoria e criar tarefas automaticamente
+    // Detectar eventos de mentoria e criar tarefas automaticamente (só da agenda principal)
     limparTarefasEventosRemovidos(mapped);
     criarTarefasMentoria(mapped);
     criarTarefasEventos(mapped);
@@ -5753,7 +5988,7 @@ function renderGcal() {
       <div style="font-size:10px;color:var(--text-soft);font-weight:500;">${GCAL_DAYS_PT[day.getDay()]}</div>
       <div style="font-size:${isToday?'18px':'15px'};font-weight:${isToday?'700':'400'};color:${isToday?'var(--gisella)':'var(--text)'};">${day.getDate()}</div>
       <div style="font-size:9px;color:var(--text-soft);">${GCAL_MONTHS_PT[day.getMonth()].slice(0,3)}</div>
-      ${adEvs.map(ev=>`<div onclick="openGcalEvent(gcalEvents[${gcalEvents.indexOf(ev)}])" style="background:var(--gisella-bg);color:var(--gisella);border-radius:3px;padding:1px 4px;margin-top:2px;font-size:9px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;" title="${ev.title}">${ev.title}</div>`).join('')}
+      ${adEvs.map(ev=>{const _ec=ev._sharedCal;const _col=_ec?_ec.color:'var(--gisella)';const _bg=_ec?_ec.bg:'var(--gisella-bg)';return `<div onclick="openGcalEvent(gcalEvents[${gcalEvents.indexOf(ev)}])" style="background:${_bg};color:${_col};border-radius:3px;padding:1px 4px;margin-top:2px;font-size:9px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;" title="${ev.title}${_ec?' ['+_ec.label+']':''}">${_ec?_ec.label+' · ':''}${ev.title}</div>`;}).join('')}
     </div>`;
   });
   out += `</div>`;
@@ -5816,17 +6051,21 @@ function renderGcal() {
       if (startMin < HOUR_START*60 || startMin > HOUR_END*60) return;
 
       const evIdx = gcalEvents.indexOf(ev);
-      out += `<div onclick="openGcalEvent(gcalEvents[${evIdx}])" title="${ev.title}" style="
+      const _sc = ev._sharedCal;
+      const _evColor = _sc ? _sc.color : 'var(--gisella)';
+      const _evBg    = _sc ? _sc.bg    : 'var(--gisella-bg)';
+      const _labelPfx = _sc ? `<span style="font-size:8px;font-weight:700;opacity:0.85;">${_sc.label} · </span>` : '';
+      out += `<div onclick="openGcalEvent(gcalEvents[${evIdx}])" title="${ev.title}${_sc?' ['+_sc.label+']':''}" style="
         position:absolute;top:${startPx}px;left:2px;right:2px;height:${heightPx}px;
-        background:var(--gisella-bg);color:var(--gisella);
-        border-left:3px solid var(--gisella);
+        background:${_evBg};color:${_evColor};
+        border-left:3px solid ${_evColor};
         border-radius:4px;padding:2px 4px;
         font-size:10px;font-weight:500;
         overflow:hidden;z-index:2;cursor:pointer;
         box-sizing:border-box;transition:filter 0.1s;"
         onmouseover="this.style.filter='brightness(0.92)'"
         onmouseout="this.style.filter=''">
-        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.title}</div>
+        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_labelPfx}${ev.title}</div>
         <div style="font-size:9px;opacity:0.75;">${ev.startTime}${ev.endTime?' – '+ev.endTime:''}</div>
       </div>`;
     });
@@ -5969,7 +6208,7 @@ function buildTarefasEmpresa(emp) {
             style="accent-color:${cor};width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;">
       </td>
       <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
-        ${e.titulo}
+        ${e.urgente ? '<span title="Urgente" style="font-size:13px;vertical-align:middle;margin-right:3px;">❗</span>' : ''}${e.titulo}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : ''}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
