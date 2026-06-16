@@ -1095,6 +1095,10 @@ tr:hover td { background: var(--bg); }
     <button class="filter-btn f-gisella" onclick="setFilter('livros','gisella',this)">GC Estratégias</button>
   </div>
 
+  <div class="section">
+    <div class="section-title">Calendário semanal de tarefas</div>
+    <div id="cal-livros-semana-wrap"></div>
+  </div>
 
   <div id="livros-todos"></div>
   <div id="livros-arquivados-section" style="margin-top:1.5rem;display:none;">
@@ -2833,6 +2837,93 @@ function buildConteudoCalSemana() {
   wrap.innerHTML = html;
 }
 
+/* ── CALENDÁRIO SEMANAL DE TAREFAS DOS LIVROS (aba Livros) ── */
+let _livrosCalWeekOffset = 0;
+let _livroCalDragSrc = null;
+
+function buildLivrosCalSemana() {
+  const wrap = document.getElementById('cal-livros-semana-wrap');
+  if (!wrap) return;
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - hoje.getDay() + (_livrosCalWeekOffset * 7));
+  const dias = Array.from({length:7}, (_,i) => {
+    const d = new Date(inicioSemana);
+    d.setDate(inicioSemana.getDate() + i);
+    return d;
+  });
+
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dows = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  const filter = getFilter('livros');
+  const hojeStr = hoje.toISOString().slice(0,10);
+  const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
+
+  // Montar lista de etapas (tarefas de livros) que têm prazo definido
+  const todasEtapas = [];
+  livros.forEach(l => {
+    if (filter !== 'all' && !(l.empresa||'').split(',').includes(filter)) return;
+    (l.etapas||[]).forEach((e,i) => {
+      if (!e.prazo) return;
+      todasEtapas.push({ livroId: l.id, idx: i, livroTitulo: l.titulo, empresa: l.empresa, nome: e.nome, prazo: e.prazo, feito: e.feito });
+    });
+  });
+
+  let html = `<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">
+    <button class="cal-nav" onclick="_livrosCalWeekOffset--;buildLivrosCalSemana()">‹</button>
+    <div class="cal-month">${label}</div>
+    <button class="cal-nav" onclick="_livrosCalWeekOffset++;buildLivrosCalSemana()">›</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+
+  dias.forEach((dia, idx) => {
+    const ds = dia.toISOString().slice(0,10);
+    const isToday = ds === hojeStr;
+    const dayEtapas = todasEtapas.filter(e => e.prazo === ds);
+
+    html += `<div class="livros-cal-day" ondragover="event.preventDefault();this.style.background='var(--gisella-bg)';" ondragleave="this.style.background='var(--surface)';" ondrop="livroCalDrop(event,'${ds}')"
+      style="background:var(--surface);border-radius:10px;padding:8px;min-height:110px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
+      <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
+      <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
+
+    if (dayEtapas.length === 0) {
+      html += `<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
+    }
+    dayEtapas.forEach(e => {
+      const primeiraEmp = (e.empresa||'').split(',')[0];
+      const cor = primeiraEmp==='editora'?'var(--editora)':primeiraEmp==='leia'?'var(--leia)':'var(--gisella)';
+      html += `<div draggable="true"
+        ondragstart="livroCalDragStart(event,${e.livroId},${e.idx})"
+        onclick="openEditEtapa(${e.livroId},${e.idx})"
+        title="${e.livroTitulo} — ${e.nome}"
+        style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:grab;border-left:2px solid ${cor};${e.feito?'opacity:0.45;':''}">
+        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+        <span style="display:block;font-size:9px;opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.livroTitulo}</span>
+      </div>`;
+    });
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function livroCalDragStart(e, livroId, idx) {
+  _livroCalDragSrc = { livroId, idx };
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function livroCalDrop(e, novaData) {
+  e.preventDefault();
+  e.currentTarget.style.background = 'var(--surface)';
+  if (!_livroCalDragSrc) return;
+  const { livroId, idx } = _livroCalDragSrc;
+  _livroCalDragSrc = null;
+  updateEtapaPrazoInline(livroId, idx, novaData);
+}
+
 /* ── MOBILE NAV ── */
 function toggleMobileNav() {
   const sidebar = document.querySelector('.sidebar');
@@ -3773,6 +3864,8 @@ function renderLivros() {
     }
     el.innerHTML = out;
   });
+
+  buildLivrosCalSemana();
 }
 
 function toggleArqEmpresa(emp) {
@@ -6524,6 +6617,7 @@ function updateEtapaPrazoInline(livroId, idx, val) {
   l.etapas[idx].prazo = val;
   save('gc-livros', livros);
   renderLivros();
+  buildTarefas();
 }
 
 /* ── NOTAS RÁPIDAS ── */
