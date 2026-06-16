@@ -746,8 +746,6 @@ tr:hover td { background: var(--bg); }
   <div class="nav-section">
     <div class="nav-label">Colaboradores</div>
     <button class="nav-item" onclick="showPage('colab-gisella',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--gisella-bg);color:var(--gisella);">G</span> Gisella</button>
-    <button class="nav-item" onclick="showPage('colab-milena',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">M</span> Milena</button>
-    <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
   </div>
 
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
@@ -1068,11 +1066,17 @@ tr:hover td { background: var(--bg); }
 <!-- TAREFAS -->
 <div class="page" id="page-tarefas">
   <div class="page-header"><div class="page-title">Tarefas</div><div class="page-subtitle">Todas as tarefas abertas, ordenadas por prazo</div></div>
-  <div class="filter-bar" id="filter-bar-tarefas">
+  <div class="filter-bar" id="filter-bar-tarefas" style="margin-bottom:8px;">
     <button class="filter-btn active" onclick="setFilter('tarefas','all',this)">Todas</button>
     <button class="filter-btn f-editora" onclick="setFilter('tarefas','editora',this)">Editora Cassol</button>
     <button class="filter-btn f-leia" onclick="setFilter('tarefas','leia',this)">Léia Cassol</button>
     <button class="filter-btn f-gisella" onclick="setFilter('tarefas','gisella',this)">GC Estratégias</button>
+  </div>
+  <div class="filter-bar" id="filter-bar-tarefas-colab">
+    <button class="filter-btn active" onclick="setFilterColab('tarefas','all',this)">Todos os colaboradores</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Gisella',this)">Gisella</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Milena',this)">Milena</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Luiggi',this)">Luiggi</button>
   </div>
   <div id="tarefas-container"></div>
 </div>
@@ -1105,7 +1109,7 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
     <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Agenda &middot; Tarefas atribuídas</div>
+    <div class="page-subtitle">Agenda &middot; Notas rápidas</div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1122,37 +1126,10 @@ tr:hover td { background: var(--bg); }
     <div id="mentorias-semana-colab" style="margin-top:10px;font-size:13px;"></div>
   </div>
   <div class="section">
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;">
-      <!-- ESQUERDA: tarefas fixas -->
-      <div>
-        <!-- TAREFAS DO DIA -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas do Dia</span>
-<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-          </div>
-          <div id="gisella-daily-tasks"></div>
-        </div>
-        <!-- TAREFAS DA SEMANA -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas da Semana</span>
-<span style="font-size:9px;opacity:0.6;">reset domingo</span>
-          </div>
-          <div id="gisella-weekly-tasks"></div>
-        </div>
-        <!-- NOTAS RÁPIDAS -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
-          <div id="gisella-notas-lista"></div>
-          <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
-        </div>
-      </div>
-      <!-- DIREITA: tarefas atribuídas -->
-      <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
-        <div id="colab-tarefas-gisella"></div>
-      </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="gisella-notas-lista"></div>
+      <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
     </div>
   </div>
 </div>
@@ -1205,82 +1182,6 @@ tr:hover td { background: var(--bg); }
     <div class="btn-row" style="margin-top:1.5rem;">
       <button class="btn" onclick="closeModal('modal-link')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLink()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- COLABORADOR: MILENA -->
-<div class="page" id="page-colab-milena">
-  <div class="page-header">
-    <div class="page-title">Milena</div>
-    <div class="page-subtitle">Tarefas fixas · Tarefas atribuídas</div>
-  </div>
-  <div class="section">
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;">
-      <div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas do Dia</span>
-<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-          </div>
-          <div id="milena-daily-tasks"></div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas da Semana</span>
-<span style="font-size:9px;opacity:0.6;">reset domingo</span>
-          </div>
-          <div id="milena-weekly-tasks"></div>
-        </div>
-        <!-- NOTAS RÁPIDAS -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
-          <div id="milena-notas-lista"></div>
-          <button onclick="addNotaRapida('milena')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
-        <div id="colab-tarefas-milena"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- COLABORADOR: LUIGGI -->
-<div class="page" id="page-colab-luiggi">
-  <div class="page-header">
-    <div class="page-title">Luiggi</div>
-    <div class="page-subtitle">Tarefas fixas · Tarefas atribuídas</div>
-  </div>
-  <div class="section">
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;">
-      <div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas do Dia</span>
-<span style="font-size:9px;opacity:0.6;">reset meia-noite</span>
-          </div>
-          <div id="luiggi-daily-tasks"></div>
-        </div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span>Tarefas Fixas da Semana</span>
-<span style="font-size:9px;opacity:0.6;">reset domingo</span>
-          </div>
-          <div id="luiggi-weekly-tasks"></div>
-        </div>
-        <!-- NOTAS RÁPIDAS -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px;">
-          <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
-          <div id="luiggi-notas-lista"></div>
-          <button onclick="addNotaRapida('luiggi')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Tarefas atribuídas</div>
-        <div id="colab-tarefas-luiggi"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -1622,7 +1523,6 @@ tr:hover td { background: var(--bg); }
     <div class="modal-tabs">
       <button class="modal-tab active" onclick="switchMenteeTab('notas',this)">Notas gerais</button>
       <button class="modal-tab" onclick="switchMenteeTab('sessoes',this)">Sessões</button>
-      <button class="modal-tab" onclick="switchMenteeTab('tarefas',this)">Tarefas</button>
       <button class="modal-tab" onclick="switchMenteeTab('livros',this)">Livros</button>
     </div>
     <div class="modal-tab-content active" id="mtab-notas">
@@ -1635,10 +1535,6 @@ tr:hover td { background: var(--bg); }
       </div>
       <textarea class="notes-area" id="mm-snotes" placeholder="O que foi discutido..." style="min-height:80px;margin-bottom:12px;"></textarea>
       <div id="mm-sessions-list"></div>
-    </div>
-    <div class="modal-tab-content" id="mtab-tarefas">
-      <div id="mm-tasks-list" style="margin-bottom:10px;"></div>
-      <button class="add-btn" onclick="openAddMenteeTask()" style="width:100%;justify-content:center;">+ adicionar item</button>
     </div>
     <div class="modal-tab-content" id="mtab-livros">
       <div id="mm-livros-list"></div>
@@ -2059,10 +1955,6 @@ function switchMenteeTab(tab, btn) {
   const el = document.getElementById('mtab-' + tab);
   if (el) el.classList.add('active');
   if (tab === 'livros') renderMenteeLivros();
-  if (tab === 'tarefas') {
-    const m = getMenteeArray().find(x=>x.id===currentMenteeId);
-    if (m) renderMenteeTasks(m);
-  }
 }
 
 function renderMenteeLivros() {
@@ -2459,6 +2351,50 @@ function limparTarefasEventosRemovidos(allEvents) {
 
 
 function toggleColabFixed(key, taskKey, val) { toggleFixed(key, taskKey, val); }
+
+
+/* ── TAREFAS AUTOMÁTICAS RECORRENTES (GISELLA) ── */
+// Estas tarefas são criadas automaticamente como tarefas normais (aparecem
+// na aba "Tarefas", filtráveis por colaborador) com a data de hoje.
+const GISELLA_RECORRENTES_DIARIAS = ['Responder WhatsApp', 'Responder e-mails', 'Ajustes no sistema'];
+const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana Plano Diretor', 'Links da semana Plano Diretor', 'Analisar Planilha de Métricas'];
+const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
+
+function ensureGisellaRecorrentes() {
+  const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD horário local
+  const dow = new Date().getDay(); // 0=dom,1=seg,...5=sex,6=sab
+  let changed = false;
+  let idCounter = 0;
+
+  function ensureTask(label, recurKey) {
+    const ja = events.some(e => e.recurKey === recurKey && e.data === todayStr);
+    if (ja) return;
+    events.push({
+      id: Date.now() + (idCounter++),
+      empresa: 'gisella',
+      titulo: label,
+      tipo: 'tarefa',
+      data: todayStr,
+      responsavel: 'Gisella',
+      arquivada: false,
+      recurKey,
+    });
+    changed = true;
+  }
+
+  GISELLA_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'diaria-' + i));
+  if (dow === 1) GISELLA_RECORRENTES_SEGUNDA.forEach((label, i) => ensureTask(label, 'segunda-' + i));
+  if (dow === 5) GISELLA_RECORRENTES_SEXTA.forEach((label, i) => ensureTask(label, 'sexta-' + i));
+
+  if (changed) {
+    save('gc-events', events);
+    buildTarefas();
+    buildPrioridades();
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Array.isArray(events)) ensureGisellaRecorrentes();
+});
 
 
 /* ── TAREFAS FIXAS EDITÁVEIS ── */
@@ -2878,7 +2814,7 @@ function buildConteudoCalSemana() {
     const isToday = ds === hoje.toISOString().slice(0,10);
     const dayConts = conteudos.filter(c =>
       !c.done && c.dataPost === ds &&
-      (filter === 'all' || (c.empresa||'') === filter)
+      (filter === 'all' || (c.empresa||'').split(',').includes(filter))
     );
 
     html += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'}">
@@ -2914,9 +2850,16 @@ function closeMobileNav() {
 
 function showPage(id, btn) {
   closeMobileNav();
+  let el = document.getElementById('page-' + id);
+  // Fallback de segurança: se a página não existir (ex: link antigo/salvo
+  // para uma aba removida), cai na aba Tarefas em vez de deixar tela em branco.
+  if (!el) {
+    id = 'tarefas';
+    el = document.getElementById('page-tarefas');
+    btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'tarefas'"));
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById('page-' + id);
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
@@ -2925,9 +2868,7 @@ function showPage(id, btn) {
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { buildColabTarefas(); loadGcal(); renderGisellaFixedTasks(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); renderColabFixedTasks('milena'); renderColabFixedTasks('luiggi'); renderLinks(); }
-  if (id === 'colab-milena') { buildColabTarefas(); renderColabFixedTasks('milena'); renderNotas('milena'); setTimeout(() => renderNotas('milena'), 300); }
-  if (id === 'colab-luiggi') { buildColabTarefas(); renderColabFixedTasks('luiggi'); renderNotas('luiggi'); setTimeout(() => renderNotas('luiggi'), 300); }
+  if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
   if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
@@ -2944,21 +2885,6 @@ function showPageSection(pageId, sectionId) {
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
-  // Re-open mentee modal after quickadd if we were adding a mentee task
-  if (id === 'modal-quickadd' && window._postQuickAddMenteeId) {
-    const mid  = window._postQuickAddMenteeId;
-    const prog = window._postQuickAddMenteeProgram || 'planodiretor';
-    window._postQuickAddMenteeId = null;
-    window._postQuickAddMenteeProgram = null;
-    setTimeout(() => {
-      openMenteeModal(mid, prog);
-      // Switch to tarefas tab so user sees the new task
-      setTimeout(() => {
-        const tabBtn = document.querySelectorAll('#modal-mentee .modal-tab')[2];
-        if (tabBtn) switchMenteeTab('tarefas', tabBtn);
-      }, 120);
-    }, 80);
-  }
 }
 
 function updateQaFields() {
@@ -3091,7 +3017,7 @@ function buildCalendar(id, filter) {
     const showEventos = (id !== 'cal-conteudo');
     const _calFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
     const dayConteudos = showConteudos
-      ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'') === _calFilter))
+      ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
       : [];
     const allEventsRaw = showEventos ? [...events, ...gcalEventsNative] : [];
     // Deduplicar por id (gcal ids são strings como 'gcal-...')
@@ -3951,13 +3877,11 @@ function renderMenteeList() {
   const cntM2 = document.getElementById('cnt-mentoradas'); if(cntM2) cntM2.textContent = mentees.length;
   const menteesSorted = [...mentees].sort((a,b) => a.name.localeCompare(b.name, 'pt-BR'));
   el.innerHTML = menteesSorted.map(m => {
-    const pendentes = (m.tasks||[]).filter(t=>!t.done).length;
     return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id})">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
         ${m.docsLink ? `<a href="${m.docsLink}" target="_blank" onclick="event.stopPropagation();" style="font-size:11px;color:var(--gisella);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">📄 docs</a>` : ''}
-        ${pendentes > 0 ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} tarefa${pendentes>1?'s':''}</span>` : ''}
       </div>
       <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id},'planodiretor')" title="Descadastrar">×</button>
     </div>`;
@@ -3974,17 +3898,10 @@ function renderMarco0List() {
     return;
   }
   el.innerHTML = menteesSorted.map(m => {
-    const tarefas = (m.tasks||[]);
-    const pendentes = tarefas.filter(t=>!t.done).length;
-    const total = tarefas.length;
-    const badge = total > 0
-      ? `<span style="font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:1px 6px;display:inline-block;margin-top:2px;">${pendentes} pendente${pendentes!==1?'s':''}</span>`
-      : `<span style="font-size:10px;color:var(--text-soft);">sem tarefas</span>`;
-    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id},'marco0');setTimeout(()=>{const tabBtn=document.querySelectorAll('#modal-mentee .modal-tab')[2];if(tabBtn)switchMenteeTab('tarefas',tabBtn);},100)">
+    return `<div class="mentee-list-item" onclick="openMenteeModal(${m.id},'marco0')">
       <div class="avatar">${getInitials(m.name)}</div>
       <div style="flex:1;min-width:0;">
         <div class="mentee-name">${m.name}</div>
-        <div style="margin-top:2px;">${badge}</div>
       </div>
       <button class="mentee-delete-btn" onclick="event.stopPropagation();deleteMentee(${m.id},'marco0')" title="Descadastrar">×</button>
     </div>`;
@@ -4005,7 +3922,6 @@ function openMenteeModal(id, program) {
   document.getElementById('mm-sdate').value = new Date().toISOString().slice(0,10);
   document.getElementById('mm-snotes').value = '';
   renderMenteeSessions(m);
-  renderMenteeTasks(m);
   renderMenteeLivros();
   // Reset tabs
   document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
@@ -4059,6 +3975,7 @@ function deleteSession(sid) {
 
 function renderMenteeTasks(m) {
   const el = document.getElementById('mm-tasks-list');
+  if (!el) return;
   if (!m.tasks||m.tasks.length===0) { el.innerHTML='<div style="font-size:13px;color:var(--text-soft);margin-bottom:8px;">Nenhuma tarefa vinculada.</div>'; return; }
   el.innerHTML = m.tasks.map(t => {
     // Sync done state from global events
@@ -4481,13 +4398,13 @@ function renderConteudos() {
   ['editora','leia','gisella'].forEach(emp => {
     const el = document.getElementById('conteudo-tbody-'+emp);
     if (!el) return;
-    const items = ativos.filter(c => c.empresa === emp);
+    const items = ativos.filter(c => (c.empresa||'').split(',').includes(emp));
     el.innerHTML = cardsHtml(items, false);
   });
 
   // Menu page
   const _cf = getFilter('conteudo-menu');
-  const ativosMenu = _cf==='all' ? ativos : ativos.filter(c=>c.empresa===_cf);
+  const ativosMenu = _cf==='all' ? ativos : ativos.filter(c=>(c.empresa||'').split(',').includes(_cf));
   const menuDiv = document.getElementById('conteudo-tbody-menu');
   if (menuDiv) menuDiv.innerHTML = cardsHtml(ativosMenu, true);
 
@@ -4881,12 +4798,14 @@ function buildTarefas() {
   const todayStr2 = today.toISOString().slice(0,10);
 
   const _tf = getFilter('tarefas');
+  const _tfc = getFilterColab('tarefas');
   // Etapas de livros como tarefas virtuais
   const etapaEvents = [];
   livros.forEach(l => {
     (l.etapas||[]).forEach((e,i) => {
       const empMatch = _tf==='all'||(l.empresa||'').split(',').includes(_tf);
       if (!empMatch) return;
+      if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
       etapaEvents.push({
         id: `livro-${l.id}-${i}`,
         _livroId: l.id, _etapaIdx: i,
@@ -4900,11 +4819,11 @@ function buildTarefas() {
     });
   });
   const ativas = [
-    ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
+    ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
     ...etapaEvents.filter(e=>!e.arquivada)
   ];
   const arquivadas = [
-    ...events.filter(e=>e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf))),
+    ...events.filter(e=>e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
     ...etapaEvents.filter(e=>e.arquivada)
   ];
 
@@ -5138,6 +5057,18 @@ function setFilter(pageId, empresa, btn) {
 }
 
 function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
+
+const pageFiltersColab = {};
+
+function setFilterColab(pageId, colab, btn) {
+  pageFiltersColab[pageId] = colab;
+  const bar = document.getElementById('filter-bar-' + pageId + '-colab');
+  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (pageId === 'tarefas') buildTarefas();
+}
+
+function getFilterColab(pageId) { return pageFiltersColab[pageId] || 'all'; }
 
 function buildEventosList() {
   const today = new Date().toISOString().slice(0,10);
@@ -6881,9 +6812,21 @@ function bottomNav(pageId, btn) {
   if (btn) btn.classList.add('active');
   if (pageId === 'colab-self') {
     const user = localStorage.getItem('gc-session-user') || 'gisella';
-    const colabPage = 'colab-' + user;
-    const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
-    showPage(colabPage, navBtn);
+    if (user === 'gisella') {
+      const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes('colab-gisella'));
+      showPage('colab-gisella', navBtn);
+    } else {
+      // Milena/Luiggi não têm página pessoal: vão para Tarefas já filtradas pelo nome
+      const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'tarefas'"));
+      showPage('tarefas', navBtn);
+      setTimeout(() => {
+        const nome = user === 'milena' ? 'Milena' : user === 'luiggi' ? 'Luiggi' : null;
+        if (nome) {
+          const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
+          if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
+        }
+      }, 50);
+    }
   } else {
     const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(pageId));
     showPage(pageId, navBtn);
@@ -7359,7 +7302,7 @@ function buildHomeCards() {
     // Projetos ativos
     const projetosEmp = (projetos||[]).filter(p => (p.empresa||'')=== emp && p.status !== 'finalizado');
     // Conteudos ativos
-    const conteudosEmp = (conteudos||[]).filter(c => (c.empresa||'')=== emp && !c.archived && c.status !== 'postado');
+    const conteudosEmp = (conteudos||[]).filter(c => (c.empresa||'').split(',').includes(emp) && !c.archived && c.status !== 'postado');
     // Tarefas desta semana COM data (atrasadas + até 7 dias)
     const tarefasEmp = (events||[]).filter(e =>
       (e.empresa||'').split(',').includes(emp) &&
@@ -7490,6 +7433,7 @@ function initApp(cloudData) {
   renderMenteeList();
   renderMarco0List();
   renderConteudos();
+  ensureGisellaRecorrentes();
   buildTarefas();
   buildColabTarefas();
   renderProjetos();
@@ -7674,20 +7618,36 @@ function showApp(user, displayName) {
     hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
     if (window.innerWidth > 768) closeMobileNav();
   });
-  // If collaborator with NO saved page, redirect to their colab page
+  // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
   if (['gisella','milena','luiggi'].includes(user)) {
     const savedPg = localStorage.getItem('gc-current-page');
     if (!savedPg) {
-      const colabPage = 'colab-' + user;
       setTimeout(() => {
-        const el = document.getElementById('page-' + colabPage);
-        const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(colabPage));
-        if (el) {
-          document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-          document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-          el.classList.add('active');
-          if (btn) btn.classList.add('active');
-          localStorage.setItem('gc-current-page', colabPage);
+        if (user === 'gisella') {
+          const el = document.getElementById('page-colab-gisella');
+          const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes('colab-gisella'));
+          if (el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            if (btn) btn.classList.add('active');
+            localStorage.setItem('gc-current-page', 'colab-gisella');
+          }
+        } else {
+          // Milena/Luiggi: leva para a aba Tarefas já filtrada pelo próprio nome
+          const el = document.getElementById('page-tarefas');
+          const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'tarefas'"));
+          if (el) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            if (btn) btn.classList.add('active');
+            localStorage.setItem('gc-current-page', 'tarefas');
+            buildTarefas();
+            const nome = user === 'milena' ? 'Milena' : 'Luiggi';
+            const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
+            if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
+          }
         }
       }, 50);
     }
