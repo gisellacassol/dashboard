@@ -746,6 +746,8 @@ tr:hover td { background: var(--bg); }
   <div class="nav-section">
     <div class="nav-label">Colaboradores</div>
     <button class="nav-item" onclick="showPage('colab-gisella',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--gisella-bg);color:var(--gisella);">G</span> Gisella</button>
+    <button class="nav-item" onclick="showPage('colab-milena',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">M</span> Milena</button>
+    <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
   </div>
 
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
@@ -1119,7 +1121,18 @@ tr:hover td { background: var(--bg); }
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
     <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Agenda &middot; Notas rápidas</div>
+    <div class="page-subtitle">Tarefas &middot; Agenda &middot; Notas rápidas</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas da semana</div>
+      <div style="display:flex;gap:6px;">
+        <button class="cal-nav" onclick="_colabCalOffset['gisella']--;buildColabCalSemana('gisella')">‹</button>
+        <button class="cal-nav" onclick="_colabCalOffset['gisella']++;buildColabCalSemana('gisella')">›</button>
+      </div>
+    </div>
+    <div id="colab-cal-gisella" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;"></div>
+    <div id="colab-lista-gisella" style="margin-top:14px;"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1140,6 +1153,58 @@ tr:hover td { background: var(--bg); }
       <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
       <div id="gisella-notas-lista"></div>
       <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA MILENA -->
+<div class="page" id="page-colab-milena">
+  <div class="page-header">
+    <div class="page-title">Milena</div>
+    <div class="page-subtitle">Tarefas &middot; Notas rápidas</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas da semana</div>
+      <div style="display:flex;gap:6px;">
+        <button class="cal-nav" onclick="_colabCalOffset['milena']--;buildColabCalSemana('milena')">‹</button>
+        <button class="cal-nav" onclick="_colabCalOffset['milena']++;buildColabCalSemana('milena')">›</button>
+      </div>
+    </div>
+    <div id="colab-cal-milena" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;"></div>
+    <div id="colab-lista-milena" style="margin-top:14px;"></div>
+  </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="milena-notas-lista"></div>
+      <button onclick="addNotaRapida('milena')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA LUIGGI -->
+<div class="page" id="page-colab-luiggi">
+  <div class="page-header">
+    <div class="page-title">Luiggi</div>
+    <div class="page-subtitle">Tarefas &middot; Notas rápidas</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas da semana</div>
+      <div style="display:flex;gap:6px;">
+        <button class="cal-nav" onclick="_colabCalOffset['luiggi']--;buildColabCalSemana('luiggi')">‹</button>
+        <button class="cal-nav" onclick="_colabCalOffset['luiggi']++;buildColabCalSemana('luiggi')">›</button>
+      </div>
+    </div>
+    <div id="colab-cal-luiggi" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;"></div>
+    <div id="colab-lista-luiggi" style="margin-top:14px;"></div>
+  </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="luiggi-notas-lista"></div>
+      <button onclick="addNotaRapida('luiggi')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
     </div>
   </div>
 </div>
@@ -1284,6 +1349,18 @@ tr:hover td { background: var(--bg); }
               <input type="checkbox" id="qa-urgente" style="accent-color:var(--danger);width:16px;height:16px;"> <span style="font-size:16px;">❗</span> <span style="color:var(--danger);font-weight:500;">Urgente</span>
             </label>
           </div>
+        </div>
+        <div class="form-group"><label class="form-label">Recorrência</label>
+          <select class="form-select" id="qa-recorrencia">
+            <option value="">Sem recorrência</option>
+            <option value="diaria">Diária</option>
+            <option value="seg">Toda segunda-feira</option>
+            <option value="ter">Toda terça-feira</option>
+            <option value="qua">Toda quarta-feira</option>
+            <option value="qui">Toda quinta-feira</option>
+            <option value="sex">Toda sexta-feira</option>
+            <option value="sab">Todo sábado</option>
+          </select>
         </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
@@ -2335,6 +2412,31 @@ function criarTarefasEventos(allEvents) {
       changed = true;
     }
   });
+  // Processar tarefas com recorrência customizada criadas pelo usuário
+  const DOW_MAP = { diaria: null, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6 };
+  const recorrentes = events.filter(e => e.recurPattern && !e._recurInstance);
+  recorrentes.forEach(template => {
+    const pattern = template.recurPattern;
+    const deveCriarHoje = pattern === 'diaria' || DOW_MAP[pattern] === dow;
+    if (!deveCriarHoje) return;
+    const rKey = 'custom-' + template.id + '-' + todayStr;
+    const ja = events.some(e => e.recurKey === rKey);
+    if (ja) return;
+    events.push({
+      id: Date.now() + (idCounter++),
+      empresa: template.empresa,
+      titulo: template.titulo,
+      tipo: 'tarefa',
+      data: todayStr,
+      responsavel: template.responsavel || '',
+      arquivada: false,
+      urgente: template.urgente || false,
+      recurKey: rKey,
+      _recurInstance: true,
+    });
+    changed = true;
+  });
+
   if (changed) {
     save('gc-events', events);
     buildTarefas(); buildColabTarefas(); buildPrioridades();
@@ -2371,21 +2473,25 @@ const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana Plano Diretor', 'Links da
 const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
 
 function ensureGisellaRecorrentes() {
+  // Limpar permanentemente as tarefas diárias automáticas antigas
+  const antes = events.length;
+  events = events.filter(e => !(e.recurKey && e.recurKey.startsWith('diaria-')));
+  if (events.length !== antes) { save('gc-events', events); }
+
   const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD horário local
   const dow = new Date().getDay(); // 0=dom,1=seg,...5=sex,6=sab
   let changed = false;
   let idCounter = 0;
 
-  function ensureTask(label, recurKey, dataStr) {
-    const d = dataStr || todayStr;
-    const ja = events.some(e => e.recurKey === recurKey && e.data === d);
+  function ensureTask(label, recurKey) {
+    const ja = events.some(e => e.recurKey === recurKey && e.data === todayStr);
     if (ja) return;
     events.push({
       id: Date.now() + (idCounter++),
       empresa: 'gisella',
       titulo: label,
       tipo: 'tarefa',
-      data: d,
+      data: todayStr,
       responsavel: 'Gisella',
       arquivada: false,
       recurKey,
@@ -2406,7 +2512,6 @@ function ensureGisellaRecorrentes() {
 }
 let _lastGcalLoad = 0;
 function maybeReloadGcal() {
-  // Só recarrega se passaram mais de 5 minutos desde o último carregamento
   if (Date.now() - _lastGcalLoad > 5 * 60 * 1000) {
     _lastGcalLoad = Date.now();
     loadGcal();
@@ -2421,7 +2526,6 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Refresh automático a cada 15 minutos enquanto o app estiver aberto
 setInterval(() => {
   if (document.visibilityState === 'visible') maybeReloadGcal();
 }, 15 * 60 * 1000);
@@ -3102,7 +3206,9 @@ function showPage(id, btn) {
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
+  if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); buildColabCalSemana('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
+  if (id === 'colab-milena')  { renderNotas('milena');  buildColabCalSemana('milena');  }
+  if (id === 'colab-luiggi') { renderNotas('luiggi'); buildColabCalSemana('luiggi'); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
   if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
@@ -3516,6 +3622,13 @@ function deleteEventDirect(id) {
   });
   events = events.filter(x => x.id !== id);
   projetos.forEach(p => { if (p.tarefas) p.tarefas = p.tarefas.filter(t => t.eventId !== id); });
+  // Remove do calendário de tarefas da semana (kanban)
+  Object.keys(kanbanData).forEach(colab => {
+    Object.keys(kanbanData[colab]||{}).forEach(day => {
+      kanbanData[colab][day] = (kanbanData[colab][day]||[]).filter(t => String(t.id) !== String(id));
+    });
+  });
+  save('gc-kanban', kanbanData);
 
   // Salvar localmente imediatamente — localStorage é a fonte da verdade
   localStorage.setItem('gc-events',   JSON.stringify(events));
@@ -3679,6 +3792,7 @@ function submitQuickAdd() {
   const responsavel = tipo === 'evento' ? getQaVal('qa-responsavel-evento') : getQaVal('qa-responsavel');
   const observacao = tipo === 'evento' ? getQaVal('qa-observacao-evento') : getQaVal('qa-observacao');
   const urgenteVal = document.getElementById('qa-urgente') ? document.getElementById('qa-urgente').checked : false;
+  const recorrenciaVal = tipo === 'tarefa' ? (getQaVal('qa-recorrencia') || '') : '';
   const eventData = {
     empresa, titulo, tipo,
     data: tipo === 'tarefa' ? getQaVal('qa-prazo') : getQaVal('qa-evento-inicio'),
@@ -3686,6 +3800,7 @@ function submitQuickAdd() {
     dataFim: getQaVal('qa-data-fim'), horaFim: getQaVal('qa-hora-fim'),
     responsavel, observacao,
     urgente: tipo === 'tarefa' ? urgenteVal : undefined,
+    recurPattern: recorrenciaVal || undefined,
   };
 
   if (editingEventId) {
@@ -4092,9 +4207,7 @@ function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.
 function checkLivrosSemTitulo() {
   const semTitulo = (livros || []).filter(l => !l.titulo || !l.titulo.trim());
   if (!semTitulo.length) return;
-
   const EMP = { editora: 'Editora Cassol', leia: 'Léia Cassol', gisella: 'GC' };
-
   let rows = semTitulo.map(l => {
     const emp = EMP[(l.empresa||'').split(',')[0]] || l.empresa || '—';
     const etapas = (l.etapas || []).map(e => e.nome).filter(Boolean).slice(0,4).join(', ') || '(sem etapas)';
@@ -4114,7 +4227,6 @@ function checkLivrosSemTitulo() {
         </div>
       </div>`;
   }).join('');
-
   const overlay = document.createElement('div');
   overlay.id = 'fix-livros-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(28,20,16,0.45);z-index:9998;display:flex;align-items:center;justify-content:center;';
@@ -4132,7 +4244,6 @@ function checkLivrosSemTitulo() {
     </div>`;
   document.body.appendChild(overlay);
 }
-
 window.fixLivroTitulo = function(id) {
   const input = document.getElementById('fix-livro-' + id);
   if (!input) return;
@@ -7132,6 +7243,91 @@ function bottomNav(pageId, btn) {
   } else {
     const navBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(pageId));
     showPage(pageId, navBtn);
+  }
+}
+
+function showColabFiltered(nome, btn) {
+  // Navega para Tarefas e aplica filtro do colaborador
+  const tarefasBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'tarefas'"));
+  showPage('tarefas', tarefasBtn);
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  setTimeout(() => {
+    const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
+    if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
+  }, 50);
+}
+
+// ── CALENDÁRIO SEMANAL POR COLABORADOR ──
+const _colabCalOffset = { gisella: 0, milena: 0, luiggi: 0 };
+
+function buildColabCalSemana(colabKey) {
+  const calWrap  = document.getElementById('colab-cal-'   + colabKey);
+  const listWrap = document.getElementById('colab-lista-' + colabKey);
+  if (!calWrap) return;
+
+  const nomeColab = colabKey.charAt(0).toUpperCase() + colabKey.slice(1);
+  const cor = colabKey === 'gisella' ? 'var(--gisella)' : colabKey === 'milena' ? 'var(--leia)' : 'var(--editora)';
+  const corBg = colabKey === 'gisella' ? 'var(--gisella-bg)' : colabKey === 'milena' ? 'var(--leia-bg)' : 'var(--editora-bg)';
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - hoje.getDay() + (_colabCalOffset[colabKey] * 7));
+  const dias = Array.from({length:7}, (_,i) => { const d = new Date(inicioSemana); d.setDate(inicioSemana.getDate()+i); return d; });
+  const hojeStr = hoje.toISOString().slice(0,10);
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dows  = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+
+  // Montar todas as tarefas do colaborador
+  const tarefas = [];
+  events.filter(e => e.tipo==='tarefa' && e.responsavel===nomeColab).forEach(e => {
+    tarefas.push({ id: e.id, titulo: e.titulo, empresa: e.empresa, data: e.data||'', arquivada: !!e.arquivada, urgente: !!e.urgente });
+  });
+  livros.forEach(l => {
+    (l.etapas||[]).forEach((e,i) => {
+      if (e.resp === nomeColab && !e.feito)
+        tarefas.push({ titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', arquivada: false, urgente: false });
+    });
+  });
+
+  const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
+  let calHtml = `<div style="font-size:11px;color:var(--text-soft);margin-bottom:10px;">${label}</div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start;">`;
+
+  dias.forEach((dia, idx) => {
+    const ds = dia.toISOString().slice(0,10);
+    const isToday = ds === hojeStr;
+    const dayTarefas = tarefas.filter(t => t.data === ds && !t.arquivada);
+    calHtml += `<div style="background:var(--bg);border-radius:8px;padding:6px;min-height:90px;border:1px solid ${isToday?cor:'var(--border)'};transition:background 0.1s;">
+      <div style="font-size:9px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">${dows[idx]}</div>
+      <div style="font-size:${isToday?'15px':'13px'};font-weight:${isToday?'700':'500'};color:${isToday?cor:'var(--text)'};margin-bottom:5px;">${dia.getDate()}</div>`;
+    if (!dayTarefas.length) calHtml += `<div style="font-size:9px;color:var(--text-soft);opacity:0.4;">—</div>`;
+    dayTarefas.forEach(t => {
+      calHtml += `<div title="${t.titulo}" style="font-size:9px;padding:3px 5px;border-radius:3px;margin-bottom:2px;background:${corBg};color:${cor};border-left:2px solid ${cor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${t.urgente?'❗ ':''}${t.titulo}</div>`;
+    });
+    calHtml += `</div>`;
+  });
+  calHtml += `</div>`;
+  calWrap.innerHTML = calHtml;
+
+  // Lista abaixo
+  if (listWrap) {
+    const semData = tarefas.filter(t => !t.arquivada && !t.data);
+    const comData = tarefas.filter(t => !t.arquivada && t.data).sort((a,b) => a.data > b.data ? 1 : -1);
+    const arquivadas = tarefas.filter(t => t.arquivada);
+    const all = [...comData, ...semData];
+    if (!all.length) { listWrap.innerHTML = `<div style="font-size:13px;color:var(--text-soft);padding:8px 0;">Nenhuma tarefa ativa.</div>`; return; }
+    let rows = all.map(t => {
+      const diff = t.data ? Math.round((new Date(t.data+'T00:00:00')-hoje)/86400000) : null;
+      const prazoColor = diff===null?'var(--text-soft)':diff<0?'var(--danger)':diff===0?cor:diff<=7?'var(--warn)':'var(--text-soft)';
+      const prazoLabel = diff===null?'—':diff<0?`${Math.abs(diff)}d atraso`:diff===0?'Hoje':`${diff}d`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        <div style="flex:1;">${t.urgente?'❗ ':''}${t.titulo}</div>
+        <div style="font-size:11px;color:${prazoColor};white-space:nowrap;">${prazoLabel}</div>
+      </div>`;
+    }).join('');
+    listWrap.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">${rows}</div>`;
   }
 }
 
