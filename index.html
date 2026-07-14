@@ -638,7 +638,21 @@ tr:hover td { background: var(--bg); }
 .login-error { font-size:12px;color:var(--danger);margin-top:8px;min-height:16px;text-align:center; }
 </style>
 </head>
-<body>
+<body><style>
+#_dbg-err{display:none;position:fixed;top:0;left:0;right:0;padding:16px;background:#c0392b;color:#fff;font-family:monospace;font-size:13px;z-index:99999;white-space:pre-wrap;word-break:break-all;}
+</style>
+<div id="_dbg-err"></div>
+<script>
+window.onerror=function(msg,src,line,col,err){
+  var el=document.getElementById('_dbg-err');
+  if(el){el.style.display='block';el.textContent='ERRO JS:\n'+msg+'\nLinha:'+line+' Col:'+col+'\nFonte:'+src;}
+  return false;
+};
+window.addEventListener('unhandledrejection',function(e){
+  var el=document.getElementById('_dbg-err');
+  if(el){el.style.display='block';el.textContent='PROMISE ERRO:\n'+(e.reason||e);}
+});
+</script>
 
 <div id="login-screen" style="display:none;">
   <div class="login-box">
@@ -5702,8 +5716,6 @@ function toggleProjetosArquivadosTodos() {
 // Ordem manual das tarefas dos colaboradores
 let colabOrdem = load('gc-colab-ordem', {});
 
-}
-
 var _colabCalOff={};
 function _buildColabCal(key){
   var wrap=document.getElementById('colab-cal-semana-'+key);if(!wrap)return;
@@ -7753,7 +7765,7 @@ function initApp(cloudData) {
 
   // (gcalKey tasks are managed by criarTarefasEventos / limparTarefasEventosRemovidos)
 
-  // Restaurar página salva — fallback para visao se página não existir mais
+  // Restaurar página salva
   const savedPage = localStorage.getItem('gc-current-page');
   if (savedPage) {
     const _spEl = document.getElementById('page-' + savedPage);
@@ -7782,7 +7794,7 @@ function initApp(cloudData) {
   loadGcal();
   loadGcalLeia();
   buildHomeCards();
-  // buildTarefasEmpresa removido (páginas empresa removidas)
+
   ['gisella','milena','luiggi'].forEach(renderNotas);
   renderSteiraList();
 
