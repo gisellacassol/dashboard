@@ -750,6 +750,8 @@ tr:hover td { background: var(--bg); }
   <div class="nav-section">
     <div class="nav-label">Colaboradores</div>
     <button class="nav-item" onclick="showPage('colab-gisella',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--gisella-bg);color:var(--gisella);">G</span> Gisella</button>
+    <button class="nav-item" onclick="showPage('colab-milena',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">M</span> Milena</button>
+    <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
   </div>
 
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
@@ -1156,6 +1158,42 @@ tr:hover td { background: var(--bg); }
       <div id="gisella-notas-lista"></div>
       <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
     </div>
+  </div>
+</div>
+
+<!-- COLABORADOR: MILENA -->
+<div class="page" id="page-colab-milena">
+  <div class="page-header">
+    <div class="page-title" style="color:var(--leia);">Milena</div>
+    <div class="page-subtitle">Tarefas &middot; Calendário semanal</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">📅 Semana</div>
+    </div>
+    <div id="colab-cal-semana-milena"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas</div>
+    <div id="colab-tarefas-Milena"></div>
+  </div>
+</div>
+
+<!-- COLABORADOR: LUIGGI -->
+<div class="page" id="page-colab-luiggi">
+  <div class="page-header">
+    <div class="page-title" style="color:var(--editora);">Luiggi</div>
+    <div class="page-subtitle">Tarefas &middot; Calendário semanal</div>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">📅 Semana</div>
+    </div>
+    <div id="colab-cal-semana-luiggi"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas</div>
+    <div id="colab-tarefas-Luiggi"></div>
   </div>
 </div>
 
@@ -3024,9 +3062,6 @@ window._toggleDataModo = function() {
 };
 function refreshAllCalendarios() {
   buildTarefas(); buildTarefasCalSemana();
-  ['gisella','milena','luiggi'].forEach(function(k){
-    if (document.getElementById('colab-cal-'+k)) buildColabCalSemana(k);
-  });
 }
 function editEventoPrazo(id, tdEl) {
   var ev = events.find(function(e){ return e.id === id; });
@@ -3141,7 +3176,6 @@ function buildTarefasCalSemana() {
   html += '</div>';
   if (wrap) wrap.innerHTML = html;
 
-  // Visão Geral: render sem filtro
   var wrapVisao = document.getElementById('cal-visao-semana-wrap');
   if (wrapVisao) {
     var etVG=[];
@@ -3155,7 +3189,7 @@ function buildTarefasCalSemana() {
         .map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),
       etVG.filter(function(e){return!e.arquivada;})
     ));
-    var htmlVG='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;">';
+    var htmlVG='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
     dias.forEach(function(dia,i2){
       var ds2=dia.toISOString().slice(0,10),isT2=ds2===hojeStr;
       var dayVG=_sortByTipo(todasVG.filter(function(t){return t.data===ds2;}));
@@ -3242,6 +3276,8 @@ function showPage(id, btn) {
   if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
   if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
+  if (id === 'colab-milena') { buildColabTarefas(); buildColabCalSemanaSimples('milena'); }
+  if (id === 'colab-luiggi') { buildColabTarefas(); buildColabCalSemanaSimples('luiggi'); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
   if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
@@ -3840,7 +3876,6 @@ function submitQuickAdd() {
     tipoTarefa: tipo === 'tarefa' ? (document.getElementById('qa-tipo-tarefa') ? document.getElementById('qa-tipo-tarefa').value || undefined : undefined) : undefined,
   };
 
-  // Fases: criar 3 tarefas separadas
   if (tipo === 'tarefa' && !editingEventId) {
     var modoFases = document.querySelector('input[name="qa-data-modo"]:checked');
     if (modoFases && modoFases.value === 'fases') {
@@ -5834,6 +5869,45 @@ function toggleProjetosArquivadosTodos() {
 /* ── COLABORADORES ── */
 // Ordem manual das tarefas dos colaboradores
 let colabOrdem = load('gc-colab-ordem', {});
+
+function buildColabCalSemanaSimples(colabKey) {
+  var wrap = document.getElementById('colab-cal-semana-' + colabKey);
+  if (!wrap) return;
+  var nomeColab = colabKey.charAt(0).toUpperCase() + colabKey.slice(1);
+  var cor = colabKey==='milena' ? 'var(--leia)' : 'var(--editora)';
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+  var dias = Array.from({length:7}, function(_,i){ var d=new Date(inicioSemana); d.setDate(inicioSemana.getDate()+i); return d; });
+  var hojeStr = hoje.toISOString().slice(0,10);
+  var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  var dows = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+
+  var todasTarefas = [];
+  events.filter(function(e){ return e.responsavel===nomeColab && e.tipo==='tarefa' && !e.arquivada; })
+    .forEach(function(e){ todasTarefas.push({titulo:e.titulo, data:e.data||'', arquivada:false}); });
+  livros.forEach(function(l){
+    (l.etapas||[]).forEach(function(e,i){
+      if(e.resp===nomeColab && !e.feito) todasTarefas.push({titulo:'['+( l.titulo||'Livro')+'] '+e.nome, data:e.prazo||'', arquivada:false});
+    });
+  });
+
+  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  dias.forEach(function(dia, idx){
+    var ds = dia.toISOString().slice(0,10), isT = ds===hojeStr;
+    var dayT = todasTarefas.filter(function(t){ return t.data===ds; });
+    html += '<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:80px;border:1px solid '+(isT?cor:'var(--border)')+';">';
+    html += '<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:4px;">'+dows[idx]+'</div>';
+    html += '<div style="font-size:'+(isT?'16px':'14px')+';font-weight:'+(isT?'700':'500')+';color:'+(isT?cor:'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
+    if(!dayT.length) html += '<div style="font-size:10px;color:var(--text-soft);opacity:.5;">—</div>';
+    dayT.forEach(function(t){
+      html += '<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor+'15;color:'+cor+';border-left:2px solid '+cor+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+t.titulo+'</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
 
 function buildColabTarefas() {
   const today = new Date(); today.setHours(0,0,0,0);
