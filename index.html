@@ -7753,16 +7753,18 @@ function initApp(cloudData) {
 
   // (gcalKey tasks are managed by criarTarefasEventos / limparTarefasEventosRemovidos)
 
-  // Restaurar página salva
+  // Restaurar página salva — fallback para visao se página não existir mais
   const savedPage = localStorage.getItem('gc-current-page');
   if (savedPage) {
-    const el = document.getElementById('page-' + savedPage);
-    const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
-    if (el) {
+    const _spEl = document.getElementById('page-' + savedPage);
+    if (_spEl) {
+      const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
+      _spEl.classList.add('active');
       if (btn) btn.classList.add('active');
+    } else {
+      localStorage.setItem('gc-current-page', 'visao');
     }
   }
 
@@ -7780,7 +7782,7 @@ function initApp(cloudData) {
   loadGcal();
   loadGcalLeia();
   buildHomeCards();
-  ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
+  // buildTarefasEmpresa removido (páginas empresa removidas)
   ['gisella','milena','luiggi'].forEach(renderNotas);
   renderSteiraList();
 
