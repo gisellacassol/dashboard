@@ -2913,7 +2913,11 @@ let _tarefaCalDragSrc = null;
 
 function buildTarefasCalSemana() {
   const wrap = document.getElementById('cal-tarefas-semana-wrap');
-  if (!wrap && !document.getElementById('cal-visao-semana-wrap')) return;
+  const wrapV = document.getElementById('cal-visao-semana-wrap');
+  const wrapC1 = document.getElementById('colab-cal-semana-gisella');
+  const wrapC2 = document.getElementById('colab-cal-semana-milena');
+  const wrapC3 = document.getElementById('colab-cal-semana-luiggi');
+  if (!wrap && !wrapV && !wrapC1 && !wrapC2 && !wrapC3) return;
 
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const inicioSemana = new Date(hoje);
@@ -2943,6 +2947,7 @@ function buildTarefasCalSemana() {
       if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
       etapaEvents.push({
         _isEtapa: true, livroId: l.id, etapaIdx: i,
+        _isEtapa:true, livroId:l.id, etapaIdx:i,
         titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa,
         data: _fds(e.prazo||''), responsavel: e.resp||'', arquivada: !!e.feito, urgente: false, tipoTarefa: '',
       });
@@ -5697,6 +5702,8 @@ function toggleProjetosArquivadosTodos() {
 // Ordem manual das tarefas dos colaboradores
 let colabOrdem = load('gc-colab-ordem', {});
 
+}
+
 var _colabCalOff={};
 function _buildColabCal(key){
   var wrap=document.getElementById('colab-cal-semana-'+key);if(!wrap)return;
@@ -5717,12 +5724,15 @@ function _buildColabCal(key){
   livros.forEach(function(l){(l.etapas||[]).forEach(function(e){
     if(e.resp===nome&&!e.feito)tarefas.push({titulo:'['+(l.titulo||'Livro')+'] '+e.nome,data:_fds(e.prazo||'')});
   });});
-  var nav='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
-  nav+='<span style="font-size:12px;color:var(--text-soft);">'+rangeLabel+'</span>';
-  nav+='<div style="display:flex;gap:4px;">';
-  nav+='<button class="cal-nav" onclick="_colabCalOff[&quot;'+key+'&quot;]=(_colabCalOff[&quot;'+key+'&quot;]||0)-1;_buildColabCal(&quot;'+key+'&quot;)">&#8249;</button>';
-  nav+='<button class="cal-nav" onclick="_colabCalOff[&quot;'+key+'&quot;]=(_colabCalOff[&quot;'+key+'&quot;]||0)+1;_buildColabCal(&quot;'+key+'&quot;)">&#8250;</button>';
-  nav+='</div></div>';
+  // nav com data-key attribute para evitar problema de aspas no onclick
+  var navHtml=[
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">',
+    '<span style="font-size:12px;color:var(--text-soft);">'+rangeLabel+'</span>',
+    '<div style="display:flex;gap:4px;">',
+    '<button class="cal-nav" data-k="'+key+'" data-d="-1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8249;</button>',
+    '<button class="cal-nav" data-k="'+key+'" data-d="1"  onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8250;</button>',
+    '</div></div>'
+  ].join('');
   var html='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
   dias.forEach(function(dia,i){
     var ds=dia.toISOString().slice(0,10),isT=ds===hojeS;
@@ -5737,7 +5747,7 @@ function _buildColabCal(key){
     html+='</div>';
   });
   html+='</div>';
-  wrap.innerHTML=nav+html;
+  wrap.innerHTML=navHtml+html;
 }
 
 function buildColabTarefas() {
@@ -7743,19 +7753,16 @@ function initApp(cloudData) {
 
   // (gcalKey tasks are managed by criarTarefasEventos / limparTarefasEventosRemovidos)
 
-  // Restaurar página salva — com fallback para visao se página não existir mais
+  // Restaurar página salva
   const savedPage = localStorage.getItem('gc-current-page');
   if (savedPage) {
-    const _spEl = document.getElementById('page-' + savedPage);
-    if (_spEl) {
-      const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
+    const el = document.getElementById('page-' + savedPage);
+    const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
+    if (el) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      _spEl.classList.add('active');
+      el.classList.add('active');
       if (btn) btn.classList.add('active');
-    } else {
-      // Página não existe mais (ex: aba removida) — vai para Visão Geral
-      localStorage.setItem('gc-current-page', 'visao');
     }
   }
 
@@ -7773,7 +7780,7 @@ function initApp(cloudData) {
   loadGcal();
   loadGcalLeia();
   buildHomeCards();
-  // buildTarefasEmpresa removido (páginas de empresa removidas)
+  ['editora','leia','gisella'].forEach(buildTarefasEmpresa);
   ['gisella','milena','luiggi'].forEach(renderNotas);
   renderSteiraList();
 
@@ -7949,10 +7956,11 @@ function showApp(user, displayName) {
     hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
     if (window.innerWidth > 768) closeMobileNav();
   });
-  // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
+  // Se for colaborador, sempre redirecionar para a página correta ao logar
   if (['gisella','milena','luiggi'].includes(user)) {
     const savedPg = localStorage.getItem('gc-current-page');
-    if (!savedPg) {
+    const _userPage = user==='gisella'?'colab-gisella':'tarefas';
+    if (!savedPg || !document.getElementById('page-'+savedPg) || savedPg==='colab-luiggi'&&user!=='luiggi' || savedPg==='colab-milena'&&user!=='milena') {
       setTimeout(() => {
         if (user === 'gisella') {
           const el = document.getElementById('page-colab-gisella');
