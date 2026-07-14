@@ -806,94 +806,6 @@ tr:hover td { background: var(--bg); }
 </div>
 
 
-    <div class="page-title">Editora Cassol</div>
-    <div class="page-subtitle">Livros em produção · Projetos · Grandes projetos</div>
-  </div>
-    <div class="section" style="padding-bottom:8px;">
-    <button onclick="openLinksModal('editora')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;color:var(--editora);cursor:pointer;">
-      🔗 Banco de Links
-    </button>
-  </div>
-  <div class="section">
-    <div class="section-title">Calendário</div>
-    <div class="cal-wrap" id="cal-editora"></div>
-  </div>
-  <div class="section" id="section-tarefas-editora">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Tarefas</div>
-      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-emp-editora').checked=true;},50)">+ nova tarefa</button>
-    </div>
-    <div id="tarefas-empresa-editora"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-editora').checked=true;},50)">+ novo conteúdo</button>
-    </div>
-    <div id="conteudo-tbody-editora"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos</div>
-
-    </div>
-    <div id="projetos-editora"></div>
-    <button class="archived-toggle" onclick="toggleProjetosArquivados('editora')"><span id="parq-arrow-editora">▸</span> Arquivados (<span id="parq-count-editora">0</span>)</button>
-    <div id="projetos-arquivados-editora" style="display:none;margin-top:8px;"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddLivro('editora')">+ novo livro</button>
-    </div>
-    <div id="livros-editora"></div>
-  </div>
-</div>
-
-    <div class="page-title">Léia Cassol</div>
-    <div class="page-subtitle">Marketing · Redes sociais · Projetos de livro</div>
-  </div>
-  <div class="section" style="padding-bottom:8px;">
-    <button onclick="openLinksModal('leia')" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;color:var(--leia);cursor:pointer;">
-      🔗 Banco de Links
-    </button>
-  </div>
-  <div class="section">
-    <div class="section-title">Calendário</div>
-    <div class="cal-wrap" id="cal-leia"></div>
-  </div>
-  <div class="section" id="section-tarefas-leia">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Tarefas</div>
-      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-emp-leia').checked=true;},50)">+ nova tarefa</button>
-    </div>
-    <div id="tarefas-empresa-leia"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Criação de conteúdo</div>
-      <button class="add-btn" style="margin:0;" onclick="openQuickAdd();setTimeout(()=>{document.getElementById('qa-tipo').value='conteudo';updateQaFields();document.getElementById('qa-emp-leia').checked=true;},50)">+ novo conteúdo</button>
-    </div>
-    <div id="conteudo-tbody-leia"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Projetos</div>
-
-    </div>
-    <div id="projetos-leia"></div>
-    <button class="archived-toggle" onclick="toggleProjetosArquivados('leia')"><span id="parq-arrow-leia">▸</span> Arquivados (<span id="parq-count-leia">0</span>)</button>
-    <div id="projetos-arquivados-leia" style="display:none;margin-top:8px;"></div>
-  </div>
-  <div class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div class="section-title" style="margin-bottom:0;">Livros em produção</div>
-      <button class="add-btn" style="margin:0;" onclick="openAddLivro('leia')">+ novo livro</button>
-    </div>
-    <div id="livros-leia"></div>
-  </div>
-</div>
-
 <!-- EVENTOS -->
 <div class="page" id="page-eventos">
   <div class="page-header">
@@ -5624,21 +5536,20 @@ function renderProjetos() {
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
 
-  // Todos page — com filtro de empresa
+  // Todos page com filtro
   const _fEmp = (typeof pageFilters !== 'undefined' && pageFilters['projetos']) || 'all';
   const todosEl = document.getElementById('projetos-todos');
   if (todosEl) {
-    const _lista = _fEmp === 'all' ? ativos : ativos.filter(p => (p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
-    todosEl.innerHTML = _lista.length===0
+    const _pl = _fEmp==='all' ? ativos : ativos.filter(p=>(p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
+    todosEl.innerHTML = _pl.length===0
       ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
-      : _lista.map(p=>projetoHtml(p,true)).join('');
-    const archTodosEl2 = document.getElementById('projetos-arquivados-todos');
-    const archTodosC2 = document.getElementById('parq-count-todos');
-    const _arch = _fEmp === 'all' ? finalizados : finalizados.filter(p => (p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
-    if (archTodosC2) archTodosC2.textContent = _arch.length;
-    if (archTodosEl2) archTodosEl2.innerHTML = _arch.map(p=>projetoHtml(p,true)).join('');
+      : _pl.map(p=>projetoHtml(p,true)).join('');
   }
-  // arquivados-todos handled above
+  const archTodosEl = document.getElementById('projetos-arquivados-todos');
+  const archTodosCnt = document.getElementById('parq-count-todos');
+  const _archFilt = _fEmp==='all' ? finalizados : finalizados.filter(p=>(p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
+  if (archTodosCnt) archTodosCnt.textContent = _archFilt.length;
+  if (archTodosEl) archTodosEl.innerHTML = _archFilt.map(p=>projetoHtml(p,true)).join('');
 
   // Per company
   ['editora','leia','gisella'].forEach(emp => {
