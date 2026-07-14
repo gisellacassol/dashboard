@@ -612,6 +612,15 @@ tr:hover td { background: var(--bg); }
   input[type="date"] { font-size: 16px !important; }
 }
 
+/* ── CHIPS TIPO TAREFA ── */
+._ttchip {
+  display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;
+  border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);
+  cursor:pointer;transition:all 0.15s;user-select:none;
+}
+._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
+._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
+
 /* ── LOGIN ── */
 #login-screen {
   position:fixed;inset:0;background:var(--bg);z-index:99999;
@@ -748,12 +757,6 @@ tr:hover td { background: var(--bg); }
   <div class="nav-section">
     <div class="nav-label">Visão</div>
     <button class="nav-item active" onclick="showPage('visao',this)"><span style="font-size:15px;opacity:0.6;">◈</span> Visão Geral</button>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Empresas</div>
-    <button class="nav-item" onclick="showPage('editora',this)"><span class="nav-dot dot-editora"></span> Editora Cassol</button>
-    <button class="nav-item" onclick="showPage('leia',this)"><span class="nav-dot dot-leia"></span> Léia Cassol</button>
-    <button class="nav-item" onclick="showPage('gisella',this)"><span class="nav-dot dot-gisella"></span> GC</button>
   </div>
   <div class="nav-section">
     <div class="nav-label">Sessões</div>
@@ -1332,6 +1335,15 @@ tr:hover td { background: var(--bg); }
               <input type="checkbox" id="qa-urgente" style="accent-color:var(--danger);width:16px;height:16px;"> <span style="font-size:16px;">❗</span> <span style="color:var(--danger);font-weight:500;">Urgente</span>
             </label>
           </div>
+        </div>
+        <div class="form-group"><label class="form-label">Tipo de tarefa</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="qa-tipo-tarefa-group">
+            <label id="_tt-none"  style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="" checked style="display:none;"><span class="_ttchip _ttchip-active" onclick="_setTipoTarefa('')">Sem categoria</span></label>
+            <label id="_tt-bur"   style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="burocracia" style="display:none;"><span class="_ttchip" onclick="_setTipoTarefa('burocracia')">⚙️ Burocracias</span></label>
+            <label id="_tt-cri"   style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="criativo" style="display:none;"><span class="_ttchip" onclick="_setTipoTarefa('criativo')">💡 Criativo</span></label>
+            <label id="_tt-est"   style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="estrategia" style="display:none;"><span class="_ttchip" onclick="_setTipoTarefa('estrategia')">🎯 Estratégia</span></label>
+          </div>
+          <input type="hidden" id="qa-tipo-tarefa" value="">
         </div>
         <div class="form-group" id="qa-recorrencia-group"><label class="form-label">Recorrência</label>
           <select class="form-select" id="qa-recorrencia">
@@ -2936,8 +2948,48 @@ function buildConteudoCalSemana() {
 
   html += '</div></div>';
   if (wrap) wrap.innerHTML = html;
+  // Visão Geral: reconstruir sem filtros (mostra tarefas de todas as empresas)
   const wrapVisao = document.getElementById('cal-visao-semana-wrap');
-  if (wrapVisao) wrapVisao.innerHTML = html;
+  if (wrapVisao) {
+    const etapasV = [];
+    livros.forEach(l => {
+      (l.etapas||[]).forEach((e,i) => {
+        etapasV.push({ _isEtapa:true, livroId:l.id, etapaIdx:i,
+          titulo:`[${l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título')}] ${e.nome}`,
+          empresa:l.empresa, data:e.prazo||'', responsavel:e.resp||'', arquivada:!!e.feito, urgente:false });
+      });
+    });
+    const todasV = [
+      ...events.filter(e => e.tipo==='tarefa' && !e.arquivada)
+        .map(e => ({_isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'',
+          responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||''})),
+      ...etapasV.filter(e => !e.arquivada),
+    ];
+    let htmlV = `<div class="cal-header">
+    <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">‹</button>
+    <div class="cal-month">${label}</div>
+    <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
+  </div>
+  <div class="cal-semana-scroll"><div class="cal-semana-inner" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">`;
+    dias.forEach((dia,idx2) => {
+      const ds2 = dia.toISOString().slice(0,10);
+      const isT2 = ds2===hojeStr;
+      const dayV = _sortByTipo(todasV.filter(t => t.data===ds2));
+      htmlV += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isT2?'var(--gisella)':'var(--border)'}">
+      <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx2]}</div>
+      <div style="font-size:${isT2?'16px':'14px'};font-weight:${isT2?'700':'500'};color:${isT2?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
+      if (!dayV.length) htmlV += `<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
+      dayV.forEach(t => {
+        const emp2=(t.empresa||'').split(',')[0];
+        const cor2=emp2==='editora'?'var(--editora)':emp2==='leia'?'var(--leia)':'var(--gisella)';
+        const click2=t._isEtapa?`openEditEtapa(${t.livroId},${t.etapaIdx})`:`openEditEvent(${t.id})`;
+        htmlV += `<div onclick="${click2}" title="${t.titulo}" style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:${cor2}15;color:${cor2};border-left:2px solid ${cor2};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</div>`;
+      });
+      htmlV += '</div>';
+    });
+    htmlV += '</div></div>';
+    wrapVisao.innerHTML = htmlV;
+  }
 }
 
 /* ── CALENDÁRIO SEMANAL DE TAREFAS DOS LIVROS (aba Livros) ── */
@@ -3070,7 +3122,7 @@ function buildTarefasCalSemana() {
   });
   const todas = [
     ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc))
-      .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente })),
+      .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
     ...etapaEvents,
   ];
 
@@ -3084,7 +3136,7 @@ function buildTarefasCalSemana() {
   dias.forEach((dia, idx) => {
     const ds = dia.toISOString().slice(0,10);
     const isToday = ds === hojeStr;
-    const dayTarefas = todas.filter(t => t.data === ds);
+    const dayTarefas = _sortByTipo(todas.filter(t => t.data === ds));
 
     html += `<div class="tarefas-cal-day" ondragover="event.preventDefault();this.style.background='var(--gisella-bg)';" ondragleave="this.style.background='var(--surface)';" ondrop="tarefaCalDrop(event,'${ds}')"
       style="background:var(--surface);border-radius:10px;padding:8px;min-height:110px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
@@ -3108,7 +3160,7 @@ function buildTarefasCalSemana() {
         onclick="${clickAction}"
         title="${t.titulo}"
         style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:grab;border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}">
-        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${t.titulo}</span>
+        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
         ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.responsavel}</span>`:''}
       </div>`;
     });
@@ -3456,6 +3508,7 @@ function openQuickAdd() {
   document.getElementById('qa-titulo').value = '';
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
   setEmpresasChecked('qa-emp-', 'editora');
+  if (window._setTipoTarefa) window._setTipoTarefa('');
   // Auto-detect tipo from current active page
   const activePage = document.querySelector('.page.active');
   const pageId = activePage ? activePage.id : '';
@@ -3511,7 +3564,8 @@ function openEditEvent(id) {
   if (delBtn) delBtn.style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
   setEmpresasChecked('qa-emp-', ev.empresa || 'editora');
-  document.getElementById('qa-tipo').value = ev.tipo || 'evento';
+  document.getElementById('qa-tipo').value = ev.tipo || 'tarefa';
+  updateQaFields();
   document.getElementById('qa-prazo').value = ev.data || '';
   document.getElementById('qa-hora-inicio').value = ev.horaInicio || '';
   document.getElementById('qa-data-fim').value = ev.dataFim || '';
@@ -3520,6 +3574,7 @@ function openEditEvent(id) {
   document.getElementById('qa-observacao').value = ev.observacao || '';
   const urgenteEdit = document.getElementById('qa-urgente');
   if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
+  if (window._setTipoTarefa) window._setTipoTarefa(ev.tipoTarefa||'');
   // Mostrar e popular comentários
   const comWrap = document.getElementById('qa-comentarios-wrap');
   if (comWrap) {
@@ -3773,6 +3828,7 @@ function submitQuickAdd() {
     responsavel, observacao,
     urgente: tipo === 'tarefa' ? urgenteVal : undefined,
     recurPattern: tipo === 'tarefa' ? (getQaVal('qa-recorrencia') || undefined) : undefined,
+    tipoTarefa: tipo === 'tarefa' ? (getQaVal('qa-tipo-tarefa') || undefined) : undefined,
   };
 
   if (editingEventId) {
@@ -3826,10 +3882,12 @@ function submitQuickAdd() {
   window._addingToMenteeId = null;
 
   save('gc-events', events);
+  if (window.fbSave) window.fbSave('gc-events', events).catch(()=>{});
   refreshCalendars();
   buildCalendar('cal-eventos', 'all');
   buildTarefas();
   buildColabTarefas();
+  buildTarefasCalSemana();
   buildPrioridades();
   // Notify if task assigned to someone
   if (tipo === 'tarefa' && !editingEventId) {
@@ -5219,7 +5277,7 @@ function buildTarefas() {
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
-        <span>${e.titulo}</span>
+        <span>${_TIPO_TAREFA_EMOJI[e.tipoTarefa]?_TIPO_TAREFA_EMOJI[e.tipoTarefa]+' ':''  }${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
@@ -5230,6 +5288,9 @@ function buildTarefas() {
       <td>
         ${empBadgesHtml(e.empresa)}
         ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
+      </td>
+      <td style="text-align:center;font-size:15px;" title="${e.tipoTarefa==='burocracia'?'Burocracias/Mecânicas':e.tipoTarefa==='criativo'?'Criativo/Brainstorming':e.tipoTarefa==='estrategia'?'Estratégias/Foco':''}">
+        ${_TIPO_TAREFA_EMOJI[e.tipoTarefa]||''}
       </td>
       <td style="font-size:12px;color:${prazoColor};font-weight:500;cursor:pointer;" title="Clique para alterar o prazo"
         onclick="${e._livroId!==undefined?`editEtapaPrazo(${e._livroId},${e._etapaIdx},this)`:`editEventoPrazo(${e.id},this)`}">
@@ -5242,7 +5303,7 @@ function buildTarefas() {
     return;
   }
 
-  ativas.sort((a,b)=>(a.data||'9').localeCompare(b.data||'9'));
+  ativas = _sortByTipo(ativas);
   arquivadas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
 
   // Calcular limites de semana corretamente (segunda a domingo)
@@ -5281,7 +5342,7 @@ function buildTarefas() {
   });
 
   function tableHtml(items, isArq) {
-    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th style="width:44px;text-align:center;">Tipo</th><th>Prazo</th></tr></thead>
     <tbody>${items.map(t=>tarefaRow(t,isArq||false)).join('')}</tbody></table></div>`;
   }
 
@@ -7278,6 +7339,25 @@ function _showDatePickerPopup(anchorEl, currentVal, onPick) {
   renderPicker();
 }
 
+
+const _TIPO_TAREFA_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
+const _TIPO_TAREFA_ORDER = { burocracia:0, estrategia:1, criativo:2 };
+function _sortByTipo(arr) {
+  return [...arr].sort((a,b) => {
+    const oa = _TIPO_TAREFA_ORDER[a.tipoTarefa] ?? 3;
+    const ob = _TIPO_TAREFA_ORDER[b.tipoTarefa] ?? 3;
+    if (oa !== ob) return oa - ob;
+    return (a.data||'9').localeCompare(b.data||'9');
+  });
+}
+window._setTipoTarefa = function(val) {
+  document.getElementById('qa-tipo-tarefa').value = val;
+  document.querySelectorAll('._ttchip').forEach(c => c.classList.remove('_ttchip-active'));
+  const map = { '':'_tt-none', burocracia:'_tt-bur', criativo:'_tt-cri', estrategia:'_tt-est' };
+  const lbl = document.getElementById(map[val] || '_tt-none');
+  if (lbl) lbl.querySelector('._ttchip').classList.add('_ttchip-active');
+};
+
 function refreshAllCalendarios() {
   buildTarefas();
   buildTarefasCalSemana();
@@ -7400,7 +7480,7 @@ function buildColabCalSemana(colabKey) {
       </tr>`;
     }).join('');
     listWrap.innerHTML=`<div class="table-wrap"><table>
-      <thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
+      <thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th style="width:44px;text-align:center;">Tipo</th><th>Prazo</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
   }
 }
