@@ -1135,8 +1135,16 @@ tr:hover td { background: var(--bg); }
 <!-- COLABORADOR: GISELLA -->
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
-    <div class="page-title">Gisella</div>
-    <div class="page-subtitle">Agenda &middot; Notas rápidas</div>
+    <div class="page-title" style="color:var(--gisella);">Gisella</div>
+    <div class="page-subtitle">Tarefas &middot; Agenda &middot; Notas rápidas</div>
+  </div>
+  <div class="section">
+    <div class="section-title">📅 Semana</div>
+    <div id="colab-cal-semana-gisella"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas</div>
+    <div id="colab-tarefas-gisella"></div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1175,7 +1183,7 @@ tr:hover td { background: var(--bg); }
   </div>
   <div class="section">
     <div class="section-title">Tarefas</div>
-    <div id="colab-tarefas-Milena"></div>
+    <div id="colab-tarefas-milena"></div>
   </div>
 </div>
 
@@ -1193,7 +1201,7 @@ tr:hover td { background: var(--bg); }
   </div>
   <div class="section">
     <div class="section-title">Tarefas</div>
-    <div id="colab-tarefas-Luiggi"></div>
+    <div id="colab-tarefas-luiggi"></div>
   </div>
 </div>
 
@@ -3095,15 +3103,26 @@ function buildTarefasCalSemana() {
 
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const inicioSemana = new Date(hoje);
-  inicioSemana.setDate(hoje.getDate() - hoje.getDay() + (_tarefasCalWeekOffset * 7));
-  const dias = Array.from({length:7}, (_,i) => {
+  // Começar na segunda-feira
+  const _dow0 = hoje.getDay();
+  const _diffMon = _dow0 === 0 ? -6 : 1 - _dow0;
+  inicioSemana.setDate(hoje.getDate() + _diffMon + (_tarefasCalWeekOffset * 7));
+  const dias = Array.from({length:5}, (_,i) => {
     const d = new Date(inicioSemana);
     d.setDate(inicioSemana.getDate() + i);
     return d;
   });
+  // Redistribuir tarefas do fim de semana: sáb→sex, dom→seg
+  function _ajustaFds(dateStr) {
+    if (!dateStr) return dateStr;
+    var d = new Date(dateStr + 'T00:00:00'); var wd = d.getDay();
+    if (wd === 6) { d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); } // sáb→sex
+    if (wd === 0) { d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); } // dom→seg
+    return dateStr;
+  }
 
   const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  const dows = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  const dows = ['SEG','TER','QUA','QUI','SEX'];
   const hojeStr = hoje.toISOString().slice(0,10);
   const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
 
@@ -3121,13 +3140,13 @@ function buildTarefasCalSemana() {
       etapaEvents.push({
         _isEtapa: true, livroId: l.id, etapaIdx: i,
         titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa,
-        data: e.prazo||'', responsavel: e.resp||'', arquivada: !!e.feito, urgente: false,
+        data: _ajustaFds(e.prazo||''), responsavel: e.resp||'', arquivada: !!e.feito, urgente: false,
       });
     });
   });
   const todas = [
     ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc))
-      .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
+      .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:_ajustaFds(e.data||''), responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
     ...etapaEvents,
   ];
 
@@ -3136,7 +3155,7 @@ function buildTarefasCalSemana() {
     <div class="cal-month">${label}</div>
     <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start;">`;
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
 
   dias.forEach((dia, idx) => {
     const ds = dia.toISOString().slice(0,10);
@@ -3164,7 +3183,7 @@ function buildTarefasCalSemana() {
       html += `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
         <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chkFn}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:1px;width:11px;height:11px;cursor:pointer;">
         <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" title="${t.titulo}" style="flex:1;min-width:0;cursor:pointer;">
-          <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
+          <span style="display:block;word-break:break-word;line-height:1.3;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
           ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.responsavel}</span>`:''}
         </div>
       </div>`;
@@ -3182,14 +3201,14 @@ function buildTarefasCalSemana() {
     livros.forEach(function(l){(l.etapas||[]).forEach(function(e,i){
       etVG.push({_isEtapa:true,livroId:l.id,etapaIdx:i,
         titulo:'['+(l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título'))+'] '+e.nome,
-        empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+        empresa:l.empresa,data:_ajustaFds(e.prazo||''),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
     });});
     var todasVG=_sortByTipo([].concat(
       events.filter(function(e){return e.tipo==='tarefa'&&!e.arquivada;})
-        .map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),
+        .map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:_ajustaFds(e.data||''),arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),
       etVG.filter(function(e){return!e.arquivada;})
     ));
-    var htmlVG='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+    var htmlVG='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
     dias.forEach(function(dia,i2){
       var ds2=dia.toISOString().slice(0,10),isT2=ds2===hojeStr;
       var dayVG=_sortByTipo(todasVG.filter(function(t){return t.data===ds2;}));
@@ -3205,7 +3224,7 @@ function buildTarefasCalSemana() {
         var em=_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':'';
         htmlVG+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor2+'15;color:'+cor2+';border-left:2px solid '+cor2+';display:flex;align-items:flex-start;gap:3px;">';
         htmlVG+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk2+'" onclick="event.stopPropagation();" style="accent-color:'+cor2+';flex-shrink:0;margin-top:1px;width:10px;height:10px;cursor:pointer;">';
-        htmlVG+='<span onclick="'+cl+'" title="'+t.titulo.replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span>';
+        htmlVG+='<span onclick="'+cl+'" title="'+t.titulo.replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;word-break:break-word;line-height:1.3;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span>';
         htmlVG+='</div>';
       });
       htmlVG+='</div>';
@@ -3275,7 +3294,7 @@ function showPage(id, btn) {
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
   if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
+  if (id === 'colab-gisella') { buildColabTarefas(); buildColabCalSemanaSimples('gisella'); loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
   if (id === 'colab-milena') { buildColabTarefas(); buildColabCalSemanaSimples('milena'); }
   if (id === 'colab-luiggi') { buildColabTarefas(); buildColabCalSemanaSimples('luiggi'); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
@@ -5271,7 +5290,7 @@ function buildTarefas() {
       });
     });
   });
-  const ativas = [
+  let ativas = [
     ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
     ...etapaEvents.filter(e=>!e.arquivada)
   ];
@@ -5874,7 +5893,7 @@ function buildColabCalSemanaSimples(colabKey) {
   var wrap = document.getElementById('colab-cal-semana-' + colabKey);
   if (!wrap) return;
   var nomeColab = colabKey.charAt(0).toUpperCase() + colabKey.slice(1);
-  var cor = colabKey==='milena' ? 'var(--leia)' : 'var(--editora)';
+  var cor = colabKey==='gisella' ? 'var(--gisella)' : colabKey==='milena' ? 'var(--leia)' : 'var(--editora)';
   var hoje = new Date(); hoje.setHours(0,0,0,0);
   var inicioSemana = new Date(hoje);
   inicioSemana.setDate(hoje.getDate() - hoje.getDay());
