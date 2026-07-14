@@ -605,6 +605,10 @@ tr:hover td { background: var(--bg); }
 ._ttchip { display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);cursor:pointer;transition:all .15s;user-select:none; }
 ._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
 ._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
+/* ── CHIPS TIPO TAREFA ── */
+._ttchip { display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);cursor:pointer;transition:all .15s;user-select:none; }
+._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
+._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
 /* ── LOGIN ── */
 #login-screen {
   position:fixed;inset:0;background:var(--bg);z-index:99999;
@@ -1284,7 +1288,48 @@ tr:hover td { background: var(--bg); }
 
       <!-- TAREFA FIELDS -->
       <div id="qa-fields-tarefa">
-        <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" id="qa-prazo" type="date"></div>
+        <div class="form-group">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <label class="form-label" style="margin:0;">Data</label>
+            <label style="cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px;"><input type="radio" name="qa-data-modo" value="unica" checked onchange="_toggleDataModo()" style="accent-color:var(--gisella);"> Data única</label>
+            <label style="cursor:pointer;display:flex;align-items:center;gap:4px;font-size:12px;"><input type="radio" name="qa-data-modo" value="fases" onchange="_toggleDataModo()" style="accent-color:var(--gisella);"> Dividir em fases</label>
+          </div>
+          <div id="qa-data-unica-wrap"><input class="form-input" id="qa-prazo" type="date"></div>
+          <div id="qa-data-fases-wrap" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;">
+              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">🔍 Pensar/Pesquisar</div>
+                <input class="form-input" id="qa-fase-pensar" type="date" style="margin-bottom:8px;font-size:12px;padding:6px 8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-pensar" value="" checked style="width:11px;height:11px;accent-color:var(--gisella);"> Sem tipo</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-pensar" value="burocracia" style="width:11px;height:11px;accent-color:var(--gisella);"> ⚙️ Burocracias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-pensar" value="estrategia" style="width:11px;height:11px;accent-color:var(--gisella);"> 🎯 Estratégias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-pensar" value="criativo" style="width:11px;height:11px;accent-color:var(--gisella);"> 💡 Criativo</label>
+                </div>
+              </div>
+              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">📝 Rascunho</div>
+                <input class="form-input" id="qa-fase-rascunho" type="date" style="margin-bottom:8px;font-size:12px;padding:6px 8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-rascunho" value="" checked style="width:11px;height:11px;accent-color:var(--gisella);"> Sem tipo</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-rascunho" value="burocracia" style="width:11px;height:11px;accent-color:var(--gisella);"> ⚙️ Burocracias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-rascunho" value="estrategia" style="width:11px;height:11px;accent-color:var(--gisella);"> 🎯 Estratégias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-rascunho" value="criativo" style="width:11px;height:11px;accent-color:var(--gisella);"> 💡 Criativo</label>
+                </div>
+              </div>
+              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
+                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">🚀 Implementação</div>
+                <input class="form-input" id="qa-fase-impl" type="date" style="margin-bottom:8px;font-size:12px;padding:6px 8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-impl" value="" checked style="width:11px;height:11px;accent-color:var(--gisella);"> Sem tipo</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-impl" value="burocracia" style="width:11px;height:11px;accent-color:var(--gisella);"> ⚙️ Burocracias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-impl" value="estrategia" style="width:11px;height:11px;accent-color:var(--gisella);"> 🎯 Estratégias</label>
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;"><input type="radio" name="qa-tipo-impl" value="criativo" style="width:11px;height:11px;accent-color:var(--gisella);"> 💡 Criativo</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
@@ -2954,9 +2999,36 @@ function livroCalDrop(e, novaData) {
 let _tarefasCalWeekOffset = 0;
 let _tarefaCalDragSrc = null;
 
+const _TIPO_TAREFA_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
+const _TIPO_TAREFA_ORDER  = { burocracia:0, estrategia:1, criativo:2 };
+function _sortByTipo(arr) {
+  return [...arr].sort(function(a,b){
+    var oa = _TIPO_TAREFA_ORDER[a.tipoTarefa] != null ? _TIPO_TAREFA_ORDER[a.tipoTarefa] : 3;
+    var ob = _TIPO_TAREFA_ORDER[b.tipoTarefa] != null ? _TIPO_TAREFA_ORDER[b.tipoTarefa] : 3;
+    return oa !== ob ? oa - ob : (a.data||'9').localeCompare(b.data||'9');
+  });
+}
+window._setTipoTarefa = function(val) {
+  var inp = document.getElementById('qa-tipo-tarefa');
+  if (inp) inp.value = val;
+  document.querySelectorAll('._ttchip').forEach(function(c){ c.classList.remove('_ttchip-active'); });
+  var map = { '':'_tt-none', burocracia:'_tt-bur', criativo:'_tt-cri', estrategia:'_tt-est' };
+  var lbl = document.getElementById(map[val] || '_tt-none');
+  if (lbl) lbl.querySelector('._ttchip').classList.add('_ttchip-active');
+};
+window._toggleDataModo = function() {
+  var modo = document.querySelector('input[name="qa-data-modo"]:checked');
+  var unica = document.getElementById('qa-data-unica-wrap');
+  var fases = document.getElementById('qa-data-fases-wrap');
+  if (!modo||!unica||!fases) return;
+  var isFases = modo.value === 'fases';
+  unica.style.display = isFases ? 'none' : '';
+  fases.style.display = isFases ? '' : 'none';
+};
+
 function buildTarefasCalSemana() {
   const wrap = document.getElementById('cal-tarefas-semana-wrap');
-  if (!wrap) return;
+  if (!wrap && !document.getElementById('cal-visao-semana-wrap')) return;
 
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const inicioSemana = new Date(hoje);
@@ -3025,13 +3097,13 @@ function buildTarefasCalSemana() {
       const clickAction = t._isEtapa
         ? `openEditEtapa(${t.livroId},${t.etapaIdx})`
         : `openEditEvent(${t.id})`;
-      html += `<div draggable="true"
-        ondragstart="${dragStart}"
-        onclick="${clickAction}"
-        title="${t.titulo}"
-        style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:grab;border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}">
-        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
-        ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.responsavel}</span>`:''}
+      const _chkFn=t._isEtapa?`toggleEtapa(${t.livroId},${t.etapaIdx})`:`toggleTarefaArquivada(${t.id})`;
+      html += `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
+        <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chkFn}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:1px;width:11px;height:11px;cursor:pointer;">
+        <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" title="${t.titulo}" style="flex:1;min-width:0;cursor:grab;">
+          <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
+          ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.responsavel}</span>`:''}
+        </div>
       </div>`;
     });
 
@@ -3039,68 +3111,35 @@ function buildTarefasCalSemana() {
   });
 
   html += '</div>';
-  wrap.innerHTML = html;
+  if (wrap) wrap.innerHTML = html;
+}
 
-  // ── Visão Geral: todas as tarefas sem filtro ──
+
+
   const wrapVisao = document.getElementById('cal-visao-semana-wrap');
   if (wrapVisao) {
-    const etapasVG = [];
-    livros.forEach(l => {
-      (l.etapas||[]).forEach((e,i) => {
-        etapasVG.push({ _isEtapa:true, livroId:l.id, etapaIdx:i,
-          titulo:`[${l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título')}] ${e.nome}`,
-          empresa:l.empresa, data:e.prazo||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'' });
-      });
-    });
-    const todasVG = _sortByTipo([
-      ...events.filter(e=>e.tipo==='tarefa'&&!e.arquivada)
-        .map(e=>({_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',
-          arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''})),
-      ...etapasVG.filter(e=>!e.arquivada),
-    ]);
-    let htmlVG = `<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">
-    <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">‹</button>
-    <div class="cal-month">${label}</div>
-    <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
-  </div><div class="cal-semana-scroll"><div class="cal-semana-inner" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">`;
-    dias.forEach((dia,idx2) => {
-      const ds2=dia.toISOString().slice(0,10);
-      const isT2=ds2===hojeStr;
-      const dayVG=_sortByTipo(todasVG.filter(t=>t.data===ds2));
-      htmlVG+=`<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isT2?'var(--gisella)':'var(--border)'}">
-      <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx2]}</div>
-      <div style="font-size:${isT2?'16px':'14px'};font-weight:${isT2?'700':'500'};color:${isT2?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
-      if(!dayVG.length)htmlVG+=`<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
-      dayVG.forEach(t=>{
-        const c2=(t.empresa||'').split(',')[0];
-        const cor2=c2==='editora'?'var(--editora)':c2==='leia'?'var(--leia)':'var(--gisella)';
-        const cl=t._isEtapa?`openEditEtapa(${t.livroId},${t.etapaIdx})`:`openEditEvent(${t.id})`;
-        htmlVG+=`<div onclick="${cl}" title="${t.titulo}" style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:${cor2}15;color:${cor2};border-left:2px solid ${cor2};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</div>`;
+    var etVG=[];
+    livros.forEach(function(l){(l.etapas||[]).forEach(function(e,i){etVG.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+(l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título'))+'] '+e.nome,empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});});});
+    var todasVG=_sortByTipo([].concat(events.filter(function(e){return e.tipo==='tarefa'&&!e.arquivada;}).map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),etVG.filter(function(e){return!e.arquivada;})));
+    var htmlVG='<div class="cal-header" style="padding:0 0 10px;border-bottom:none;"><button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">&#8249;</button><div class="cal-month">'+label+'</div><button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">&#8250;</button></div><div class="cal-semana-scroll"><div class="cal-semana-inner" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">';
+    dias.forEach(function(dia,i2){
+      var ds2=dia.toISOString().slice(0,10),isT2=ds2===hojeStr;
+      var dayVG=_sortByTipo(todasVG.filter(function(t){return t.data===ds2;}));
+      htmlVG+='<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid '+(isT2?'var(--gisella)':'var(--border)')+'"><div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">'+dows[i2]+'</div><div style="font-size:'+(isT2?'16px':'14px')+';font-weight:'+(isT2?'700':'500')+';color:'+(isT2?'var(--gisella)':'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
+      if(!dayVG.length)htmlVG+='<div style="font-size:10px;color:var(--text-soft);opacity:.5;">—</div>';
+      dayVG.forEach(function(t){
+        var c2=(t.empresa||'').split(',')[0];
+        var cor2=c2==='editora'?'var(--editora)':c2==='leia'?'var(--leia)':'var(--gisella)';
+        var cl=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':'openEditEvent('+t.id+')';
+        var chk2=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':'toggleTarefaArquivada('+t.id+')';
+        var em=_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':'';
+        htmlVG+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor2+'15;color:'+cor2+';border-left:2px solid '+cor2+';display:flex;align-items:flex-start;gap:3px;"><input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk2+'" onclick="event.stopPropagation();" style="accent-color:'+cor2+';flex-shrink:0;margin-top:1px;width:10px;height:10px;cursor:pointer;"><span onclick="'+cl+'" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span></div>';
       });
       htmlVG+='</div>';
     });
     htmlVG+='</div></div>';
     wrapVisao.innerHTML=htmlVG;
   }
-}
-
-const _TIPO_TAREFA_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
-const _TIPO_TAREFA_ORDER  = { burocracia:0, estrategia:1, criativo:2 };
-function _sortByTipo(arr) {
-  return [...arr].sort((a,b) => {
-    const oa = _TIPO_TAREFA_ORDER[a.tipoTarefa] ?? 3;
-    const ob = _TIPO_TAREFA_ORDER[b.tipoTarefa] ?? 3;
-    return oa !== ob ? oa - ob : (a.data||'9').localeCompare(b.data||'9');
-  });
-}
-window._setTipoTarefa = function(val) {
-  const inp = document.getElementById('qa-tipo-tarefa');
-  if (inp) inp.value = val;
-  document.querySelectorAll('._ttchip').forEach(c => c.classList.remove('_ttchip-active'));
-  const map = { '':'_tt-none', burocracia:'_tt-bur', criativo:'_tt-cri', estrategia:'_tt-est' };
-  const lbl = document.getElementById(map[val] || '_tt-none');
-  if (lbl) lbl.querySelector('._ttchip').classList.add('_ttchip-active');
-};
 
 function tarefaCalDragStart(e, kind, a, b) {
   _tarefaCalDragSrc = kind === 'etapa' ? { kind:'etapa', livroId:a, idx:b } : { kind:'evento', id:a };
@@ -3437,6 +3476,11 @@ function openQuickAdd() {
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
   setEmpresasChecked('qa-emp-', 'editora');
   if (window._setTipoTarefa) window._setTipoTarefa('');
+  var rdUnica = document.querySelector('input[name="qa-data-modo"][value="unica"]');
+  if (rdUnica) { rdUnica.checked = true; if (window._toggleDataModo) window._toggleDataModo(); }
+  ['qa-fase-pensar','qa-fase-rascunho','qa-fase-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['qa-tipo-pensar','qa-tipo-rascunho','qa-tipo-impl'].forEach(function(nm){var r=document.querySelector('input[name="'+nm+'"][value=""]');if(r)r.checked=true;});
+  if (window._setTipoTarefa) window._setTipoTarefa('');
   if (window._setTipoTarefa) window._setTipoTarefa('');
   // Auto-detect tipo from current active page
   const activePage = document.querySelector('.page.active');
@@ -3487,6 +3531,9 @@ function openEditEvent(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
   editingEventId = id;
+  window._editingEtapa = null;
+  var rdU = document.querySelector('input[name="qa-data-modo"][value="unica"]');
+  if (rdU) { rdU.checked = true; if (window._toggleDataModo) window._toggleDataModo(); }
   document.getElementById('qa-modal-title').textContent = 'Editar item';
   document.getElementById('qa-submit-btn').textContent = 'Salvar';
   const delBtn = document.getElementById('qa-delete-btn');
@@ -3503,8 +3550,9 @@ function openEditEvent(id) {
   document.getElementById('qa-hora-fim').value = ev.horaFim || '';
   document.getElementById('qa-responsavel').value = ev.responsavel || '';
   document.getElementById('qa-observacao').value = ev.observacao || '';
-  const urgenteEdit = document.getElementById('qa-urgente');
-  if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
+  const urventeEdit = document.getElementById('qa-urgente');
+  if (urventeEdit) urventeEdit.checked = !!ev.urgente;
+  if (window._setTipoTarefa) window._setTipoTarefa(ev.tipoTarefa || '');
   if (window._setTipoTarefa) window._setTipoTarefa(ev.tipoTarefa || '');
   // Mostrar e popular comentários
   const comWrap = document.getElementById('qa-comentarios-wrap');
@@ -3648,6 +3696,7 @@ function submitQuickAdd() {
       l.etapas[idx].nome = titulo;
       l.etapas[idx].prazo = getQaVal('qa-prazo');
       l.etapas[idx].resp = getQaVal('qa-responsavel');
+      var novaEmp=getEmpresaStr('qa-emp-',l.empresa||'editora'); if(novaEmp)l.empresa=novaEmp;
       save('gc-livros', livros);
       renderLivros();
       buildTarefas();
@@ -3755,6 +3804,31 @@ function submitQuickAdd() {
     tipoTarefa: tipo === 'tarefa' ? (document.getElementById('qa-tipo-tarefa')?.value || undefined) : undefined,
   };
 
+  if (tipo === 'tarefa' && !editingEventId) {
+    var modoFases = document.querySelector('input[name="qa-data-modo"]:checked');
+    if (modoFases && modoFases.value === 'fases') {
+      var _fases = [
+        { id:'qa-fase-pensar',   tn:'qa-tipo-pensar',   prefix:'🔍 Pensar/Pesquisar' },
+        { id:'qa-fase-rascunho', tn:'qa-tipo-rascunho', prefix:'📝 Rascunho' },
+        { id:'qa-fase-impl',     tn:'qa-tipo-impl',     prefix:'🚀 Implementação' },
+      ];
+      var _criadas = 0;
+      _fases.forEach(function(f,fi){
+        var el=document.getElementById(f.id); if(!el||!el.value) return;
+        var tr=document.querySelector('input[name="'+f.tn+'"]:checked');
+        var ft=tr?tr.value||undefined:undefined;
+        events.push({id:Date.now()+fi+1,...eventData,titulo:f.prefix+' — '+titulo,data:el.value,tipoTarefa:ft});
+        _criadas++;
+      });
+      if (_criadas>0) {
+        save('gc-events',events);
+        if(window.fbSave)window.fbSave('gc-events',events).catch(function(){});
+        buildTarefas();buildColabTarefas();buildTarefasCalSemana();buildPrioridades();
+        closeModal('modal-quickadd'); return;
+      }
+    }
+  }
+
   if (editingEventId) {
     const i = events.findIndex(x => x.id === editingEventId);
     if (i > -1) events[i] = {...events[i], ...eventData};
@@ -3806,13 +3880,14 @@ function submitQuickAdd() {
   window._addingToMenteeId = null;
 
   save('gc-events', events);
-  if (window.fbSave) window.fbSave('gc-events', events).catch(()=>{});
+  if (window.fbSave) window.fbSave('gc-events', events).catch(function(){});
   refreshCalendars();
   buildCalendar('cal-eventos', 'all');
   buildTarefas();
   buildColabTarefas();
   buildTarefasCalSemana();
   buildPrioridades();
+  closeModal('modal-quickadd');
   // Notify if task assigned to someone
   if (tipo === 'tarefa' && !editingEventId) {
     const resp = getQaVal('qa-responsavel');
