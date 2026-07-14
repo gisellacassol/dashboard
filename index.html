@@ -593,19 +593,6 @@ tr:hover td { background: var(--bg); }
 #undo-toast button:hover { background: rgba(255,255,255,0.15); }
 
 /* ── CHIPS TIPO TAREFA ── */
-._ttchip {
-  display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;
-  border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);
-  cursor:pointer;transition:all 0.15s;user-select:none;
-}
-._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
-._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
-
-/* ── CHIPS TIPO TAREFA ── */
-._ttchip { display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);cursor:pointer;transition:all .15s;user-select:none; }
-._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
-._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
-/* ── CHIPS TIPO TAREFA ── */
 ._ttchip { display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);cursor:pointer;transition:all .15s;user-select:none; }
 ._ttchip:hover { border-color:var(--text-soft);color:var(--text); }
 ._ttchip._ttchip-active { background:var(--text);color:var(--surface);border-color:var(--text); }
@@ -747,6 +734,12 @@ tr:hover td { background: var(--bg); }
     <button class="nav-item active" onclick="showPage('visao',this)"><span style="font-size:15px;opacity:0.6;">◈</span> Visão Geral</button>
   </div>
   <div class="nav-section">
+    <div class="nav-label">Empresas</div>
+    <button class="nav-item" onclick="showPage('editora',this)"><span class="nav-dot dot-editora"></span> Editora Cassol</button>
+    <button class="nav-item" onclick="showPage('leia',this)"><span class="nav-dot dot-leia"></span> Léia Cassol</button>
+    <button class="nav-item" onclick="showPage('gisella',this)"><span class="nav-dot dot-gisella"></span> GC</button>
+  </div>
+  <div class="nav-section">
     <div class="nav-label">Sessões</div>
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
     <button class="nav-item" onclick="showPage('conteudo-menu',this)"><span style="font-size:13px;">✍</span> Conteúdo</button>
@@ -783,9 +776,16 @@ tr:hover td { background: var(--bg); }
     <div class="cal-wrap" id="cal-visao"></div>
   </div>
   <div class="section">
-    <div class="section-title">📅 Tarefas da semana</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">📅 Tarefas da semana</div>
+      <div style="display:flex;gap:6px;">
+        <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">&#8249;</button>
+        <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">&#8250;</button>
+      </div>
+    </div>
     <div id="cal-visao-semana-wrap"></div>
   </div>
+
   <div class="section">
     <div class="section-title">Prioridade</div>
     <div id="prioridades-container"></div>
@@ -2995,10 +2995,7 @@ function livroCalDrop(e, novaData) {
   updateEtapaPrazoInline(livroId, idx, novaData);
 }
 
-/* ── CALENDÁRIO SEMANAL DE TAREFAS (aba Tarefas) ── */
-let _tarefasCalWeekOffset = 0;
-let _tarefaCalDragSrc = null;
-
+/* ── TIPO TAREFA + PRAZO INLINE ── */
 const _TIPO_TAREFA_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
 const _TIPO_TAREFA_ORDER  = { burocracia:0, estrategia:1, criativo:2 };
 function _sortByTipo(arr) {
@@ -3025,6 +3022,37 @@ window._toggleDataModo = function() {
   unica.style.display = isFases ? 'none' : '';
   fases.style.display = isFases ? '' : 'none';
 };
+function refreshAllCalendarios() {
+  buildTarefas(); buildTarefasCalSemana();
+  ['gisella','milena','luiggi'].forEach(function(k){
+    if (document.getElementById('colab-cal-'+k)) buildColabCalSemana(k);
+  });
+}
+function editEventoPrazo(id, tdEl) {
+  var ev = events.find(function(e){ return e.id === id; });
+  if (!ev) return;
+  var inp = document.createElement('input');
+  inp.type = 'date'; inp.value = ev.data || '';
+  inp.style.cssText = 'font-size:12px;border:1px solid var(--gisella);border-radius:5px;padding:2px 5px;background:var(--surface);color:var(--text);cursor:pointer;';
+  inp.onchange = function(){ ev.data = this.value; save('gc-events',events); if(window.fbSave)window.fbSave('gc-events',events).catch(function(){}); refreshAllCalendarios(); };
+  inp.onblur  = function(){ refreshAllCalendarios(); };
+  tdEl.innerHTML = ''; tdEl.appendChild(inp); inp.focus(); inp.click();
+}
+function editEtapaPrazo(livroId, idx, tdEl) {
+  var l = livros.find(function(x){ return x.id === livroId; });
+  if (!l||!l.etapas||!l.etapas[idx]) return;
+  var etapa = l.etapas[idx];
+  var inp = document.createElement('input');
+  inp.type = 'date'; inp.value = etapa.prazo || '';
+  inp.style.cssText = 'font-size:12px;border:1px solid var(--gisella);border-radius:5px;padding:2px 5px;background:var(--surface);color:var(--text);cursor:pointer;';
+  inp.onchange = function(){ etapa.prazo = this.value; save('gc-livros',livros); if(window.fbSave)window.fbSave('gc-livros',livros).catch(function(){}); refreshAllCalendarios(); renderLivros(); };
+  inp.onblur  = function(){ refreshAllCalendarios(); };
+  tdEl.innerHTML = ''; tdEl.appendChild(inp); inp.focus(); inp.click();
+}
+
+/* ── CALENDÁRIO SEMANAL DE TAREFAS (aba Tarefas) ── */
+let _tarefasCalWeekOffset = 0;
+let _tarefaCalDragSrc = null;
 
 function buildTarefasCalSemana() {
   const wrap = document.getElementById('cal-tarefas-semana-wrap');
@@ -3097,10 +3125,10 @@ function buildTarefasCalSemana() {
       const clickAction = t._isEtapa
         ? `openEditEtapa(${t.livroId},${t.etapaIdx})`
         : `openEditEvent(${t.id})`;
-      const _chkFn=t._isEtapa?`toggleEtapa(${t.livroId},${t.etapaIdx})`:`toggleTarefaArquivada(${t.id})`;
+      const _chkFn = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : `toggleTarefaArquivada(${t.id})`;
       html += `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
         <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chkFn}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:1px;width:11px;height:11px;cursor:pointer;">
-        <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" title="${t.titulo}" style="flex:1;min-width:0;cursor:grab;">
+        <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" title="${t.titulo}" style="flex:1;min-width:0;cursor:pointer;">
           <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
           ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.responsavel}</span>`:''}
         </div>
@@ -3112,20 +3140,28 @@ function buildTarefasCalSemana() {
 
   html += '</div>';
   if (wrap) wrap.innerHTML = html;
-}
 
-
-
-  const wrapVisao = document.getElementById('cal-visao-semana-wrap');
+  // Visão Geral: render sem filtro
+  var wrapVisao = document.getElementById('cal-visao-semana-wrap');
   if (wrapVisao) {
     var etVG=[];
-    livros.forEach(function(l){(l.etapas||[]).forEach(function(e,i){etVG.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+(l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título'))+'] '+e.nome,empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});});});
-    var todasVG=_sortByTipo([].concat(events.filter(function(e){return e.tipo==='tarefa'&&!e.arquivada;}).map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),etVG.filter(function(e){return!e.arquivada;})));
-    var htmlVG='<div class="cal-header" style="padding:0 0 10px;border-bottom:none;"><button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">&#8249;</button><div class="cal-month">'+label+'</div><button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">&#8250;</button></div><div class="cal-semana-scroll"><div class="cal-semana-inner" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">';
+    livros.forEach(function(l){(l.etapas||[]).forEach(function(e,i){
+      etVG.push({_isEtapa:true,livroId:l.id,etapaIdx:i,
+        titulo:'['+(l.titulo||(l.autor?l.autor+' (sem título)':'Livro sem título'))+'] '+e.nome,
+        empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+    });});
+    var todasVG=_sortByTipo([].concat(
+      events.filter(function(e){return e.tipo==='tarefa'&&!e.arquivada;})
+        .map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,data:e.data||'',arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),
+      etVG.filter(function(e){return!e.arquivada;})
+    ));
+    var htmlVG='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;">';
     dias.forEach(function(dia,i2){
       var ds2=dia.toISOString().slice(0,10),isT2=ds2===hojeStr;
       var dayVG=_sortByTipo(todasVG.filter(function(t){return t.data===ds2;}));
-      htmlVG+='<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid '+(isT2?'var(--gisella)':'var(--border)')+'"><div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">'+dows[i2]+'</div><div style="font-size:'+(isT2?'16px':'14px')+';font-weight:'+(isT2?'700':'500')+';color:'+(isT2?'var(--gisella)':'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
+      htmlVG+='<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:80px;border:1px solid '+(isT2?'var(--gisella)':'var(--border)')+';">';
+      htmlVG+='<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">'+dows[i2]+'</div>';
+      htmlVG+='<div style="font-size:'+(isT2?'16px':'14px')+';font-weight:'+(isT2?'700':'500')+';color:'+(isT2?'var(--gisella)':'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
       if(!dayVG.length)htmlVG+='<div style="font-size:10px;color:var(--text-soft);opacity:.5;">—</div>';
       dayVG.forEach(function(t){
         var c2=(t.empresa||'').split(',')[0];
@@ -3133,13 +3169,17 @@ function buildTarefasCalSemana() {
         var cl=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':'openEditEvent('+t.id+')';
         var chk2=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':'toggleTarefaArquivada('+t.id+')';
         var em=_TIPO_TAREFA_EMOJI[t.tipoTarefa]?_TIPO_TAREFA_EMOJI[t.tipoTarefa]+' ':'';
-        htmlVG+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor2+'15;color:'+cor2+';border-left:2px solid '+cor2+';display:flex;align-items:flex-start;gap:3px;"><input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk2+'" onclick="event.stopPropagation();" style="accent-color:'+cor2+';flex-shrink:0;margin-top:1px;width:10px;height:10px;cursor:pointer;"><span onclick="'+cl+'" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span></div>';
+        htmlVG+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor2+'15;color:'+cor2+';border-left:2px solid '+cor2+';display:flex;align-items:flex-start;gap:3px;">';
+        htmlVG+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk2+'" onclick="event.stopPropagation();" style="accent-color:'+cor2+';flex-shrink:0;margin-top:1px;width:10px;height:10px;cursor:pointer;">';
+        htmlVG+='<span onclick="'+cl+'" title="'+t.titulo.replace(/"/g,'&quot;')+'" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span>';
+        htmlVG+='</div>';
       });
       htmlVG+='</div>';
     });
-    htmlVG+='</div></div>';
+    htmlVG+='</div>';
     wrapVisao.innerHTML=htmlVG;
   }
+}
 
 function tarefaCalDragStart(e, kind, a, b) {
   _tarefaCalDragSrc = kind === 'etapa' ? { kind:'etapa', livroId:a, idx:b } : { kind:'evento', id:a };
@@ -3196,7 +3236,7 @@ function showPage(id, btn) {
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
-  if (id === 'visao') { buildPrioridades(); window.scrollTo({top:0,behavior:'instant'}); }
+  if (id === 'visao') { buildPrioridades(); buildTarefasCalSemana(); window.scrollTo({top:0,behavior:'instant'}); }
   if (id === 'tarefas') { buildTarefas(); }
   if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
   if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
@@ -3480,8 +3520,6 @@ function openQuickAdd() {
   if (rdUnica) { rdUnica.checked = true; if (window._toggleDataModo) window._toggleDataModo(); }
   ['qa-fase-pensar','qa-fase-rascunho','qa-fase-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   ['qa-tipo-pensar','qa-tipo-rascunho','qa-tipo-impl'].forEach(function(nm){var r=document.querySelector('input[name="'+nm+'"][value=""]');if(r)r.checked=true;});
-  if (window._setTipoTarefa) window._setTipoTarefa('');
-  if (window._setTipoTarefa) window._setTipoTarefa('');
   // Auto-detect tipo from current active page
   const activePage = document.querySelector('.page.active');
   const pageId = activePage ? activePage.id : '';
@@ -3542,17 +3580,14 @@ function openEditEvent(id) {
   setEmpresasChecked('qa-emp-', ev.empresa || 'editora');
   document.getElementById('qa-tipo').value = ev.tipo || 'tarefa';
   updateQaFields();
-  const ttEl = document.getElementById('qa-tipo-tarefa');
-  if (ttEl) ttEl.value = ev.tipoTarefa || '';
   document.getElementById('qa-prazo').value = ev.data || '';
   document.getElementById('qa-hora-inicio').value = ev.horaInicio || '';
   document.getElementById('qa-data-fim').value = ev.dataFim || '';
   document.getElementById('qa-hora-fim').value = ev.horaFim || '';
   document.getElementById('qa-responsavel').value = ev.responsavel || '';
   document.getElementById('qa-observacao').value = ev.observacao || '';
-  const urventeEdit = document.getElementById('qa-urgente');
-  if (urventeEdit) urventeEdit.checked = !!ev.urgente;
-  if (window._setTipoTarefa) window._setTipoTarefa(ev.tipoTarefa || '');
+  const urgenteEdit = document.getElementById('qa-urgente');
+  if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
   if (window._setTipoTarefa) window._setTipoTarefa(ev.tipoTarefa || '');
   // Mostrar e popular comentários
   const comWrap = document.getElementById('qa-comentarios-wrap');
@@ -3696,7 +3731,8 @@ function submitQuickAdd() {
       l.etapas[idx].nome = titulo;
       l.etapas[idx].prazo = getQaVal('qa-prazo');
       l.etapas[idx].resp = getQaVal('qa-responsavel');
-      var novaEmp=getEmpresaStr('qa-emp-',l.empresa||'editora'); if(novaEmp)l.empresa=novaEmp;
+      var novaEmpEtapa = getEmpresaStr('qa-emp-', l.empresa||'editora'); if(novaEmpEtapa) l.empresa = novaEmpEtapa;
+      var ttEtapa = document.getElementById('qa-tipo-tarefa'); if(ttEtapa) l.etapas[idx].tipoTarefa = ttEtapa.value || undefined;
       save('gc-livros', livros);
       renderLivros();
       buildTarefas();
@@ -3801,9 +3837,10 @@ function submitQuickAdd() {
     dataFim: getQaVal('qa-data-fim'), horaFim: getQaVal('qa-hora-fim'),
     responsavel, observacao,
     urgente: tipo === 'tarefa' ? urgenteVal : undefined,
-    tipoTarefa: tipo === 'tarefa' ? (document.getElementById('qa-tipo-tarefa')?.value || undefined) : undefined,
+    tipoTarefa: tipo === 'tarefa' ? (document.getElementById('qa-tipo-tarefa') ? document.getElementById('qa-tipo-tarefa').value || undefined : undefined) : undefined,
   };
 
+  // Fases: criar 3 tarefas separadas
   if (tipo === 'tarefa' && !editingEventId) {
     var modoFases = document.querySelector('input[name="qa-data-modo"]:checked');
     if (modoFases && modoFases.value === 'fases') {
@@ -3813,17 +3850,17 @@ function submitQuickAdd() {
         { id:'qa-fase-impl',     tn:'qa-tipo-impl',     prefix:'🚀 Implementação' },
       ];
       var _criadas = 0;
-      _fases.forEach(function(f,fi){
-        var el=document.getElementById(f.id); if(!el||!el.value) return;
-        var tr=document.querySelector('input[name="'+f.tn+'"]:checked');
-        var ft=tr?tr.value||undefined:undefined;
-        events.push({id:Date.now()+fi+1,...eventData,titulo:f.prefix+' — '+titulo,data:el.value,tipoTarefa:ft});
+      _fases.forEach(function(f, fi){
+        var el = document.getElementById(f.id); if(!el||!el.value) return;
+        var tr = document.querySelector('input[name="'+f.tn+'"]:checked');
+        var ft = tr ? tr.value || undefined : undefined;
+        events.push({id:Date.now()+fi+1,...eventData, titulo:f.prefix+' — '+titulo, data:el.value, tipoTarefa:ft});
         _criadas++;
       });
-      if (_criadas>0) {
-        save('gc-events',events);
-        if(window.fbSave)window.fbSave('gc-events',events).catch(function(){});
-        buildTarefas();buildColabTarefas();buildTarefasCalSemana();buildPrioridades();
+      if (_criadas > 0) {
+        save('gc-events', events);
+        if(window.fbSave) window.fbSave('gc-events', events).catch(function(){});
+        buildTarefas(); buildColabTarefas(); buildTarefasCalSemana(); buildPrioridades();
         closeModal('modal-quickadd'); return;
       }
     }
@@ -3880,7 +3917,7 @@ function submitQuickAdd() {
   window._addingToMenteeId = null;
 
   save('gc-events', events);
-  if (window.fbSave) window.fbSave('gc-events', events).catch(function(){});
+  if(window.fbSave) window.fbSave('gc-events', events).catch(function(){});
   refreshCalendars();
   buildCalendar('cal-eventos', 'all');
   buildTarefas();
@@ -5226,7 +5263,7 @@ function buildTarefas() {
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
-        <span>${_TIPO_TAREFA_EMOJI[e.tipoTarefa]?_TIPO_TAREFA_EMOJI[e.tipoTarefa]+' ':''  }${e.titulo}</span>
+        <span>${_TIPO_TAREFA_EMOJI[e.tipoTarefa]?_TIPO_TAREFA_EMOJI[e.tipoTarefa]+' ':''}${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
@@ -5238,11 +5275,9 @@ function buildTarefas() {
         ${empBadgesHtml(e.empresa)}
         ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
       </td>
-      <td style="width:40px;text-align:center;font-size:15px;" title="${e.tipoTarefa==='burocracia'?'Burocracias/Mecânicas':e.tipoTarefa==='criativo'?'Criativo/Brainstorming':e.tipoTarefa==='estrategia'?'Estratégias/Foco':''}">
-        ${_TIPO_TAREFA_EMOJI[e.tipoTarefa]||''}
-      </td>
-      <td style="font-size:12px;color:${prazoColor};font-weight:500;cursor:pointer;" title="Clique para alterar prazo"
-          onclick="${e._livroId!==undefined?`editEtapaPrazo(${e._livroId},${e._etapaIdx},this)`:`editEventoPrazo(${e.id},this)`}">
+      <td style="width:38px;text-align:center;font-size:14px;" title="${e.tipoTarefa==='burocracia'?'Burocracias':e.tipoTarefa==='criativo'?'Criativo':e.tipoTarefa==='estrategia'?'Estratégias':''}">${_TIPO_TAREFA_EMOJI[e.tipoTarefa]||''}</td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;cursor:pointer;white-space:nowrap;" title="Clique para alterar prazo"
+          onclick="${isEtapa?`editEtapaPrazo(${e._livroId},${e._etapaIdx},this)`:`editEventoPrazo(${e.id},this)`}">
         ${e.data?fmtDateTarefa(e.data):'—'}
       </td>
     </tr>`;
@@ -5292,7 +5327,7 @@ function buildTarefas() {
   });
 
   function tableHtml(items, isArq) {
-    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th style="width:110px;">Empresa</th><th style="width:40px;text-align:center;">Tipo</th><th>Prazo</th></tr></thead>
+    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th style="width:110px;">Empresa</th><th style="width:38px;text-align:center;">Tipo</th><th>Prazo</th></tr></thead>
     <tbody>${items.map(t=>tarefaRow(t,isArq||false)).join('')}</tbody></table></div>`;
   }
 
