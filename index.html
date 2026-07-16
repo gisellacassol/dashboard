@@ -350,6 +350,12 @@ tr:hover td { background: var(--bg); }
 .modal-tab-content { display: none; }
 .modal-tab-content.active { display: block; }
 @media (max-width: 768px) {
+  /* Esconder calendário semanal de tarefas no mobile */
+  #cal-tarefas-semana-wrap,
+  #cal-visao-semana-wrap,
+  [id^="colab-cal-semana-"],
+  .section-title-semana { display: none !important; }
+
   /* Layout */
   .shell { flex-direction: column; }
   .main { margin-left: 0 !important; padding: 3.5rem 0.75rem 2rem; }
@@ -530,7 +536,7 @@ tr:hover td { background: var(--bg); }
     transition: transform 0.28s cubic-bezier(.4,0,.2,1);
   }
   #chat-panel.open { transform: translateY(0); right: 0; }
-  #chat-overlay { display: block !important; }
+  /* #chat-overlay controlled by JS — do not force display here */
 }
 #chat-overlay {
   display: none; position: fixed; inset: 0;
@@ -780,7 +786,7 @@ tr:hover td { background: var(--bg); }
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
   </div>
   <div class="section">
-    <div class="section-title">Tarefas da semana</div>
+    <div class="section-title section-title-semana">Tarefas da semana</div>
     <div id="cal-visao-semana-wrap"></div>
     <div id="visao-tarefas-lista" style="margin-top:12px;"></div>
   </div>
@@ -913,7 +919,7 @@ tr:hover td { background: var(--bg); }
   </div>
 
   <div class="section">
-    <div class="section-title">Calendário semanal</div>
+    <div class="section-title section-title-semana">Calendário semanal</div>
     <div id="cal-tarefas-semana-wrap"></div>
   </div>
 
@@ -968,7 +974,7 @@ tr:hover td { background: var(--bg); }
     </div>
     <div id="mentorias-semana-colab" style="margin-top:10px;font-size:13px;"></div>
   </div>
-  <div class="section">
+  <div class="section section-title-semana">
     <div class="section-title">📅 Semana</div>
     <div id="colab-cal-semana-gisella"></div>
   </div>
@@ -991,7 +997,7 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Milena</div>
     <div class="page-subtitle">Semana &middot; Tarefas</div>
   </div>
-  <div class="section">
+  <div class="section section-title-semana">
     <div class="section-title">📅 Semana</div>
     <div id="colab-cal-semana-milena"></div>
   </div>
@@ -1014,7 +1020,7 @@ tr:hover td { background: var(--bg); }
     <div class="page-title">Luiggi</div>
     <div class="page-subtitle">Semana &middot; Tarefas</div>
   </div>
-  <div class="section">
+  <div class="section section-title-semana">
     <div class="section-title">📅 Semana</div>
     <div id="colab-cal-semana-luiggi"></div>
   </div>
