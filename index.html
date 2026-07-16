@@ -592,10 +592,6 @@ tr:hover td { background: var(--bg); }
 }
 #undo-toast button:hover { background: rgba(255,255,255,0.15); }
 
-/* ── CHIPS TIPO TAREFA ── */
-._ttchip{display:inline-block;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-mid);color:var(--text-mid);background:var(--bg);cursor:pointer;transition:all .15s;user-select:none;}
-._ttchip:hover{border-color:var(--text-soft);color:var(--text);}
-._ttchip._ttchip-active{background:var(--text);color:var(--surface);border-color:var(--text);}
 /* ── LOGIN ── */
 #login-screen {
   position:fixed;inset:0;background:var(--bg);z-index:99999;
@@ -638,21 +634,7 @@ tr:hover td { background: var(--bg); }
 .login-error { font-size:12px;color:var(--danger);margin-top:8px;min-height:16px;text-align:center; }
 </style>
 </head>
-<body><style>
-#_dbg-err{display:none;position:fixed;top:0;left:0;right:0;padding:16px;background:#c0392b;color:#fff;font-family:monospace;font-size:13px;z-index:99999;white-space:pre-wrap;word-break:break-all;}
-</style>
-<div id="_dbg-err"></div>
-<script>
-window.onerror=function(msg,src,line,col,err){
-  var el=document.getElementById('_dbg-err');
-  if(el){el.style.display='block';el.textContent='ERRO JS:\n'+msg+'\nLinha:'+line+' Col:'+col+'\nFonte:'+src;}
-  return false;
-};
-window.addEventListener('unhandledrejection',function(e){
-  var el=document.getElementById('_dbg-err');
-  if(el){el.style.display='block';el.textContent='PROMISE ERRO:\n'+(e.reason||e);}
-});
-</script>
+<body>
 
 <div id="login-screen" style="display:none;">
   <div class="login-box">
@@ -747,7 +729,6 @@ window.addEventListener('unhandledrejection',function(e){
     <div class="nav-label">Visão</div>
     <button class="nav-item active" onclick="showPage('visao',this)"><span style="font-size:15px;opacity:0.6;">◈</span> Visão Geral</button>
   </div>
-
   <div class="nav-section">
     <div class="nav-label">Sessões</div>
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
@@ -787,11 +768,6 @@ window.addEventListener('unhandledrejection',function(e){
     <div class="cal-wrap" id="cal-visao"></div>
   </div>
   <div class="section">
-    <div class="section-title">📅 Tarefas da semana</div>
-    <div id="cal-visao-semana-wrap"></div>
-  </div>
-
-  <div class="section">
     <div class="section-title">Prioridade</div>
     <div id="prioridades-container"></div>
     <div style="margin-top:8px;">
@@ -802,6 +778,11 @@ window.addEventListener('unhandledrejection',function(e){
 
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas da semana</div>
+    <div id="cal-visao-semana-wrap"></div>
+    <div id="visao-tarefas-lista" style="margin-top:12px;"></div>
   </div>
   <div class="section">
     <div class="section-title">Conteúdos da semana</div>
@@ -970,8 +951,8 @@ window.addEventListener('unhandledrejection',function(e){
 <!-- COLABORADOR: GISELLA -->
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
-    <div class="page-title" style="color:var(--gisella);">Gisella</div>
-    <div class="page-subtitle">Agenda &middot; Tarefas &middot; Notas rápidas</div>
+    <div class="page-title">Gisella</div>
+    <div class="page-subtitle">Agenda &middot; Semana &middot; Tarefas</div>
   </div>
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -988,13 +969,6 @@ window.addEventListener('unhandledrejection',function(e){
     <div id="mentorias-semana-colab" style="margin-top:10px;font-size:13px;"></div>
   </div>
   <div class="section">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
-      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
-      <div id="gisella-notas-lista"></div>
-      <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
-    </div>
-  </div>
-  <div class="section">
     <div class="section-title">📅 Semana</div>
     <div id="colab-cal-semana-gisella"></div>
   </div>
@@ -1002,13 +976,20 @@ window.addEventListener('unhandledrejection',function(e){
     <div class="section-title">Tarefas</div>
     <div id="colab-tarefas-gisella"></div>
   </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="gisella-notas-lista"></div>
+      <button onclick="addNotaRapida('gisella')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
 </div>
 
 <!-- COLABORADOR: MILENA -->
 <div class="page" id="page-colab-milena">
   <div class="page-header">
-    <div class="page-title" style="color:var(--leia);">Milena</div>
-    <div class="page-subtitle">Tarefas &middot; Calendário semanal</div>
+    <div class="page-title">Milena</div>
+    <div class="page-subtitle">Semana &middot; Tarefas</div>
   </div>
   <div class="section">
     <div class="section-title">📅 Semana</div>
@@ -1018,13 +999,20 @@ window.addEventListener('unhandledrejection',function(e){
     <div class="section-title">Tarefas</div>
     <div id="colab-tarefas-milena"></div>
   </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="milena-notas-lista"></div>
+      <button onclick="addNotaRapida('milena')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
 </div>
 
 <!-- COLABORADOR: LUIGGI -->
 <div class="page" id="page-colab-luiggi">
   <div class="page-header">
-    <div class="page-title" style="color:var(--editora);">Luiggi</div>
-    <div class="page-subtitle">Tarefas &middot; Calendário semanal</div>
+    <div class="page-title">Luiggi</div>
+    <div class="page-subtitle">Semana &middot; Tarefas</div>
   </div>
   <div class="section">
     <div class="section-title">📅 Semana</div>
@@ -1033,6 +1021,13 @@ window.addEventListener('unhandledrejection',function(e){
   <div class="section">
     <div class="section-title">Tarefas</div>
     <div id="colab-tarefas-luiggi"></div>
+  </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="luiggi-notas-lista"></div>
+      <button onclick="addNotaRapida('luiggi')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
   </div>
 </div>
 
@@ -1165,48 +1160,7 @@ window.addEventListener('unhandledrejection',function(e){
 
       <!-- TAREFA FIELDS -->
       <div id="qa-fields-tarefa">
-        <div class="form-group">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-            <label class="form-label" style="margin:0;">Data</label>
-            <label style="cursor:pointer;font-size:12px;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-data-modo" value="unica" checked onchange="_toggleDataModo()" style="accent-color:var(--gisella);"> Data única</label>
-            <label style="cursor:pointer;font-size:12px;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-data-modo" value="fases" onchange="_toggleDataModo()" style="accent-color:var(--gisella);"> 3 fases</label>
-          </div>
-          <div id="qa-data-unica-wrap"><input class="form-input" id="qa-prazo" type="date"></div>
-          <div id="qa-data-fases-wrap" style="display:none;">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
-                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">🔍 Pensar/Pesquisar</div>
-                <input class="form-input" id="qa-fase-pensar" type="date" style="margin-bottom:6px;font-size:12px;">
-                <div style="display:flex;flex-direction:column;gap:3px;">
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-pensar" value="" checked style="accent-color:var(--gisella);width:11px;height:11px;"> Sem tipo</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-pensar" value="burocracia" style="accent-color:var(--gisella);width:11px;height:11px;"> ⚙️ Burocracias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-pensar" value="estrategia" style="accent-color:var(--gisella);width:11px;height:11px;"> 🎯 Estratégias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-pensar" value="criativo" style="accent-color:var(--gisella);width:11px;height:11px;"> 💡 Criativo</label>
-                </div>
-              </div>
-              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
-                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">📝 Rascunho</div>
-                <input class="form-input" id="qa-fase-rascunho" type="date" style="margin-bottom:6px;font-size:12px;">
-                <div style="display:flex;flex-direction:column;gap:3px;">
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-rascunho" value="" checked style="accent-color:var(--gisella);width:11px;height:11px;"> Sem tipo</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-rascunho" value="burocracia" style="accent-color:var(--gisella);width:11px;height:11px;"> ⚙️ Burocracias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-rascunho" value="estrategia" style="accent-color:var(--gisella);width:11px;height:11px;"> 🎯 Estratégias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-rascunho" value="criativo" style="accent-color:var(--gisella);width:11px;height:11px;"> 💡 Criativo</label>
-                </div>
-              </div>
-              <div style="background:var(--surface);border-radius:8px;padding:8px;border:1px solid var(--border);">
-                <div style="font-size:11px;font-weight:600;color:var(--text-soft);margin-bottom:6px;">🚀 Implementação</div>
-                <input class="form-input" id="qa-fase-impl" type="date" style="margin-bottom:6px;font-size:12px;">
-                <div style="display:flex;flex-direction:column;gap:3px;">
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-impl" value="" checked style="accent-color:var(--gisella);width:11px;height:11px;"> Sem tipo</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-impl" value="burocracia" style="accent-color:var(--gisella);width:11px;height:11px;"> ⚙️ Burocracias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-impl" value="estrategia" style="accent-color:var(--gisella);width:11px;height:11px;"> 🎯 Estratégias</label>
-                  <label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="radio" name="qa-tp-impl" value="criativo" style="accent-color:var(--gisella);width:11px;height:11px;"> 💡 Criativo</label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" id="qa-prazo" type="date"></div>
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
@@ -1220,15 +1174,6 @@ window.addEventListener('unhandledrejection',function(e){
         </div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
-        <div class="form-group"><label class="form-label">Tipo de tarefa</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
-            <label id="_tt-none" style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="" checked style="display:none;"><span class="_ttchip _ttchip-active" onclick="_setTipo('')">Sem tipo</span></label>
-            <label id="_tt-bur"  style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="burocracia" style="display:none;"><span class="_ttchip" onclick="_setTipo('burocracia')">⚙️ Burocracias</span></label>
-            <label id="_tt-est"  style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="estrategia" style="display:none;"><span class="_ttchip" onclick="_setTipo('estrategia')">🎯 Estratégias</span></label>
-            <label id="_tt-cri"  style="cursor:pointer;"><input type="radio" name="qa-tipo-tarefa-r" value="criativo" style="display:none;"><span class="_ttchip" onclick="_setTipo('criativo')">💡 Criativo</span></label>
-          </div>
-          <input type="hidden" id="qa-tipo-tarefa" value="">
-        </div>
         <!-- COMENTÁRIOS -->
         <div id="qa-comentarios-wrap" style="display:none;margin-top:4px;">
           <div style="font-size:11px;font-weight:500;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Comentários</div>
@@ -2872,61 +2817,32 @@ function livroCalDrop(e, novaData) {
   updateEtapaPrazoInline(livroId, idx, novaData);
 }
 
-/* ── HELPERS TIPO TAREFA + FDS + PRAZO INLINE ── */
-const _TIPO_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
-const _TIPO_ORDER = { burocracia:0, estrategia:1, criativo:2 };
-function _sortTipo(arr){
-  return [...arr].sort(function(a,b){
-    var oa=_TIPO_ORDER[a.tipoTarefa]!=null?_TIPO_ORDER[a.tipoTarefa]:3;
-    var ob=_TIPO_ORDER[b.tipoTarefa]!=null?_TIPO_ORDER[b.tipoTarefa]:3;
-    return oa!==ob?oa-ob:(a.data||'9').localeCompare(b.data||'9');
-  });
-}
-function _fds(ds){ // sábado→sexta, domingo→segunda
-  if(!ds)return ds;
-  var d=new Date(ds+'T00:00:00'),wd=d.getDay();
-  if(wd===6){d.setDate(d.getDate()-1);}else if(wd===0){d.setDate(d.getDate()+1);}
-  return d.toISOString().slice(0,10);
-}
-window._setTipo=function(val){
-  var inp=document.getElementById('qa-tipo-tarefa');if(inp)inp.value=val;
-  document.querySelectorAll('._ttchip').forEach(function(c){c.classList.remove('_ttchip-active');});
-  var m={'':'_tt-none',burocracia:'_tt-bur',criativo:'_tt-cri',estrategia:'_tt-est'};
-  var lb=document.getElementById(m[val]||'_tt-none');
-  if(lb)lb.querySelector('._ttchip').classList.add('_ttchip-active');
-};
-window._toggleDataModo=function(){
-  var modo=document.querySelector('input[name="qa-data-modo"]:checked');
-  var u=document.getElementById('qa-data-unica-wrap');
-  var f=document.getElementById('qa-data-fases-wrap');
-  if(!modo||!u||!f)return;
-  var isFases=modo.value==='fases';
-  u.style.display=isFases?'none':'';f.style.display=isFases?'':'none';
-};
-function _editEventoPrazo(id,td){
-  var ev=events.find(function(e){return e.id===id;});if(!ev)return;
-  var inp=document.createElement('input');inp.type='date';inp.value=ev.data||'';
-  inp.style.cssText='font-size:12px;border:1px solid var(--gisella);border-radius:5px;padding:2px 5px;background:var(--surface);color:var(--text);cursor:pointer;';
-  inp.onchange=function(){ev.data=this.value;save('gc-events',events);if(window.fbSave)window.fbSave('gc-events',events).catch(function(){});buildTarefas();buildTarefasCalSemana();};
-  inp.onblur=function(){buildTarefas();buildTarefasCalSemana();};
-  td.innerHTML='';td.appendChild(inp);inp.focus();inp.click();
-}
-function _editEtapaPrazo(livroId,idx,td){
-  var l=livros.find(function(x){return x.id===livroId;});if(!l||!l.etapas||!l.etapas[idx])return;
-  var etapa=l.etapas[idx];
-  var inp=document.createElement('input');inp.type='date';inp.value=etapa.prazo||'';
-  inp.style.cssText='font-size:12px;border:1px solid var(--gisella);border-radius:5px;padding:2px 5px;background:var(--surface);color:var(--text);cursor:pointer;';
-  inp.onchange=function(){etapa.prazo=this.value;save('gc-livros',livros);if(window.fbSave)window.fbSave('gc-livros',livros).catch(function(){});buildTarefas();buildTarefasCalSemana();renderLivros();};
-  inp.onblur=function(){buildTarefas();buildTarefasCalSemana();};
-  td.innerHTML='';td.appendChild(inp);inp.focus();inp.click();
-}
-
 /* ── CALENDÁRIO SEMANAL DE TAREFAS (aba Tarefas) ── */
 let _tarefasCalWeekOffset = 0;
 let _tarefaCalDragSrc = null;
 
+/* ── TIPO TAREFA ── */
+const _TIPO_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
+const _TIPO_ORDER = { burocracia:2, criativo:1, estrategia:0, '':3 };
+function _sortTipo(arr) {
+  return arr.slice().sort((a,b) => {
+    const oa = _TIPO_ORDER[a.tipoTarefa||''] ?? 3;
+    const ob = _TIPO_ORDER[b.tipoTarefa||''] ?? 3;
+    return oa !== ob ? oa - ob : (a.titulo||'').localeCompare(b.titulo||'');
+  });
+}
+/* _fds: move sábado→sexta, domingo→segunda */
+function _fds(ds) {
+  if (!ds) return ds;
+  const d = new Date(ds + 'T00:00:00');
+  const dw = d.getDay();
+  if (dw === 6) { d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+  if (dw === 0) { d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+  return ds;
+}
+
 function buildTarefasCalSemana() {
-  const wrap = document.getElementById('cal-tarefas-semana-wrap');
+  const wrap  = document.getElementById('cal-tarefas-semana-wrap');
   const wrapV = document.getElementById('cal-visao-semana-wrap');
   const wrapC1 = document.getElementById('colab-cal-semana-gisella');
   const wrapC2 = document.getElementById('colab-cal-semana-milena');
@@ -2935,8 +2851,9 @@ function buildTarefasCalSemana() {
 
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const inicioSemana = new Date(hoje);
-  const _dow0=hoje.getDay(); const _dm=_dow0===0?-6:1-_dow0;
-  inicioSemana.setDate(hoje.getDate()+_dm+(_tarefasCalWeekOffset*7));
+  const _dow0 = hoje.getDay();
+  const _dm   = _dow0 === 0 ? -6 : 1 - _dow0;
+  inicioSemana.setDate(hoje.getDate() + _dm + (_tarefasCalWeekOffset * 7));
   const dias = Array.from({length:5}, (_,i) => {
     const d = new Date(inicioSemana);
     d.setDate(inicioSemana.getDate() + i);
@@ -2944,13 +2861,11 @@ function buildTarefasCalSemana() {
   });
 
   const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  const dows = ['SEG','TER','QUA','QUI','SEX'];
+  const dows  = ['SEG','TER','QUA','QUI','SEX'];
   const hojeStr = hoje.toISOString().slice(0,10);
-  const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
+  const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[4].getDate()} ${meses[dias[4].getMonth()]} ${dias[4].getFullYear()}`;
 
-  // Mesmos filtros e mesma montagem de dados usados em buildTarefas, para
-  // que o calendário e a lista abaixo sempre mostrem exatamente as mesmas tarefas.
-  const _tf = getFilter('tarefas');
+  const _tf  = getFilter('tarefas');
   const _tfc = getFilterColab('tarefas');
 
   const etapaEvents = [];
@@ -2960,10 +2875,9 @@ function buildTarefasCalSemana() {
       if (!empMatch) return;
       if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
       etapaEvents.push({
-        _isEtapa: true, livroId: l.id, etapaIdx: i,
         _isEtapa:true, livroId:l.id, etapaIdx:i,
-        titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa,
-        data: _fds(e.prazo||''), responsavel: e.resp||'', arquivada: !!e.feito, urgente: false, tipoTarefa: '',
+        titulo:`[${l.titulo}] ${e.nome}`, empresa:l.empresa,
+        data:_fds(e.prazo||''), responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
       });
     });
   });
@@ -2973,89 +2887,77 @@ function buildTarefasCalSemana() {
     ...etapaEvents,
   ];
 
-  let html = `<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">
-    <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">‹</button>
-    <div class="cal-month">${label}</div>
-    <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
-
-  dias.forEach((dia, idx) => {
-    const ds = dia.toISOString().slice(0,10);
-    const isToday = ds === hojeStr;
-    const dayTarefas = _sortTipo(todas.filter(t => t.data === ds));
-
-    html += `<div class="tarefas-cal-day" ondragover="event.preventDefault();this.style.background='var(--gisella-bg)';" ondragleave="this.style.background='var(--surface)';" ondrop="tarefaCalDrop(event,'${ds}')"
-      style="background:var(--surface);border-radius:10px;padding:8px;min-height:110px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
-      <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
-      <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
-
-    if (dayTarefas.length === 0) {
-      html += `<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
-    }
-    dayTarefas.forEach(t => {
-      const primeiraEmp = (t.empresa||'').split(',')[0];
-      const cor = primeiraEmp==='editora'?'var(--editora)':primeiraEmp==='leia'?'var(--leia)':'var(--gisella)';
-      const dragStart = t._isEtapa
-        ? `tarefaCalDragStart(event,'etapa',${t.livroId},${t.etapaIdx})`
-        : `tarefaCalDragStart(event,'evento',${t.id},null)`;
-      const clickAction = t._isEtapa
-        ? `openEditEtapa(${t.livroId},${t.etapaIdx})`
-        : `openEditEvent(${t.id})`;
-      const _chk=t._isEtapa?`toggleEtapa(${t.livroId},${t.etapaIdx})`:`toggleTarefaArquivada(${t.id})`;
-      html+=`<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
-        <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chk}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">
-        <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" style="flex:1;min-width:0;cursor:pointer;">
-          <span style="display:block;word-break:break-word;line-height:1.3;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_EMOJI[t.tipoTarefa]?_TIPO_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
-          ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;">${t.responsavel}</span>`:''}
-        </div>
-      </div>`;
-    });
-
-    html += '</div>';
-  });
-
-  html += '</div>';
-  if(wrap) wrap.innerHTML=html;
-
-  var wrapVG=document.getElementById('cal-visao-semana-wrap');
-  if(wrapVG){
-    var etVG=[];
-    livros.forEach(function(l){(l.etapas||[]).forEach(function(e,i){
-      etVG.push({_isEtapa:true,livroId:l.id,etapaIdx:i,
-        titulo:'['+(l.titulo||'Livro')+'] '+e.nome,
-        empresa:l.empresa,data:_fds(e.prazo||''),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
-    });});
-    var todasVG=_sortTipo([].concat(
-      events.filter(function(e){return e.tipo==='tarefa'&&!e.arquivada;})
-        .map(function(e){return{_isEtapa:false,id:e.id,titulo:e.titulo,empresa:e.empresa,
-          data:_fds(e.data||''),arquivada:false,urgente:!!e.urgente,tipoTarefa:e.tipoTarefa||''};}),
-      etVG.filter(function(e){return!e.arquivada;})
-    ));
-    var hVG='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
-    dias.forEach(function(dia,i2){
-      var ds2=dia.toISOString().slice(0,10),isT2=ds2===hojeStr;
-      var dVG=_sortTipo(todasVG.filter(function(t){return t.data===ds2;}));
-      hVG+='<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:80px;border:1px solid '+(isT2?'var(--gisella)':'var(--border)')+';">';
-      hVG+='<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:4px;">'+dows[i2]+'</div>';
-      hVG+='<div style="font-size:'+(isT2?'16px':'14px')+';font-weight:'+(isT2?700:500)+';color:'+(isT2?'var(--gisella)':'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
-      if(!dVG.length)hVG+='<div style="font-size:10px;color:var(--text-soft);opacity:.5;">—</div>';
-      dVG.forEach(function(t){
-        var c2=(t.empresa||'').split(',')[0];
-        var cor2=c2==='editora'?'var(--editora)':c2==='leia'?'var(--leia)':'var(--gisella)';
-        var cl=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':'openEditEvent('+t.id+')';
-        var chk2=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':'toggleTarefaArquivada('+t.id+')';
-        var em=_TIPO_EMOJI[t.tipoTarefa]?_TIPO_EMOJI[t.tipoTarefa]+' ':'';
-        hVG+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor2+'15;color:'+cor2+';border-left:2px solid '+cor2+';display:flex;align-items:flex-start;gap:3px;">';
-        hVG+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk2+'" onclick="event.stopPropagation();" style="accent-color:'+cor2+';flex-shrink:0;margin-top:2px;width:10px;height:10px;cursor:pointer;">';
-        hVG+='<span onclick="'+cl+'" style="flex:1;min-width:0;word-break:break-word;line-height:1.3;cursor:pointer;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+(t.urgente?'❗ ':'')+em+t.titulo+'</span>';
-        hVG+='</div>';
-      });
-      hVG+='</div>';
-    });
-    hVG+='</div>';
-    wrapVG.innerHTML=hVG;
+  function _chipHtml(t, cor) {
+    const dragStart = t._isEtapa ? `tarefaCalDragStart(event,'etapa',${t.livroId},${t.etapaIdx})` : `tarefaCalDragStart(event,'evento',${t.id},null)`;
+    const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : `openEditEvent(${t.id})`;
+    const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : `toggleTarefaArquivada(${t.id})`;
+    return `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
+      <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chk}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">
+      <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" style="flex:1;min-width:0;cursor:pointer;">
+        <span style="display:block;word-break:break-word;line-height:1.3;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_EMOJI[t.tipoTarefa]?_TIPO_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
+        ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;">${t.responsavel}</span>`:''}
+      </div>
+    </div>`;
   }
+
+  if (wrap) {
+    let html = `<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">
+      <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">‹</button>
+      <div class="cal-month">${label}</div>
+      <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
+    dias.forEach((dia,idx) => {
+      const ds = dia.toISOString().slice(0,10);
+      const isToday = ds === hojeStr;
+      const dayTarefas = _sortTipo(todas.filter(t => t.data === ds));
+      const cor = 'var(--gisella)';
+      html += `<div class="tarefas-cal-day" ondragover="event.preventDefault();this.style.background='var(--gisella-bg)';" ondragleave="this.style.background='var(--surface)';" ondrop="tarefaCalDrop(event,'${ds}')"
+        style="background:var(--surface);border-radius:10px;padding:8px;min-height:110px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
+        <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
+        <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
+      if (dayTarefas.length===0) html += `<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
+      dayTarefas.forEach(t => {
+        const pr = (t.empresa||'').split(',')[0];
+        const c = pr==='editora'?'var(--editora)':pr==='leia'?'var(--leia)':'var(--gisella)';
+        html += _chipHtml(t, c);
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  if (wrapV) {
+    let hVG = `<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">
+      <button class="cal-nav" onclick="_tarefasCalWeekOffset--;buildTarefasCalSemana()">‹</button>
+      <div class="cal-month">${label}</div>
+      <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
+    dias.forEach((dia,idx) => {
+      const ds = dia.toISOString().slice(0,10);
+      const isToday = ds === hojeStr;
+      const dayTarefas = _sortTipo(todas.filter(t => t.data === ds));
+      hVG += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};">
+        <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:4px;">${dows[idx]}</div>
+        <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?700:500};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
+      if (dayTarefas.length===0) hVG += `<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>`;
+      dayTarefas.forEach(t => {
+        const pr = (t.empresa||'').split(',')[0];
+        const c = pr==='editora'?'var(--editora)':pr==='leia'?'var(--leia)':'var(--gisella)';
+        hVG += _chipHtml(t, c);
+      });
+      hVG += '</div>';
+    });
+    hVG += '</div>';
+    wrapV.innerHTML = hVG;
+  }
+
+  [wrapC1,wrapC2,wrapC3].filter(Boolean).forEach(w => {
+    const key = w.id.replace('colab-cal-semana-','');
+    _buildColabCal(key);
+  });
 }
 
 function tarefaCalDragStart(e, kind, a, b) {
@@ -3113,14 +3015,13 @@ function showPage(id, btn) {
   if (el) el.classList.add('active');
   if (btn) btn.classList.add('active');
   localStorage.setItem('gc-current-page', id);
-  if (id === 'visao') { buildPrioridades(); buildTarefasCalSemana(); window.scrollTo({top:0,behavior:'instant'}); }
-  if (id === 'tarefas') { buildTarefas(); buildTarefasCalSemana(); }
-  if (id === 'editora' || id === 'leia' || id === 'gisella') { buildTarefasEmpresa(id); }
-  if (id === 'gisella') setTimeout(() => { countMentoriasmes(); renderSteiraList(); }, 300);
-  if (id === 'leia' && gcalLeiaCache.length === 0) { loadGcalLeia(); }
-  if (id === 'colab-gisella') { buildColabTarefas(); _buildColabCal('gisella'); loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); }
-  if (id === 'colab-milena') { buildColabTarefas(); _buildColabCal('milena'); }
-  if (id === 'colab-luiggi') { buildColabTarefas(); _buildColabCal('luiggi'); }
+  if (id === 'visao') { buildPrioridades(); window.scrollTo({top:0,behavior:'instant'}); }
+  if (id === 'tarefas') { buildTarefas(); }
+
+
+  if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); buildColabTarefas(); }
+  if (id === 'colab-milena')  { renderNotas('milena');  buildColabTarefas(); }
+  if (id === 'colab-luiggi') { renderNotas('luiggi'); buildColabTarefas(); }
   if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
   if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
   if (id === 'links') { renderLinks(); }
@@ -3394,11 +3295,6 @@ function openQuickAdd() {
   document.getElementById('qa-titulo').value = '';
   document.getElementById('qa-titulo').placeholder = 'Descreva...';
   setEmpresasChecked('qa-emp-', 'editora');
-  if(window._setTipo)window._setTipo('');
-  var _rdU=document.querySelector('input[name="qa-data-modo"][value="unica"]');
-  if(_rdU){_rdU.checked=true;if(window._toggleDataModo)window._toggleDataModo();}
-  ['qa-fase-pensar','qa-fase-rascunho','qa-fase-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  ['qa-tp-pensar','qa-tp-rascunho','qa-tp-impl'].forEach(function(nm){var r=document.querySelector('input[name="'+nm+'"][value=""]');if(r)r.checked=true;});
   // Auto-detect tipo from current active page
   const activePage = document.querySelector('.page.active');
   const pageId = activePage ? activePage.id : '';
@@ -3448,17 +3344,13 @@ function openEditEvent(id) {
   const ev = events.find(x => x.id === id);
   if (!ev) return;
   editingEventId = id;
-  window._editingEtapa = null;
-  var _rdU2=document.querySelector('input[name="qa-data-modo"][value="unica"]');
-  if(_rdU2){_rdU2.checked=true;if(window._toggleDataModo)window._toggleDataModo();}
   document.getElementById('qa-modal-title').textContent = 'Editar item';
   document.getElementById('qa-submit-btn').textContent = 'Salvar';
   const delBtn = document.getElementById('qa-delete-btn');
   if (delBtn) delBtn.style.display = 'inline-block';
   document.getElementById('qa-titulo').value = ev.titulo || '';
   setEmpresasChecked('qa-emp-', ev.empresa || 'editora');
-  document.getElementById('qa-tipo').value = ev.tipo || 'tarefa';
-  updateQaFields();
+  document.getElementById('qa-tipo').value = ev.tipo || 'evento';
   document.getElementById('qa-prazo').value = ev.data || '';
   document.getElementById('qa-hora-inicio').value = ev.horaInicio || '';
   document.getElementById('qa-data-fim').value = ev.dataFim || '';
@@ -3467,7 +3359,6 @@ function openEditEvent(id) {
   document.getElementById('qa-observacao').value = ev.observacao || '';
   const urgenteEdit = document.getElementById('qa-urgente');
   if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
-  if(window._setTipo)window._setTipo(ev.tipoTarefa||'');
   // Mostrar e popular comentários
   const comWrap = document.getElementById('qa-comentarios-wrap');
   if (comWrap) {
@@ -3610,8 +3501,6 @@ function submitQuickAdd() {
       l.etapas[idx].nome = titulo;
       l.etapas[idx].prazo = getQaVal('qa-prazo');
       l.etapas[idx].resp = getQaVal('qa-responsavel');
-      var _ne=getEmpresaStr('qa-emp-',l.empresa||'editora');if(_ne)l.empresa=_ne;
-      var _tt=document.getElementById('qa-tipo-tarefa');if(_tt)l.etapas[idx].tipoTarefa=_tt.value||undefined;
       save('gc-livros', livros);
       renderLivros();
       buildTarefas();
@@ -3716,32 +3605,7 @@ function submitQuickAdd() {
     dataFim: getQaVal('qa-data-fim'), horaFim: getQaVal('qa-hora-fim'),
     responsavel, observacao,
     urgente: tipo === 'tarefa' ? urgenteVal : undefined,
-    tipoTarefa: tipo==='tarefa'?(document.getElementById('qa-tipo-tarefa')?document.getElementById('qa-tipo-tarefa').value||undefined:undefined):undefined,
   };
-
-  if(tipo==='tarefa'&&!editingEventId){
-    var _mF=document.querySelector('input[name="qa-data-modo"]:checked');
-    if(_mF&&_mF.value==='fases'){
-      var _fasesDef=[
-        {id:'qa-fase-pensar',  tn:'qa-tp-pensar',  pre:'🔍 Pensar/Pesquisar'},
-        {id:'qa-fase-rascunho',tn:'qa-tp-rascunho',pre:'📝 Rascunho'},
-        {id:'qa-fase-impl',    tn:'qa-tp-impl',    pre:'🚀 Implementação'},
-      ];
-      var _nc=0;
-      _fasesDef.forEach(function(f,fi){
-        var el=document.getElementById(f.id);if(!el||!el.value)return;
-        var tr=document.querySelector('input[name="'+f.tn+'"]:checked');
-        var ft=tr?tr.value||undefined:undefined;
-        events.push({id:Date.now()+fi+1,...eventData,titulo:f.pre+' — '+titulo,data:el.value,tipoTarefa:ft});
-        _nc++;
-      });
-      if(_nc>0){
-        save('gc-events',events);if(window.fbSave)window.fbSave('gc-events',events).catch(function(){});
-        buildTarefas();buildColabTarefas();buildTarefasCalSemana();buildPrioridades();
-        closeModal('modal-quickadd');return;
-      }
-    }
-  }
 
   if (editingEventId) {
     const i = events.findIndex(x => x.id === editingEventId);
@@ -3793,14 +3657,12 @@ function submitQuickAdd() {
   window._addingToProjetoId = null;
   window._addingToMenteeId = null;
 
-  save('gc-events',events);if(window.fbSave)window.fbSave('gc-events',events).catch(function(){});
+  save('gc-events', events);
   refreshCalendars();
-  buildCalendar('cal-eventos','all');
+  buildCalendar('cal-eventos', 'all');
   buildTarefas();
   buildColabTarefas();
-  buildTarefasCalSemana();
   buildPrioridades();
-  closeModal('modal-quickadd');
   // Notify if task assigned to someone
   if (tipo === 'tarefa' && !editingEventId) {
     const resp = getQaVal('qa-responsavel');
@@ -4788,11 +4650,11 @@ function deleteConteudo(id) {
   const snapshot = [...conteudos];
   conteudos = conteudos.filter(x => x.id !== id);
   save('gc-conteudos', conteudos);
-  renderConteudos(); buildPrioridades(); buildTarefasCalSemana();
+  renderConteudos(); buildPrioridades();
   pushUndo(c.nome || 'Conteúdo', () => {
     conteudos = snapshot;
     save('gc-conteudos', conteudos);
-    renderConteudos(); buildPrioridades(); buildTarefasCalSemana();
+    renderConteudos(); buildPrioridades();
   });
 }
 
@@ -5112,7 +4974,7 @@ function buildTarefas() {
       });
     });
   });
-  let ativas = [
+  const ativas = [
     ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
     ...etapaEvents.filter(e=>!e.arquivada)
   ];
@@ -5139,7 +5001,7 @@ function buildTarefas() {
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
-        <span>${_TIPO_EMOJI[e.tipoTarefa]?_TIPO_EMOJI[e.tipoTarefa]+' ':''}${e.titulo}</span>
+        <span>${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
         ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
@@ -5147,15 +5009,11 @@ function buildTarefas() {
         ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
         ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
-      <td style="width:110px;">
+      <td>
         ${empBadgesHtml(e.empresa)}
         ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
       </td>
-      <td style="width:34px;text-align:center;font-size:13px;" title="${e.tipoTarefa==='burocracia'?'Burocracias':e.tipoTarefa==='criativo'?'Criativo':e.tipoTarefa==='estrategia'?'Estratégias':''}">${_TIPO_EMOJI[e.tipoTarefa]||''}</td>
-      <td style="font-size:12px;color:${prazoColor};font-weight:500;cursor:pointer;white-space:nowrap;" title="Clique para alterar prazo"
-          onclick="${isEtapa?`_editEtapaPrazo(${e._livroId},${e._etapaIdx},this)`:`_editEventoPrazo(${e.id},this)`}">
-        ${e.data?fmtDateTarefa(e.data):'—'}
-      </td>
+      <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDateTarefa(e.data):'—'}</td>
     </tr>`;
   }
 
@@ -5164,7 +5022,7 @@ function buildTarefas() {
     return;
   }
 
-  ativas = _sortTipo(ativas);
+  ativas.sort((a,b)=>(a.data||'9').localeCompare(b.data||'9'));
   arquivadas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
 
   // Calcular limites de semana corretamente (segunda a domingo)
@@ -5203,7 +5061,7 @@ function buildTarefas() {
   });
 
   function tableHtml(items, isArq) {
-    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th style="width:110px;">Empresa</th><th style="width:34px;text-align:center;">Tipo</th><th>Prazo</th></tr></thead>
+    return `<div class="table-wrap"><table><thead><tr><th style="width:40px;"></th><th>Tarefa</th><th>Empresa</th><th>Prazo</th></tr></thead>
     <tbody>${items.map(t=>tarefaRow(t,isArq||false)).join('')}</tbody></table></div>`;
   }
 
@@ -5546,8 +5404,9 @@ function projetoHtml(p, showEmpresa) {
 }
 
 function renderProjetos() {
-  const ativos = projetos.filter(p => p.status !== 'finalizado');
-  const finalizados = projetos.filter(p => p.status === 'finalizado');
+  const _pf = getFilter('projetos');
+  const ativos = projetos.filter(p => p.status !== 'finalizado' && (_pf==='all'||(p.empresa||'').split(',').includes(_pf)));
+  const finalizados = projetos.filter(p => p.status === 'finalizado' && (_pf==='all'||(p.empresa||'').split(',').includes(_pf)));
 
   // Visao geral
   const visaoEl = document.getElementById('projetos-visao');
@@ -5555,20 +5414,15 @@ function renderProjetos() {
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
 
-  // Todos page com filtro
-  const _fEmp = (typeof pageFilters !== 'undefined' && pageFilters['projetos']) || 'all';
+  // Todos page
   const todosEl = document.getElementById('projetos-todos');
-  if (todosEl) {
-    const _pl = _fEmp==='all' ? ativos : ativos.filter(p=>(p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
-    todosEl.innerHTML = _pl.length===0
-      ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
-      : _pl.map(p=>projetoHtml(p,true)).join('');
-  }
+  if (todosEl) todosEl.innerHTML = ativos.length===0
+    ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
+    : ativos.map(p=>projetoHtml(p,true)).join('');
   const archTodosEl = document.getElementById('projetos-arquivados-todos');
   const archTodosCnt = document.getElementById('parq-count-todos');
-  const _archFilt = _fEmp==='all' ? finalizados : finalizados.filter(p=>(p.empresa||'').split(',').map(x=>x.trim()).includes(_fEmp));
-  if (archTodosCnt) archTodosCnt.textContent = _archFilt.length;
-  if (archTodosEl) archTodosEl.innerHTML = _archFilt.map(p=>projetoHtml(p,true)).join('');
+  if (archTodosCnt) archTodosCnt.textContent = finalizados.length;
+  if (archTodosEl) archTodosEl.innerHTML = finalizados.map(p=>projetoHtml(p,true)).join('');
 
   // Per company
   ['editora','leia','gisella'].forEach(emp => {
@@ -5716,50 +5570,62 @@ function toggleProjetosArquivadosTodos() {
 // Ordem manual das tarefas dos colaboradores
 let colabOrdem = load('gc-colab-ordem', {});
 
-var _colabCalOff={};
-function _buildColabCal(key){
-  var wrap=document.getElementById('colab-cal-semana-'+key);if(!wrap)return;
-  var nome=key.charAt(0).toUpperCase()+key.slice(1);
-  var cor=key==='gisella'?'var(--gisella)':key==='milena'?'var(--leia)':'var(--editora)';
-  var off=_colabCalOff[key]||0;
-  var hoje=new Date();hoje.setHours(0,0,0,0);
-  var ini=new Date(hoje);var dw=hoje.getDay();ini.setDate(hoje.getDate()+(dw===0?-6:1-dw)+(off*7));
-  var dias=Array.from({length:5},function(_,i){var d=new Date(ini);d.setDate(ini.getDate()+i);return d;});
-  var fim=dias[4];
-  var meses=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  var rangeLabel=ini.getDate()+' '+meses[ini.getMonth()]+(ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
-  var hojeS=hoje.toISOString().slice(0,10);
-  var dows=['SEG','TER','QUA','QUI','SEX'];
-  var tarefas=[];
-  events.filter(function(e){return e.responsavel===nome&&e.tipo==='tarefa'&&!e.arquivada;})
-    .forEach(function(e){tarefas.push({titulo:e.titulo,data:_fds(e.data||'')});});
-  livros.forEach(function(l){(l.etapas||[]).forEach(function(e){
-    if(e.resp===nome&&!e.feito)tarefas.push({titulo:'['+(l.titulo||'Livro')+'] '+e.nome,data:_fds(e.prazo||'')});
-  });});
-  // nav com data-key attribute para evitar problema de aspas no onclick
-  var navHtml=[
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">',
-    '<span style="font-size:12px;color:var(--text-soft);">'+rangeLabel+'</span>',
-    '<div style="display:flex;gap:4px;">',
-    '<button class="cal-nav" data-k="'+key+'" data-d="-1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8249;</button>',
-    '<button class="cal-nav" data-k="'+key+'" data-d="1"  onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8250;</button>',
-    '</div></div>'
-  ].join('');
-  var html='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
-  dias.forEach(function(dia,i){
-    var ds=dia.toISOString().slice(0,10),isT=ds===hojeS;
-    var dt=tarefas.filter(function(t){return t.data===ds;});
-    html+='<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:80px;border:1px solid '+(isT?cor:'var(--border)')+';">';
-    html+='<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:2px;">'+dows[i]+'</div>';
-    html+='<div style="font-size:'+(isT?'16':'14')+'px;font-weight:'+(isT?700:500)+';color:'+(isT?cor:'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+' <span style="font-size:9px;color:var(--text-soft);">'+meses[dia.getMonth()]+'</span></div>';
-    if(!dt.length)html+='<div style="font-size:10px;color:var(--text-soft);opacity:.5;">—</div>';
-    dt.forEach(function(t){
-      html+='<div style="font-size:10px;padding:3px 5px;border-radius:4px;margin-bottom:2px;background:'+cor+'15;color:'+cor+';border-left:2px solid '+cor+';word-break:break-word;line-height:1.3;">'+t.titulo+'</div>';
+var _colabCalOff = {};
+function _buildColabCal(key) {
+  var wrap = document.getElementById('colab-cal-semana-' + key);
+  if (!wrap) return;
+  var cor = key==='gisella'?'var(--gisella)':key==='milena'?'var(--leia)':'var(--editora)';
+  var off = _colabCalOff[key] || 0;
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var ini = new Date(hoje);
+  var dw = hoje.getDay();
+  ini.setDate(hoje.getDate() + (dw===0?-6:1-dw) + (off*7));
+  var dias = Array.from({length:5}, function(_,i){var d=new Date(ini);d.setDate(ini.getDate()+i);return d;});
+  var fim = dias[4];
+  var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  var dows  = ['SEG','TER','QUA','QUI','SEX'];
+  var hojeStr = hoje.toISOString().slice(0,10);
+  var rangeLabel = ini.getDate()+' '+meses[ini.getMonth()] + (ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
+
+  var allTarefas = events.filter(function(e){ return e.tipo==='tarefa' && e.responsavel && e.responsavel.toLowerCase()===key; })
+    .map(function(e){ return {_isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:_fds(e.data||''), arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||''}; });
+  livros.forEach(function(l){ (l.etapas||[]).forEach(function(e,i){
+    if ((e.resp||'').toLowerCase()===key) {
+      allTarefas.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+l.titulo+'] '+e.nome,empresa:l.empresa,data:_fds(e.prazo||''),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+    }
+  }); });
+
+  var navHtml = '<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">' +
+    '<button class="cal-nav" data-k="'+key+'" data-d="-1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8249;</button>' +
+    '<div class="cal-month">'+rangeLabel+'</div>' +
+    '<button class="cal-nav" data-k="'+key+'" data-d="1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8250;</button>' +
+    '</div>';
+
+  var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">';
+  dias.forEach(function(dia,idx){
+    var ds = dia.toISOString().slice(0,10);
+    var isT = ds===hojeStr;
+    var dayT = _sortTipo(allTarefas.filter(function(t){return t.data===ds;}));
+    html += '<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid '+(isT?cor:'var(--border)')+';">';
+    html += '<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:4px;">'+dows[idx]+'</div>';
+    html += '<div style="font-size:'+(isT?'16px':'14px')+';font-weight:'+(isT?700:500)+';color:'+(isT?cor:'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
+    if (dayT.length===0) { html += '<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>'; }
+    dayT.forEach(function(t){
+      var prE=(t.empresa||'').split(',')[0];
+      var c=prE==='editora'?'var(--editora)':prE==='leia'?'var(--leia)':'var(--gisella)';
+      var dragStart=t._isEtapa?'tarefaCalDragStart(event,\'etapa\','+t.livroId+','+t.etapaIdx+')':'tarefaCalDragStart(event,\'evento\','+t.id+',null)';
+      var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':'openEditEvent('+t.id+')';
+      var chk=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':'toggleTarefaArquivada('+t.id+')';
+      html+='<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:'+c+'15;color:'+c+';border-left:2px solid '+c+';'+(t.arquivada?'opacity:0.45;':'')+'display:flex;align-items:flex-start;gap:4px;">';
+      html+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk+'" onclick="event.stopPropagation();" style="accent-color:'+c+';flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">';
+      html+='<div draggable="true" ondragstart="'+dragStart+'" onclick="'+clickAct+'" style="flex:1;min-width:0;cursor:pointer;">';
+      html+='<span style="display:block;word-break:break-word;line-height:1.3;'+(t.arquivada?'text-decoration:line-through;':'')+'">'+( t.urgente?'❗ ':'')+(_TIPO_EMOJI[t.tipoTarefa]?_TIPO_EMOJI[t.tipoTarefa]+' ':'')+t.titulo+'</span>';
+      html+='</div></div>';
     });
-    html+='</div>';
+    html += '</div>';
   });
-  html+='</div>';
-  wrap.innerHTML=navHtml+html;
+  html += '</div>';
+  wrap.innerHTML = navHtml + html;
 }
 
 function buildColabTarefas() {
@@ -5883,8 +5749,9 @@ function buildColabTarefas() {
     }
     el.innerHTML = html;
   });
+  // Build weekly calendars for each colab
+  ['gisella','milena','luiggi'].forEach(function(k){ _buildColabCal(k); });
 }
-
 
 function colabTaskDragStart(event, taskId, colabKey) {
   event.dataTransfer.setData('text/plain', JSON.stringify({taskId, colabKey}));
@@ -7770,11 +7637,11 @@ function initApp(cloudData) {
   if (savedPage) {
     const _spEl = document.getElementById('page-' + savedPage);
     if (_spEl) {
-      const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
+      const _spBtn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes(savedPage));
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       _spEl.classList.add('active');
-      if (btn) btn.classList.add('active');
+      if (_spBtn) _spBtn.classList.add('active');
     } else {
       localStorage.setItem('gc-current-page', 'visao');
     }
@@ -7794,7 +7661,6 @@ function initApp(cloudData) {
   loadGcal();
   loadGcalLeia();
   buildHomeCards();
-
   ['gisella','milena','luiggi'].forEach(renderNotas);
   renderSteiraList();
 
@@ -7970,11 +7836,10 @@ function showApp(user, displayName) {
     hb.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
     if (window.innerWidth > 768) closeMobileNav();
   });
-  // Se for colaborador, sempre redirecionar para a página correta ao logar
+  // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
   if (['gisella','milena','luiggi'].includes(user)) {
     const savedPg = localStorage.getItem('gc-current-page');
-    const _userPage = user==='gisella'?'colab-gisella':'tarefas';
-    if (!savedPg || !document.getElementById('page-'+savedPg) || savedPg==='colab-luiggi'&&user!=='luiggi' || savedPg==='colab-milena'&&user!=='milena') {
+    if (!savedPg) {
       setTimeout(() => {
         if (user === 'gisella') {
           const el = document.getElementById('page-colab-gisella');
