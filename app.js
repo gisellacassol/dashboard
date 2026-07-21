@@ -6186,28 +6186,49 @@ function startWithFirebase() {
         if (!cloudData) return;
         let changed = false;
 
-        // Task-critical keys: use Firebase if it has newer data
+        // Task-critical keys: use Firebase only if BOTH conditions are true:
+        // 1. Firebase has a newer timestamp than this device's last upload (_fbts_)
+        // 2. This device has previously synced (localTs > 0)
+        // If localTs === 0 (never synced via new system) AND local data exists,
+        // the local data is the source of truth — upload it to Firebase instead.
         const TASK_KEYS = {
           'gc-events':   v => { events   = v.map(e => ({...e, tipo: e.tipo||'tarefa'})); },
           'gc-livros':   v => { livros   = v; },
           'gc-projetos': v => { projetos = v; },
         };
+        const keysToUpload = []; // local data that needs to be pushed to Firebase
         Object.entries(TASK_KEYS).forEach(([key, setter]) => {
           const entry = cloudData[key];
-          if (!entry || !entry.value) return;
-          const cloudTs = entry.ts || 0;
+          const cloudTs = (entry && entry.ts) || 0;
           const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
+          const hasLocal = !!localStorage.getItem(key);
+
+          if (localTs === 0 && hasLocal) {
+            // Device has never synced with new system — trust local data, schedule upload
+            keysToUpload.push(key);
+            return;
+          }
+          if (!entry || !entry.value) return;
           if (cloudTs > localTs) {
             setter(entry.value);
             localStorage.setItem(key, JSON.stringify(entry.value));
             localStorage.setItem('_fbts_' + key, cloudTs.toString());
             changed = true;
-          } else if (!localStorage.getItem(key)) {
+          } else if (!hasLocal) {
             setter(entry.value);
             localStorage.setItem(key, JSON.stringify(entry.value));
             changed = true;
           }
         });
+        // Upload local-only data to Firebase to establish the correct state
+        if (keysToUpload.length > 0 && window.fbSave) {
+          keysToUpload.forEach(key => {
+            try {
+              const localVal = JSON.parse(localStorage.getItem(key));
+              if (localVal) window.fbSave(key, localVal);
+            } catch(e) {}
+          });
+        }
 
         // Fixed-check keys: sync if Firebase is newer
         ['gisella','milena','luiggi'].forEach(c => {
