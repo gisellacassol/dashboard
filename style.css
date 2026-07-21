@@ -566,3 +566,110 @@ tr:hover td { background: var(--bg); }
 }
 .login-btn:hover { opacity:0.85; }
 .login-error { font-size:12px;color:var(--danger);margin-top:8px;min-height:16px;text-align:center; }
+
+/* ═══════════════════════════════════════════════
+   MOBILE RESPONSIVO — não altera nada no desktop
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Grids inline 1fr 1fr → coluna única ── */
+  div[style*="grid-template-columns:1fr 1fr"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Grids de modal internos */
+  .modal div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Calendário mensal ── */
+  .cal-grid { font-size: 10px; }
+  .cal-day { min-height: 36px; padding: 2px 3px; }
+  .cal-day-num { font-size: 10px; }
+  .cal-event { font-size: 8px !important; padding: 1px 2px !important; margin-bottom: 1px; }
+
+  /* ── Kanban ── */
+  .kanban-board { grid-template-columns: repeat(5, minmax(160px, 1fr)); }
+  .kanban-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; }
+
+  /* ── Conteúdo cards ── */
+  .conteudo-header { flex-wrap: wrap; gap: 4px; }
+  .conteudo-titulo { white-space: normal !important; font-size: 12px; min-width: 0; }
+  .conteudo-progress-wrap { display: none; } /* esconde barra de progresso no card pequeno */
+
+  /* ── Página de eventos — lista dois lados ── */
+  #eventos-lista-proximos,
+  #eventos-lista-passados { width: 100%; }
+
+  /* ── Página Tarefas — header com filtros ── */
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  #filter-bar-tarefas-colab { flex-wrap: wrap; }
+
+  /* ── Colaboradores — notas ── */
+  div[style*="max-width:420px"] { max-width: 100% !important; }
+
+  /* ── Tabelas: forçar scroll horizontal ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 420px; }
+
+  /* ── Projetos e livros cards ── */
+  .livro-card,
+  .projeto-card { padding: 12px; }
+
+  /* ── Métricas home ── */
+  .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+  /* ── Seções de prioridade / visão ── */
+  #prioridades-container .table-wrap,
+  #tarefas-container .table-wrap { overflow-x: auto; }
+
+  /* ── Modal quickadd: campos lado a lado em grid ── */
+  #qa-fields-tarefa div[style*="grid-template-columns"],
+  #qa-fields-evento div[style*="grid-template-columns"],
+  #qa-fields-conteudo div[style*="grid-template-columns"],
+  #qa-fields-projeto div[style*="grid-template-columns"],
+  #qa-fields-livro div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Modal de novo projeto / conteudo / mentee ── */
+  #modal-projeto .modal div[style*="grid-template-columns"],
+  #modal-conteudo .modal div[style*="grid-template-columns"],
+  #modal-mentee .modal div[style*="grid-template-columns"],
+  #modal-steira .modal div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Botão row modal ── */
+  .btn-row { flex-wrap: wrap; gap: 8px; }
+  .btn-row .btn { flex: 1; min-width: 100px; text-align: center; }
+
+  /* ── Página visão: empresa cards ── */
+  #empresa-cards-row { gap: 10px !important; }
+
+  /* ── Quick add tabs ── */
+  #qa-tipo-tabs { flex-wrap: wrap; gap: 4px; }
+  .qa-tab { font-size: 11px !important; padding: 5px 8px !important; }
+
+  /* ── Steira / Kanban de conteúdo ── */
+  .steira-item { font-size: 13px; }
+
+  /* ── Conteúdo body (etapas inline) ── */
+  .conteudo-body select,
+  .conteudo-body input[type="date"] { width: 100%; font-size: 13px !important; }
+
+  /* ── Page colab: fix grid colab-tarefas ── */
+  #page-colab-gisella .two-col,
+  #page-colab-milena .two-col,
+  #page-colab-luiggi .two-col { grid-template-columns: 1fr !important; }
+
+  /* ── Visão semana tarefas (já oculta, mas garante) ── */
+  .section-title-semana { display: none !important; }
+
+  /* ── Padding extra no fundo para a bottom nav ── */
+  .main { padding-bottom: 90px !important; }
+
+  /* ── Livros etapas prazos modal ── */
+  #modal-etapas-prazos .modal,
+  #modal-conteudo-etapas-prazos .modal { width: 98vw !important; }
+}
