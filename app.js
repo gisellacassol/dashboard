@@ -1675,6 +1675,14 @@ function openQuickAdd() {
   ['qa-responsavel','qa-responsavel-evento','qa-responsavel-projeto','qa-responsavel-conteudo'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
+  // Auto-fill responsavel com o usuário logado
+  const _cuKey = window._currentUser || localStorage.getItem('gc-session-user') || '';
+  const _cuName = (LOGIN_USERS[_cuKey] && LOGIN_USERS[_cuKey].name) || window._currentUserName || '';
+  if (_cuName) {
+    ['qa-responsavel','qa-responsavel-evento','qa-responsavel-projeto','qa-responsavel-conteudo'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = _cuName;
+    });
+  }
   updateQaFields();
   // Esconder comentários ao criar nova tarefa
   const comWrapNew = document.getElementById('qa-comentarios-wrap');
