@@ -4243,6 +4243,23 @@ function toggleColabTarefaArq(taskId, checked, colabKey) {
     }
     return;
   }
+    // Etapas de conteúdo  (cont-{conteudoId}-{etapa})
+  if (taskId.startsWith('cont-')) {
+    const parts = taskId.split('-');
+    const conteudoId = parseInt(parts[1]);
+    const etapaKey = parts.slice(2).join('-');
+    const conteudo = conteudos.find(c => c.id === conteudoId);
+
+    if (conteudo) {
+      const jaConcluida = Boolean(conteudo.etapasStatus?.[etapaKey]?.feito);
+      if (jaConcluida !== checked) {
+        toggleConteudoEtapa(conteudoId, etapaKey);
+      } else {
+        buildColabTarefas();
+      }
+    }
+    return;
+  }
   // Projeto tasks  (proj-{projetoId}-{taskIdx})
   if (taskId.startsWith('proj-')) {
     const parts = taskId.split('-');
