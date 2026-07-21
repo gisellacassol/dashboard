@@ -7,7 +7,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyCuifhZ4I3_doR6N_2xdqMe3zUDMgjeeR0",
@@ -56,7 +56,26 @@
     return results;
   };
 
-  window.fbListen = function(key, callback) { return null; };
+  window.fbListen = function(key, callback) {
+    try {
+      return onSnapshot(
+        doc(db, 'dados', key),
+        (snap) => {
+          if (snap.exists()) {
+            try {
+              const val = JSON.parse(snap.data().value);
+              const ts  = snap.data().ts || 0;
+              // Ignore if this device was the one that saved (within last 20s)
+              const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
+              if (ts > 0 && ts <= localTs) return;
+              callback(val);
+            } catch(e) {}
+          }
+        },
+        (err) => { console.warn('fbListen error:', key, err.message); }
+      );
+    } catch(e) { return null; }
+  };
 
   window._fbReady = true;
   window.dispatchEvent(new Event('firebase-ready'));
@@ -5810,9 +5829,44 @@ function toggleColabTarefaArq(taskId, checked, colabKey) {
     save('gc-events', events);
     buildColabTarefas();
     buildTarefas();
+    buildPrioridades();
     return;
   }
-  // For livro/projeto tasks, just rebuild (they use feito flag)
+  // For livro etapa tasks (livro-{livroId}-{etapaIdx})
+  if (taskId.startsWith('livro-')) {
+    const parts = taskId.split('-');
+    const livroId = parseInt(parts[1]);
+    const etapaIdx = parseInt(parts[2]);
+    const livro = livros.find(l => l.id === livroId);
+    if (livro && livro.etapas && livro.etapas[etapaIdx] !== undefined) {
+      livro.etapas[etapaIdx].feito = checked;
+      save('gc-livros', livros);
+      buildColabTarefas();
+      buildTarefas();
+      renderLivros();
+    }
+    return;
+  }
+  // For projeto tasks (proj-{projetoId}-{taskIdx})
+  if (taskId.startsWith('proj-')) {
+    const parts = taskId.split('-');
+    const projetoId = parseInt(parts[1]);
+    const taskIdx = parseInt(parts[2]);
+    const proj = projetos.find(p => p.id === projetoId);
+    if (proj && proj.tarefas && proj.tarefas[taskIdx] !== undefined) {
+      proj.tarefas[taskIdx].feito = checked;
+      if (proj.tarefas[taskIdx].eventId) {
+        const ev2 = events.find(x => x.id === proj.tarefas[taskIdx].eventId);
+        if (ev2) ev2.arquivada = checked;
+        save('gc-events', events);
+      }
+      save('gc-projetos', projetos);
+      buildColabTarefas();
+      buildTarefas();
+      renderProjetos();
+    }
+    return;
+  }
   buildColabTarefas();
 }
 
@@ -7724,33 +7778,51 @@ function startWithFirebase() {
     if (ov) ov.remove();
     initApp(null); // null = use localStorage only
 
-    // Then sync from Firebase in background — only to fill missing keys on other devices
-    // We do NOT overwrite local data here — Firebase is write-only from this device's perspective
-    // Other devices pushing data is handled by the 'upload to firebase' button
+    // Sync from Firebase on startup using timestamps — if Firebase has newer data
+    // (e.g. another device checked a task), use it. Local still wins if we saved more recently.
     if (window.fbLoadAll) {
       window.fbLoadAll().then(cloudData => {
-        // Only use Firebase data for keys we have NO local data for
-        // (e.g. first time a new key is added to the schema)
         if (!cloudData) return;
         let changed = false;
-        const SYNC_KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0',
-          'gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'];
-        SYNC_KEYS.forEach(key => {
+
+        // Task-critical keys: compare timestamps and take the newer one
+        const TASK_KEYS = {
+          'gc-events':   v => { events    = v.map(e => ({...e, tipo: e.tipo||'tarefa'})); },
+          'gc-livros':   v => { livros    = v; },
+          'gc-projetos': v => { projetos  = v; },
+        };
+        Object.entries(TASK_KEYS).forEach(([key, setter]) => {
+          const entry = cloudData[key];
+          if (!entry || !entry.value) return;
+          const cloudTs = entry.ts || 0;
+          const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
+          if (cloudTs > localTs) {
+            // Firebase has newer data from another collaborator
+            setter(entry.value);
+            localStorage.setItem(key, JSON.stringify(entry.value));
+            localStorage.setItem('_fbts_' + key, cloudTs.toString());
+            changed = true;
+          } else if (!localStorage.getItem(key) && entry.value) {
+            setter(entry.value);
+            localStorage.setItem(key, JSON.stringify(entry.value));
+            changed = true;
+          }
+        });
+
+        // Other keys: fill in only if missing locally
+        ['gc-conteudos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'].forEach(key => {
           if (!localStorage.getItem(key) && cloudData[key]?.value) {
             localStorage.setItem(key, JSON.stringify(cloudData[key].value));
             changed = true;
           }
         });
+
         if (changed) {
-          // Reload data into memory for any newly filled keys
-          events    = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
-          livros    = load('gc-livros', []);
-          conteudos = load('gc-conteudos', []);
-          projetos  = load('gc-projetos', []);
-          mentees      = load('gc-mentees',       MENTEES_DEFAULT);
+          conteudos     = load('gc-conteudos', []);
+          mentees       = load('gc-mentees', MENTEES_DEFAULT);
           menteesMarco0 = load('gc-mentees-marco0', []);
           renderLivros(); renderMenteeList(); renderConteudos();
-          buildTarefas(); buildColabTarefas(); renderProjetos();
+          buildTarefas(); buildColabTarefas(); renderProjetos(); buildPrioridades();
         }
       }).catch(() => {}); // silent fail — we already have local data
     }
