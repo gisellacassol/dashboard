@@ -1231,6 +1231,23 @@ function buildTarefasCalSemana() {
       });
     });
   });
+  // Etapas de conteúdos como tarefas virtuais no calendário semanal
+  conteudos.forEach(c => {
+    if (c.done) return;
+    const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
+    if (!empMatch) return;
+    const etapas = getConteudoEtapas(c);
+    etapas.forEach(e => {
+      if (!e.prazo) return; // só aparece no cal se tiver prazo
+      if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+      etapaEvents.push({
+        _isEtapa:false, _conteudoId:c.id, _conteudoKey:e.key,
+        id:`cont-${c.id}-${e.key}`,
+        titulo:`[${c.nome}] ${e.nome}`, empresa:c.empresa,
+        data:_fds(e.prazo), responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
+      });
+    });
+  });
   const todas = [
     ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc))
       .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:_fds(e.data||''), responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
@@ -1239,8 +1256,8 @@ function buildTarefasCalSemana() {
 
   function _chipHtml(t, cor) {
     const dragStart = t._isEtapa ? `tarefaCalDragStart(event,'etapa',${t.livroId},${t.etapaIdx})` : `tarefaCalDragStart(event,'evento',${t.id},null)`;
-    const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : `openEditEvent(${t.id})`;
-    const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : `toggleTarefaArquivada(${t.id})`;
+    const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `openConteudoEtapasPrazos(${t._conteudoId})` : `openEditEvent(${t.id})`);
+    const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `toggleConteudoEtapa(${t._conteudoId},'${t._conteudoKey}')` : `toggleTarefaArquivada(${t.id})`);
     return `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
       <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chk}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">
       <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" style="flex:1;min-width:0;cursor:pointer;">
@@ -2772,6 +2789,7 @@ function toggleConteudoEtapa(id, key) {
   save('gc-conteudos', conteudos);
   renderConteudos();
   buildTarefas();
+  buildColabTarefas();
   // Notify if completed
   if (!wasFeito && c.etapasStatus[key].feito) {
     const etapaNome = CONTEUDO_ETAPAS_PADRAO[CONTEUDO_ETAPAS_KEYS.indexOf(key)] || key;
@@ -2787,6 +2805,8 @@ function setConteudoEtapaResp(id, key, resp) {
   if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
   c.etapasStatus[key].resp = resp;
   save('gc-conteudos', conteudos);
+  buildTarefas();
+  buildColabTarefas();
 }
 
 function setConteudoEtapaPrazo(id, key, prazo) {
@@ -2796,6 +2816,8 @@ function setConteudoEtapaPrazo(id, key, prazo) {
   if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
   c.etapasStatus[key].prazo = prazo;
   save('gc-conteudos', conteudos);
+  buildTarefas();
+  buildColabTarefas();
 }
 
 // Modal de prazos (estilo openEtapasPrazos dos livros)
@@ -3332,6 +3354,26 @@ function buildTarefas() {
       });
     });
   });
+  // Etapas de conteúdos como tarefas virtuais
+  conteudos.forEach(c => {
+    if (c.done) return;
+    const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
+    if (!empMatch) return;
+    const etapas = getConteudoEtapas(c);
+    etapas.forEach(e => {
+      if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+      etapaEvents.push({
+        id: `cont-${c.id}-${e.key}`,
+        _conteudoId: c.id, _conteudoKey: e.key,
+        titulo: `[${c.nome}] ${e.nome}`,
+        empresa: c.empresa,
+        data: e.prazo||'',
+        responsavel: e.resp||'',
+        arquivada: e.feito,
+        tipo: 'tarefa',
+      });
+    });
+  });
   const ativas = [
     ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
     ...etapaEvents.filter(e=>!e.arquivada)
@@ -3349,23 +3391,23 @@ function buildTarefas() {
       const diff = Math.round((new Date(e.data+'T00:00:00')-today)/86400000);
       return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
     })() : 'var(--text-soft)';
-    const isEtapa = e._livroId !== undefined;
+    const isEtapa = e._livroId !== undefined || e._conteudoId !== undefined;
     return `<tr style="${isArquivada?'opacity:0.5;':''}">
       <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
         <input type="checkbox" ${isArquivada?'checked':''}
             onclick="event.stopPropagation();"
-            onchange="${e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
+            onchange="${e._conteudoId!==undefined?`toggleConteudoEtapa(${e._conteudoId},'${e._conteudoKey}')`:e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
             style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;"
             title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
       </td>
       <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
         <span>${e.titulo}</span>
         ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
-        ${!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
+        ${e._conteudoId!==undefined?`<button onclick="openConteudoEtapasPrazos(${e._conteudoId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Ver prazos">📅</button>`:!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
         ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
-        ${!e._livroId?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
-        ${!e._livroId && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
-        ${!e._livroId ? comentarioBubble(e.id, e.comentarios) : ''}
+        ${!isEtapa?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
+        ${!isEtapa && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
+        ${!isEtapa ? comentarioBubble(e.id, e.comentarios) : ''}
       </td>
       <td>
         ${empBadgesHtml(e.empresa)}
@@ -3951,6 +3993,16 @@ function _buildColabCal(key) {
       allTarefas.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+l.titulo+'] '+e.nome,empresa:l.empresa,data:_fds(e.prazo||''),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
     }
   }); });
+  // Etapas de conteúdos
+  conteudos.forEach(function(c){
+    if (c.done) return;
+    var etapas = getConteudoEtapas(c);
+    etapas.forEach(function(e){
+      if ((e.resp||'').toLowerCase()===key && e.prazo) {
+        allTarefas.push({_isEtapa:false,_conteudoId:c.id,_conteudoKey:e.key,id:'cont-'+c.id+'-'+e.key,titulo:'['+c.nome+'] '+e.nome,empresa:c.empresa,data:_fds(e.prazo),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+      }
+    });
+  });
 
   var navHtml = '<div class="cal-header" style="padding:0 0 10px;border-bottom:none;">' +
     '<button class="cal-nav" data-k="'+key+'" data-d="-1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8249;</button>' +
@@ -3971,8 +4023,8 @@ function _buildColabCal(key) {
       var prE=(t.empresa||'').split(',')[0];
       var c=prE==='editora'?'var(--editora)':prE==='leia'?'var(--leia)':'var(--gisella)';
       var dragStart=t._isEtapa?'tarefaCalDragStart(event,\'etapa\','+t.livroId+','+t.etapaIdx+')':'tarefaCalDragStart(event,\'evento\','+t.id+',null)';
-      var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':'openEditEvent('+t.id+')';
-      var chk=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':'toggleTarefaArquivada('+t.id+')';
+      var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'openConteudoEtapasPrazos('+t._conteudoId+')':'openEditEvent('+t.id+')';
+      var chk=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'toggleConteudoEtapa('+t._conteudoId+',\''+t._conteudoKey+'\')':'toggleTarefaArquivada('+t.id+')';
       html+='<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:'+c+'15;color:'+c+';border-left:2px solid '+c+';'+(t.arquivada?'opacity:0.45;':'')+'display:flex;align-items:flex-start;gap:4px;">';
       html+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk+'" onclick="event.stopPropagation();" style="accent-color:'+c+';flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">';
       html+='<div draggable="true" ondragstart="'+dragStart+'" onclick="'+clickAct+'" style="flex:1;min-width:0;cursor:pointer;">';
@@ -4014,6 +4066,18 @@ function buildColabTarefas() {
         const tid = `livro-${l.id}-${i}`;
         if (e.resp === colab && !e.feito) {
           tasks.push({id: tid, titulo: `[${l.titulo}] ${e.nome}`, empresa: l.empresa, data: e.prazo||'', responsavel: colab, arquivada: false, urgente: false});
+        }
+      });
+    });
+
+    // From conteudos (etapas as virtual tasks)
+    conteudos.forEach(c => {
+      if (c.done) return;
+      const etapas = getConteudoEtapas(c);
+      etapas.forEach(e => {
+        if (e.resp === colab) {
+          const tid = `cont-${c.id}-${e.key}`;
+          tasks.push({id: tid, titulo: `[${c.nome}] ${e.nome}`, empresa: c.empresa, data: e.prazo||'', responsavel: colab, arquivada: e.feito, urgente: false});
         }
       });
     });
