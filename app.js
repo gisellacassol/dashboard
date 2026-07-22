@@ -6220,10 +6220,20 @@ function startWithFirebase() {
           const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
           const hasLocal = !!localStorage.getItem(key);
 
-          if (localTs === 0 && hasLocal) {
-            // Device has never synced with new system — trust local data, schedule upload
-            keysToUpload.push(key);
-            return;
+      if (localTs === 0 && hasLocal) {
+  // Dados locais sem histórico de sincronização podem estar desatualizados.
+  // Se já há dados na nuvem, ela é a fonte segura.
+  if (entry && entry.value) {
+    setter(entry.value);
+    localStorage.setItem(key, JSON.stringify(entry.value));
+    localStorage.setItem('_fbts_' + key, cloudTs.toString());
+    changed = true;
+  } else {
+    // Só envia o local quando ainda não existir nada na nuvem.
+    keysToUpload.push(key);
+  }
+  return;
+}
           }
           if (!entry || !entry.value) return;
           if (cloudTs > localTs) {
