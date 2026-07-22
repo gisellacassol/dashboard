@@ -259,7 +259,10 @@ async function uploadLocalToFirebase() {
         return window.fbSave(key, val);
       } catch(e) { return Promise.resolve(); }
     });
-    await Promise.all(promises);
+   const results = await Promise.all(promises);
+if (results.some(result => result === false)) {
+  throw new Error('Os dados locais não foram enviados porque a nuvem possui uma versão mais recente.');
+}
 
     if (btn) btn.innerHTML = '&#10003; <span>Enviado com sucesso!</span>';
     const ind = document.getElementById('sync-indicator');
@@ -6063,6 +6066,12 @@ function initApp(cloudData) {
   // cloudData is only provided when there's NO local data (first time load)
   // In all other cases, localStorage is the source of truth
   if (cloudData) {
+        Object.entries(cloudData).forEach(([key, entry]) => {
+      const cloudTs = Number(entry?.ts || 0);
+      if (cloudTs > 0) {
+        localStorage.setItem('_fbts_' + key, String(cloudTs));
+      }
+    });
     const apply = (key, setter) => {
       const entry = cloudData[key];
       const val = entry?.value ?? entry; // support both {value, ts} and raw formats
