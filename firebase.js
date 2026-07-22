@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, runTransaction, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCuifhZ4I3_doR6N_2xdqMe3zUDMgjeeR0",
@@ -17,17 +17,52 @@ window._fbDb    = db;
 window._fbReady = false;
 
 /* ── SAVE ── */
-window.fbSave = async function(key, val) {
+const saveQueues = new Map();
+
+async function saveSafely(key, val) {
+  const ref = doc(db, 'dados', key);
+  const knownTs = Number(localStorage.getItem('_fbts_' + key) || 0);
+  let conflict = null;
+
   try {
-    const ts = Date.now();
-    await setDoc(doc(db, 'dados', key), { value: JSON.stringify(val), ts });
-    // Store timestamp AFTER confirmed write so echo-prevention works
+    const ts = await runTransaction(db, async transaction => {
+      const current = await transaction.get(ref);
+      const cloudTs = current.exists() ? Number(current.data().ts || 0) : 0;
+
+      if (current.exists() && (knownTs === 0 || cloudTs > knownTs)) {
+        conflict = { cloudTs };
+        const error = new Error('O dado foi alterado por outra pessoa antes desta gravação.');
+        error.code = 'stale-write';
+        throw error;
+      }
+
+      const nextTs = Date.now();
+      transaction.set(ref, { value: JSON.stringify(val), ts: nextTs });
+      return nextTs;
+    });
+
     localStorage.setItem('_fbts_' + key, ts.toString());
     return ts;
-  } catch(e) {
+  } catch (e) {
+    if (e?.code === 'stale-write') {
+      console.warn('fbSave bloqueou uma gravação desatualizada:', key, conflict);
+      setTimeout(() => window.location.reload(), 80);
+    }
     console.warn('fbSave ERRO:', key, e.code, e.message);
     return false;
   }
+}
+
+window.fbSave = function(key, val) {
+  const previous = saveQueues.get(key) || Promise.resolve();
+  const next = previous.catch(() => undefined).then(() => saveSafely(key, val));
+  saveQueues.set(key, next);
+
+  next.finally(() => {
+    if (saveQueues.get(key) === next) saveQueues.delete(key);
+  });
+
+  return next;
 };
 
 /* ── GET ── */
