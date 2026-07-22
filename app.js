@@ -6243,7 +6243,6 @@ function startWithFirebase() {
   }
   return;
 }
-          }
           if (!entry || !entry.value) return;
           if (cloudTs > localTs) {
             setter(entry.value);
