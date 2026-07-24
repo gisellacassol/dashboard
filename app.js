@@ -1973,12 +1973,18 @@ function submitQuickAdd() {
       const i = conteudos.findIndex(x => x.id === editingEventId);
       if (i > -1) conteudos[i] = {...conteudos[i], ...c};
       editingEventId = null;
-    } else { conteudos.push(c); }
+    } else {
+      c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.dataPost);
+      conteudos.push(c);
+    }
     save('gc-conteudos', conteudos); renderConteudos();
     refreshCalendars();
     buildConteudoCalSemana();
     buildCalendar('cal-conteudo', 'all');
     buildVisaoConteudos();
+    buildTarefas();
+    buildColabTarefas();
+    buildPrioridades();
     closeModal('modal-quickadd'); return;
   }
 
@@ -2686,6 +2692,37 @@ const CONTEUDO_ETAPAS_PADRAO = ['Copy','Gravado','Em edição','Aprovado','Agend
 const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado','turbinar','metricas'];
 const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
 const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
+
+// Na criação de um conteúdo, os prazos do fluxo padrão acompanham a data de
+// postagem. Prazos que cairiam no fim de semana são antecipados para sexta.
+function prazoUtilAntesDaPostagem(dataPostagem, diasAntes) {
+  if (!dataPostagem || !/^\d{4}-\d{2}-\d{2}$/.test(dataPostagem)) return '';
+
+  const [ano, mes, dia] = dataPostagem.split('-').map(Number);
+  const data = new Date(ano, mes - 1, dia);
+  data.setDate(data.getDate() - diasAntes);
+
+  if (data.getDay() === 6) data.setDate(data.getDate() - 1); // sábado → sexta
+  if (data.getDay() === 0) data.setDate(data.getDate() - 2); // domingo → sexta
+
+  const y = data.getFullYear();
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const d = String(data.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function prazosIniciaisDoConteudo(rede, dataPostagem) {
+  // O fluxo de e-mail tem etapas próprias e não usa Edição/Aprovação/Agendamento.
+  if (rede === 'emanda' || !dataPostagem) return {};
+
+  return {
+    edicao:    { prazo: prazoUtilAntesDaPostagem(dataPostagem, 2) },
+    aprovado:  { prazo: prazoUtilAntesDaPostagem(dataPostagem, 1) },
+    agendado:  { prazo: prazoUtilAntesDaPostagem(dataPostagem, 1) },
+    postado:   { prazo: dataPostagem },
+  };
+}
+
 function getConteudoEtapasByRede(c) {
   if ((c.rede||'') === 'emanda') {
     if (!c.etapasStatus) c.etapasStatus = {};
@@ -3046,9 +3083,15 @@ function saveConteudo() {
   if (!nome) { document.getElementById('mc-nome').focus(); return; }
   const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
   if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
-  else conteudos.push({id:Date.now(), done:false, ...data});
+  else conteudos.push({
+    id:Date.now(),
+    done:false,
+    etapasStatus: prazosIniciaisDoConteudo(data.rede, data.dataPost),
+    ...data
+  });
   save('gc-conteudos',conteudos); renderConteudos();
   refreshCalendars(); buildConteudoCalSemana(); buildVisaoConteudos();
+  buildTarefas(); buildColabTarefas(); buildPrioridades();
   closeModal('modal-conteudo');
 }
 
