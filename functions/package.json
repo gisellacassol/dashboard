@@ -1,0 +1,14 @@
+{
+  "name": "cassol-dashboard-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.24.0"
+  }
+}

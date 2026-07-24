@@ -93,8 +93,9 @@ window.fbLoadAll = async function() {
 };
 
 /* ── REAL-TIME LISTENER ── */
-// Uses onSnapshot so every device sees changes immediately when another collaborator
-// checks/unchecks a task. The timestamp guard prevents echoing this device's own saves.
+// Usa onSnapshot para que todos os aparelhos recebam cada alteração. O timestamp
+// confirmado passa a ser a base da próxima gravação local; assim uma aba antiga
+// não consegue sobrescrever um check recebido da nuvem.
 window.fbListen = function(key, callback) {
   try {
     return onSnapshot(
@@ -108,6 +109,7 @@ window.fbListen = function(key, callback) {
           const localTs = parseInt(localStorage.getItem('_fbts_' + key) || '0');
           if (cloudTs > 0 && cloudTs <= localTs) return;
           const val = JSON.parse(data.value);
+          if (cloudTs > 0) localStorage.setItem('_fbts_' + key, String(cloudTs));
           callback(val);
         } catch(e) {}
       },

@@ -6160,10 +6160,12 @@ function initApp(cloudData) {
   // Escutar mudanças em tempo real de outros dispositivos
   if (window.fbListen) {
     [
-      // Guard on gc-events: skip if WE saved less than 15s ago (echo prevention)
-      ['gc-events',    v => { if (_lastLocalSave['gc-events'] && Date.now() - _lastLocalSave['gc-events'] < 15000) return; events = v.map(e=>({...e,tipo:e.tipo||'tarefa'})); buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
-      ['gc-livros',    v => { if (_lastLocalSave['gc-livros']   && Date.now() - _lastLocalSave['gc-livros']   < 15000) return; livros    = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
-      ['gc-projetos',  v => { if (_lastLocalSave['gc-projetos'] && Date.now() - _lastLocalSave['gc-projetos'] < 15000) return; projetos  = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
+      // fbListen já ignora o eco de uma gravação confirmada por este aparelho.
+      // Não descartamos mudanças recentes: esse bloqueio de 15 s deixava uma aba
+      // com a cópia antiga em memória e ela podia reverter checks de outra origem.
+      ['gc-events',    v => { events = v.map(e=>({...e,tipo:e.tipo||'tarefa'})); buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
+      ['gc-livros',    v => { livros = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
+      ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
       ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
       ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
