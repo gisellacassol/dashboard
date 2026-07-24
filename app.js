@@ -70,7 +70,16 @@ function duplicarEvento(id) {
 function duplicarConteudo(id) {
   const c = conteudos.find(x => x.id === id);
   if (!c) return;
-  const novo = {...c, id: Date.now(), nome: c.nome + ' (cópia)', done: false};
+  // A cópia começa com um novo fluxo: nunca herda checks/etapas concluídas.
+  const novo = {
+    ...c,
+    id: Date.now(),
+    nome: c.nome + ' (cópia)',
+    done: false,
+    status: 'copy',
+    etapasStatus: {},
+    etapas: Array.isArray(c.etapas) ? c.etapas.map(etapa => ({ ...etapa, feito: false })) : c.etapas,
+  };
   conteudos.push(novo);
   save('gc-conteudos', conteudos);
   renderConteudos();
@@ -851,7 +860,7 @@ function buildVisaoConteudos() {
   const hoje = new Date().toISOString().slice(0,10);
   const fim = new Date(); fim.setDate(fim.getDate()+7);
   const fimStr = fim.toISOString().slice(0,10);
-  const lista = conteudos.filter(c => !c.done && c.dataPost >= hoje && c.dataPost <= fimStr);
+  const lista = conteudos.filter(c => !isConteudoFinalizado(c) && c.dataPost >= hoje && c.dataPost <= fimStr);
   lista.sort((a,b)=>(a.dataPost||'').localeCompare(b.dataPost||''));
   if (lista.length === 0) {
     el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo programado para os próximos 7 dias.</div>';
@@ -1063,7 +1072,7 @@ function buildConteudoCalSemana() {
     const ds = dia.toISOString().slice(0,10);
     const isToday = ds === hoje.toISOString().slice(0,10);
     const dayConts = conteudos.filter(c =>
-      !c.done && c.dataPost === ds &&
+      !isConteudoFinalizado(c) && c.dataPost === ds &&
       (filter === 'all' || (c.empresa||'').split(',').includes(filter))
     );
 
@@ -1236,7 +1245,7 @@ function buildTarefasCalSemana() {
   });
   // Etapas de conteúdos como tarefas virtuais no calendário semanal
   conteudos.forEach(c => {
-    if (c.done) return;
+    if (isConteudoFinalizado(c)) return;
     const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
     if (!empMatch) return;
     const etapas = getConteudoEtapas(c);
@@ -1540,7 +1549,7 @@ function buildCalendar(id, filter) {
     const showEventos = (id !== 'cal-conteudo');
     const _calFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
     const dayConteudos = showConteudos
-      ? conteudos.filter(c => !c.done && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
+      ? conteudos.filter(c => !isConteudoFinalizado(c) && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
       : [];
     const allEventsRaw = showEventos ? [...events, ...gcalEventsNative] : [];
     // Deduplicar por id (gcal ids são strings como 'gcal-...')
@@ -2691,8 +2700,9 @@ function getConteudoEtapasByRede(c) {
 }
 
 function getConteudoEtapas(c) {
-  // Se conteúdo já tem etapas customizadas, usa elas
-  // Caso contrário, gera a partir do fluxo padrão com estado salvo em c.etapasStatus
+  const etapasDaRede = getConteudoEtapasByRede(c);
+  if (etapasDaRede) return etapasDaRede;
+  // Fluxo padrão com o estado salvo em c.etapasStatus.
   if (!c.etapasStatus) c.etapasStatus = {};
   return CONTEUDO_ETAPAS_PADRAO.map((nome, i) => ({
     key: CONTEUDO_ETAPAS_KEYS[i],
@@ -2703,18 +2713,38 @@ function getConteudoEtapas(c) {
   }));
 }
 
+// Conteúdo não possui check próprio: ele é concluído automaticamente quando
+// todas as tarefas/etapas do seu fluxo estiverem concluídas.
+function isConteudoFinalizado(c) {
+  const etapas = getConteudoEtapas(c);
+  return etapas.length > 0 && etapas.every(etapa => etapa.feito === true);
+}
+
+function atualizarConclusaoConteudo(c) {
+  const etapas = getConteudoEtapas(c);
+  const finalizado = etapas.length > 0 && etapas.every(etapa => etapa.feito === true);
+  c.done = finalizado;
+
+  if (finalizado) {
+    c.status = 'encerrar';
+  } else if (c.status === 'encerrar') {
+    const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
+    c.status = ultimaEtapaConcluida?.key || 'copy';
+  }
+  return finalizado;
+}
+
 function conteudoCardHtml(c, showEmpresa) {
   const etapas = getConteudoEtapas(c);
   const done = etapas.filter(e => e.feito).length;
   const pct = etapas.length > 0 ? Math.round(done / etapas.length * 100) : 0;
   const proxima = etapas.find(e => !e.feito);
+  const finalizado = isConteudoFinalizado(c);
   const empBadges = empBadgesHtml(c.empresa);
   const isOpen = c.expandido;
 
-  return `<div class="conteudo-card${c.done?' style="opacity:0.55;"':''}">
+  return `<div class="conteudo-card${finalizado?' style="opacity:0.55;"':''}">
     <div class="conteudo-header" onclick="toggleConteudo(${c.id})">
-      <input type="checkbox" ${c.done?'checked':''} onclick="event.stopPropagation();toggleConteudoDone(${c.id})"
-        style="accent-color:var(--gisella);width:15px;height:15px;cursor:pointer;flex-shrink:0;">
       <span class="conteudo-titulo" title="${c.nome}">${c.nome}</span>
       ${showEmpresa ? empBadges : ''}
       <span class="rede-badge rede-${c.rede}" style="flex-shrink:0;font-size:10px;">${REDE_L[c.rede]||c.rede||''}</span>
@@ -2723,7 +2753,7 @@ function conteudoCardHtml(c, showEmpresa) {
         <div class="conteudo-progress"><div class="conteudo-progress-fill" style="width:${pct}%;"></div></div>
         <span style="font-size:11px;color:var(--text-soft);">${pct}%</span>
       </div>
-      ${proxima && !c.done ? `<span style="font-size:11px;color:var(--text-soft);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${proxima.nome}</span>` : (c.done ? '<span class="badge b-ok" style="font-size:10px;">concluído</span>' : '')}
+      ${proxima && !finalizado ? `<span style="font-size:11px;color:var(--text-soft);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;">${proxima.nome}</span>` : (finalizado ? '<span class="badge b-ok" style="font-size:10px;">concluído</span>' : '')}
       <button onclick="event.stopPropagation();openConteudoEtapasPrazos(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 4px;flex-shrink:0;" title="Editar prazos e responsáveis">📅</button>
       <button onclick="event.stopPropagation();openConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;" title="Editar">✎</button>
       <button onclick="event.stopPropagation();duplicarConteudo(${c.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 4px;flex-shrink:0;" title="Duplicar">⧉</button>
@@ -2780,15 +2810,10 @@ function toggleConteudoEtapa(id, key) {
   if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
   const wasFeito = c.etapasStatus[key].feito;
   c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
-  // Atualizar status geral do conteúdo para o key atual se não feito
-  if (!c.etapasStatus[key].feito) {
-    // Reverter: encontrar a última etapa feita antes desta
-    const idx = CONTEUDO_ETAPAS_KEYS.indexOf(key);
-    const prevFeito = CONTEUDO_ETAPAS_KEYS.slice(0, idx).filter(k => c.etapasStatus[k]?.feito);
-    c.status = prevFeito.length > 0 ? prevFeito[prevFeito.length-1] : 'copy';
-  } else {
-    c.status = key;
-  }
+  const etapas = getConteudoEtapas(c);
+  const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
+  c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || 'copy');
+  atualizarConclusaoConteudo(c);
   save('gc-conteudos', conteudos);
   renderConteudos();
   buildTarefas();
@@ -2919,8 +2944,8 @@ function cardsHtmlGrouped(lista, showEmpresa) {
 }
 
 function renderConteudos() {
-  const ativos = conteudos.filter(c=>!c.done);
-  const arquivados = conteudos.filter(c=>c.done);
+  const ativos = conteudos.filter(c => !isConteudoFinalizado(c));
+  const arquivados = conteudos.filter(c => isConteudoFinalizado(c));
 
   function cardsHtml(lista, showEmpresa) {
     return lista.length === 0
@@ -3039,14 +3064,6 @@ function deleteConteudo(id) {
     save('gc-conteudos', conteudos);
     renderConteudos(); buildPrioridades();
   });
-}
-
-function toggleConteudoDone(id) {
-  const c = conteudos.find(x=>x.id===id);
-  if (!c) return;
-  c.done = !c.done;
-  c.status = c.done ? 'encerrar' : 'postado';
-  save('gc-conteudos',conteudos); renderConteudos(); buildPrioridades();
 }
 
 let _mcdConteudoId = null;
@@ -3359,7 +3376,7 @@ function buildTarefas() {
   });
   // Etapas de conteúdos como tarefas virtuais
   conteudos.forEach(c => {
-    if (c.done) return;
+    if (isConteudoFinalizado(c)) return;
     const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
     if (!empMatch) return;
     const etapas = getConteudoEtapas(c);
@@ -3998,7 +4015,7 @@ function _buildColabCal(key) {
   }); });
   // Etapas de conteúdos
   conteudos.forEach(function(c){
-    if (c.done) return;
+    if (isConteudoFinalizado(c)) return;
     var etapas = getConteudoEtapas(c);
     etapas.forEach(function(e){
       if ((e.resp||'').toLowerCase()===key && e.prazo) {
@@ -4075,7 +4092,7 @@ function buildColabTarefas() {
 
     // From conteudos (etapas as virtual tasks)
     conteudos.forEach(c => {
-      if (c.done) return;
+    if (isConteudoFinalizado(c)) return;
       const etapas = getConteudoEtapas(c);
       etapas.forEach(e => {
         if (e.resp === colab) {
@@ -4474,7 +4491,7 @@ function buildPrioridades() {
 
   // Conteúdos pela DATA DE PRODUÇÃO: hoje e amanhã (não feitos)
   const conteudosPrio = conteudos.filter(c => {
-    if (c.done) return false;
+    if (isConteudoFinalizado(c)) return false;
     if (!c.dataProd) return false;
     return c.dataProd === todayStr || c.dataProd === tomorrowStr;
   });
@@ -4489,7 +4506,7 @@ function buildPrioridades() {
   });
   // Conteúdos arquivados pela data de produção
   const conteudosArq = conteudos.filter(c => {
-    if (!c.done) return false;
+    if (!isConteudoFinalizado(c)) return false;
     if (!c.dataProd) return false;
     const d = new Date(c.dataProd + 'T00:00:00');
     return d >= threeDaysAgo && d <= today;
@@ -4519,10 +4536,10 @@ function buildPrioridades() {
 
   function conteudoRowPrio(c) {
     const prodColor = c.dataProd === todayStr ? 'var(--gisella)' : c.dataProd === tomorrowStr ? 'var(--warn)' : 'var(--text-soft)';
+    const etapas = getConteudoEtapas(c);
+    const concluidas = etapas.filter(etapa => etapa.feito).length;
     return `<tr onclick="openConteudo(${c.id})">
-      <td onclick="event.stopPropagation();">
-        <input type="checkbox" onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;">
-      </td>
+      <td style="width:32px;text-align:center;color:var(--text-soft);font-size:10px;">${concluidas}/${etapas.length}</td>
       <td style="font-weight:500;">${c.nome}
         <span style="font-size:10px;color:var(--text-soft);display:inline-block;margin-left:4px;">✍ conteúdo</span>
       </td>
@@ -4568,7 +4585,7 @@ function buildPrioridades() {
           return `<tr style="opacity:0.5;"><td onclick="event.stopPropagation();"><input type="checkbox" checked onchange="toggleTarefaArquivada(${e.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${e.titulo}</td><td><span class="badge ${EMP_BADGE2[e.empresa]||'b-gray'}">${EMP_LABEL2[e.empresa]||e.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${e.data?fmtDateTarefa(e.data):'—'}</td></tr>`;
         } else {
           const c = item.c;
-          return `<tr style="opacity:0.5;" onclick="openConteudo(${c.id})"><td onclick="event.stopPropagation();"><input type="checkbox" checked onclick="event.stopPropagation();toggleConteudoDone(${c.id})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;"></td><td style="font-weight:500;text-decoration:line-through;">${c.nome} <span style="font-size:10px;color:var(--text-soft);">✍</span></td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`;
+          return `<tr style="opacity:0.5;" onclick="openConteudo(${c.id})"><td style="width:32px;text-align:center;color:var(--ok);">✓</td><td style="font-weight:500;text-decoration:line-through;">${c.nome} <span style="font-size:10px;color:var(--text-soft);">✍</span></td><td><span class="badge ${EMP_B[c.empresa]||'b-gray'}">${EMP_S[c.empresa]||c.empresa}</span></td><td style="font-size:12px;color:var(--text-soft);">${c.dataPost?fmtDate(c.dataPost):'—'}</td></tr>`;
         }
       }).join('')}</tbody>
     </table></div>`;
