@@ -195,6 +195,13 @@ tr:hover td { background: var(--bg); }
 .projeto-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
 .projeto-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
 .projeto-header:hover { background: var(--bg); }
+.projeto-order-controls { display:flex; align-items:center; gap:2px; flex-shrink:0; }
+.projeto-order-controls button { width:25px; height:25px; padding:0; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--text-soft); cursor:pointer; font-size:14px; line-height:1; }
+.projeto-order-controls button:hover { border-color:var(--border-mid); background:var(--surface); color:var(--text); }
+.projeto-drag-handle { display:grid; place-items:center; width:25px; height:25px; border-radius:6px; color:var(--text-soft); cursor:grab; font-size:17px; user-select:none; touch-action:none; }
+.projeto-drag-handle:hover { background:var(--surface); color:var(--gisella); }
+.projeto-card.projeto-dragging { opacity:.58; border-color:var(--gisella); box-shadow:0 8px 24px rgba(0,0,0,.14); }
+.projeto-reordering { outline:1px dashed var(--gisella); outline-offset:6px; border-radius:10px; }
 .projeto-titulo { font-weight: 500; font-size: 14px; flex: 1; }
 .projeto-body { display: none; padding: 12px 16px 14px; border-top: 1px solid var(--border); }
 .projeto-body.open { display: block; }

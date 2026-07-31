@@ -3844,8 +3844,13 @@ function projetoHtml(p, showEmpresa) {
   const tarefasHtml = (p.tarefas||[]).map((t,i) => projetoTarefaRow(t,i)).join('');
   const infoHtml = (p.inicio||p.fim) ? `<div style="font-size:12px;color:var(--text-soft);padding:4px 0 8px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : '';
 
-  return `<div class="projeto-card">
+  return `<div class="projeto-card" data-projeto-id="${p.id}">
     <div class="projeto-header" style="cursor:default;">
+      <div class="projeto-order-controls" aria-label="Reposicionar projeto">
+        <button type="button" onclick="event.stopPropagation();moverProjeto(${p.id},-1)" title="Mover projeto para cima" aria-label="Mover ${p.nome} para cima">↑</button>
+        <span class="projeto-drag-handle" title="Arraste para reposicionar" aria-hidden="true">⠿</span>
+        <button type="button" onclick="event.stopPropagation();moverProjeto(${p.id},1)" title="Mover projeto para baixo" aria-label="Mover ${p.nome} para baixo">↓</button>
+      </div>
       <div class="projeto-titulo">${p.nome}</div>
       ${showEmpresa ? empBadgesHtml(p.empresa) : ''}
       <span class="badge ${st.c}">${st.l}</span>
@@ -3875,12 +3880,14 @@ function renderProjetos() {
   if (visaoEl) visaoEl.innerHTML = ativos.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
+  if (visaoEl && ativos.length) setupProjetoReordering(visaoEl);
 
   // Todos page
   const todosEl = document.getElementById('projetos-todos');
   if (todosEl) todosEl.innerHTML = ativos.length===0
     ? '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>'
     : ativos.map(p=>projetoHtml(p,true)).join('');
+  if (todosEl && ativos.length) setupProjetoReordering(todosEl);
   const archTodosEl = document.getElementById('projetos-arquivados-todos');
   const archTodosCnt = document.getElementById('parq-count-todos');
   if (archTodosCnt) archTodosCnt.textContent = finalizados.length;
@@ -3894,6 +3901,7 @@ function renderProjetos() {
     el.innerHTML = lista.length===0
       ? `<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum projeto.</div>`
       : lista.map(p=>projetoHtml(p,false)).join('');
+    if (lista.length) setupProjetoReordering(el);
     const archEl = document.getElementById('projetos-arquivados-'+emp);
     const cntEl = document.getElementById('parq-count-'+emp);
     const arch = finalizados.filter(p=>p.empresa===emp);
@@ -3902,6 +3910,70 @@ function renderProjetos() {
   });
 
   buildColabTarefas();
+}
+
+function getProjetosVisiveisAtivos() {
+  const filtro = getFilter('projetos');
+  return projetos.filter(p => p.status !== 'finalizado' && (filtro === 'all' || (p.empresa || '').split(',').includes(filtro)));
+}
+
+function salvarOrdemProjetos(idsOrdenados) {
+  const porId = new Map(projetos.map(p => [String(p.id), p]));
+  const idsVisiveis = new Set(idsOrdenados.map(String));
+  const ordenados = idsOrdenados.map(id => porId.get(String(id))).filter(Boolean);
+  let cursor = 0;
+  projetos = projetos.map(p => idsVisiveis.has(String(p.id)) ? ordenados[cursor++] : p);
+  save('gc-projetos', projetos);
+  renderProjetos();
+}
+
+function moverProjeto(id, direcao) {
+  const visiveis = getProjetosVisiveisAtivos();
+  const atual = visiveis.findIndex(p => String(p.id) === String(id));
+  const destino = atual + direcao;
+  if (atual < 0 || destino < 0 || destino >= visiveis.length) return;
+  [visiveis[atual], visiveis[destino]] = [visiveis[destino], visiveis[atual]];
+  salvarOrdemProjetos(visiveis.map(p => p.id));
+}
+
+function setupProjetoReordering(container) {
+  let dragged = null;
+  const cards = [...container.querySelectorAll(':scope > .projeto-card')];
+
+  cards.forEach(card => {
+    const handle = card.querySelector('.projeto-drag-handle');
+    if (!handle) return;
+    handle.addEventListener('mousedown', () => card.setAttribute('draggable', 'true'));
+    handle.addEventListener('touchstart', () => card.setAttribute('draggable', 'true'), {passive:true});
+
+    card.addEventListener('dragstart', event => {
+      dragged = card;
+      card.classList.add('projeto-dragging');
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', card.dataset.projetoId);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('projeto-dragging');
+      card.removeAttribute('draggable');
+      dragged = null;
+      container.classList.remove('projeto-reordering');
+    });
+  });
+
+  container.addEventListener('dragover', event => {
+    if (!dragged) return;
+    event.preventDefault();
+    container.classList.add('projeto-reordering');
+    const siblings = [...container.querySelectorAll(':scope > .projeto-card:not(.projeto-dragging)')];
+    const next = siblings.find(card => event.clientY < card.getBoundingClientRect().top + card.offsetHeight / 2);
+    if (next) container.insertBefore(dragged, next);
+    else container.appendChild(dragged);
+  });
+  container.addEventListener('drop', event => {
+    if (!dragged) return;
+    event.preventDefault();
+    salvarOrdemProjetos([...container.querySelectorAll(':scope > .projeto-card')].map(card => card.dataset.projetoId));
+  });
 }
 
 function toggleProjeto(id) { const p=projetos.find(x=>x.id===id); if(p){p.expandido=!p.expandido; save('gc-projetos',projetos); renderProjetos();} }
