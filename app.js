@@ -3845,16 +3845,17 @@ function projetoHtml(p, showEmpresa) {
   const infoHtml = (p.inicio||p.fim) ? `<div style="font-size:12px;color:var(--text-soft);padding:4px 0 8px;">${p.inicio?'Início: '+fmtDatePt(p.inicio):''}${p.inicio&&p.fim?' · ':''}${p.fim?'Fim: '+fmtDatePt(p.fim):''}</div>` : '';
 
   return `<div class="projeto-card" data-projeto-id="${p.id}">
-    <div class="projeto-header" style="cursor:default;">
-      <div class="projeto-order-controls" aria-label="Reposicionar projeto">
+    <div class="projeto-header" onclick="openProjetoPrazos(${p.id})" style="cursor:pointer;" title="Abrir tarefas e prazos do projeto">
+      <div class="projeto-order-controls" aria-label="Reposicionar projeto" onclick="event.stopPropagation()">
         <button type="button" onclick="event.stopPropagation();moverProjeto(${p.id},-1)" title="Mover projeto para cima" aria-label="Mover ${p.nome} para cima">↑</button>
         <span class="projeto-drag-handle" title="Arraste para reposicionar" aria-hidden="true">⠿</span>
         <button type="button" onclick="event.stopPropagation();moverProjeto(${p.id},1)" title="Mover projeto para baixo" aria-label="Mover ${p.nome} para baixo">↓</button>
       </div>
-      <div class="projeto-titulo">${p.nome}</div>
+      <div class="projeto-titulo" onclick="event.stopPropagation();openEditProjeto(${p.id})" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir ficha do projeto">${p.nome}</div>
       ${showEmpresa ? empBadgesHtml(p.empresa) : ''}
       <span class="badge ${st.c}">${st.l}</span>
       ${total>0 ? `<span style="font-size:11px;color:var(--text-soft);">${done}/${total}</span>` : ''}
+      <button onclick="event.stopPropagation();openProjetoPrazos(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:2px 6px;" title="Definir prazos das tarefas">📅</button>
       <button onclick="event.stopPropagation();openEditProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 6px;" title="Editar">&#9998;</button>
       <button onclick="event.stopPropagation();duplicarProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Duplicar">&#10697;</button>
       <button onclick="event.stopPropagation();deleteProjeto(${p.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;" title="Excluir">&#215;</button>
@@ -4023,6 +4024,125 @@ function openAddTarefaProjeto(projetoId) {
   document.getElementById('qa-responsavel').value = p.responsavel || '';
   document.getElementById('qa-modal-title').textContent = 'Nova tarefa · ' + p.nome;
   window._addingToProjetoId = projetoId;
+}
+
+/* ── MODAL PRAZOS DAS TAREFAS DO PROJETO ── */
+let _ppProjetoId = null;
+let _ppDragIdx = null;
+
+function openProjetoPrazos(projetoId) {
+  const p = projetos.find(x => x.id === projetoId);
+  if (!p) return;
+  _ppProjetoId = projetoId;
+  document.getElementById('modal-pp-subtitulo').textContent = p.nome + ' — defina prazos e gerencie as tarefas';
+  renderProjetoPrazosLista();
+  openModal('modal-projeto-prazos');
+}
+
+function renderProjetoPrazosLista() {
+  const p = projetos.find(x => x.id === _ppProjetoId);
+  const el = document.getElementById('modal-pp-lista');
+  if (!p || !el) return;
+  const tarefas = (p.tarefas || []).map((t, i) => ({t, i}));
+  tarefas.sort((a, b) => a.t.feito === b.t.feito ? 0 : (a.t.feito ? -1 : 1));
+
+  el.innerHTML = tarefas.length ? tarefas.map(({t, i}) => {
+    const ev = t.eventId ? events.find(x => x.id === t.eventId) : null;
+    const prazo = ev ? (ev.data || '') : (t.prazo || '');
+    const resp = ev ? (ev.responsavel || '') : (t.resp || '');
+    const cor = t.feito ? 'var(--text-soft)' : (prazo ? (() => {
+      const diff = Math.round((new Date(prazo + 'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
+      return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
+    })() : 'var(--text)');
+    return `<div draggable="true" ondragstart="projetoPrazoDragStart(event,${i})" ondragover="event.preventDefault()" ondrop="projetoPrazoDrop(event,${i})"
+      style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${t.feito?'opacity:0.55;':''}">
+      <span style="cursor:grab;color:var(--text-soft);font-size:12px;flex-shrink:0;">⠿</span>
+      <input type="checkbox" ${t.feito?'checked':''} onchange="toggleProjetoTaskModal(${_ppProjetoId},${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;font-size:13px;color:${cor};${t.feito?'text-decoration:line-through;':''}">${t.nome}</span>
+      <select onchange="updateProjetoTaskResp(${_ppProjetoId},${i},this.value)" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
+        <option value="" ${!resp?'selected':''}>—</option>
+        <option value="Gisella" ${resp==='Gisella'?'selected':''}>Gisella</option>
+        <option value="Milena" ${resp==='Milena'?'selected':''}>Milena</option>
+        <option value="Luiggi" ${resp==='Luiggi'?'selected':''}>Luiggi</option>
+      </select>
+      <input type="date" value="${prazo}" onchange="updateProjetoTaskPrazo(${_ppProjetoId},${i},this.value)" style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
+      <button onclick="deleteProjetoTaskModal(${_ppProjetoId},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;" title="Excluir">×</button>
+    </div>`;
+  }).join('') : '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa neste projeto.</div>';
+}
+
+function addProjetoTaskModal() {
+  const p = projetos.find(x => x.id === _ppProjetoId);
+  const input = document.getElementById('pp-nova-tarefa');
+  const nome = (input?.value || '').trim();
+  if (!p || !nome) { input?.focus(); return; }
+  if (!p.tarefas) p.tarefas = [];
+  const taskId = Date.now();
+  p.tarefas.push({nome, feito:false, resp:p.responsavel||'', eventId:taskId});
+  events.push({id:taskId, empresa:p.empresa, titulo:nome, data:p.fim||'', tipo:'tarefa', projetoId:p.id, responsavel:p.responsavel||''});
+  save('gc-projetos', projetos);
+  save('gc-events', events);
+  if (input) input.value = '';
+  renderProjetoPrazosLista();
+  renderProjetos();
+  buildTarefas();
+  buildColabTarefas();
+}
+
+function updateProjetoTaskPrazo(projetoId, idx, prazo) {
+  const p = projetos.find(x => x.id === projetoId);
+  const t = p?.tarefas?.[idx];
+  if (!t) return;
+  t.prazo = prazo;
+  const ev = t.eventId ? events.find(x => x.id === t.eventId) : null;
+  if (ev) ev.data = prazo;
+  save('gc-projetos', projetos);
+  save('gc-events', events);
+  renderProjetos();
+  buildTarefas();
+  buildColabTarefas();
+  renderProjetoPrazosLista();
+}
+
+function updateProjetoTaskResp(projetoId, idx, resp) {
+  const p = projetos.find(x => x.id === projetoId);
+  const t = p?.tarefas?.[idx];
+  if (!t) return;
+  t.resp = resp;
+  const ev = t.eventId ? events.find(x => x.id === t.eventId) : null;
+  if (ev) ev.responsavel = resp;
+  save('gc-projetos', projetos);
+  save('gc-events', events);
+  renderProjetos();
+  buildTarefas();
+  buildColabTarefas();
+}
+
+function toggleProjetoTaskModal(projetoId, idx) {
+  toggleProjetoTask(projetoId, idx);
+  renderProjetoPrazosLista();
+}
+
+function deleteProjetoTaskModal(projetoId, idx) {
+  deleteProjetoTask(projetoId, idx);
+  renderProjetoPrazosLista();
+}
+
+function projetoPrazoDragStart(event, idx) {
+  _ppDragIdx = idx;
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function projetoPrazoDrop(event, destino) {
+  event.preventDefault();
+  const p = projetos.find(x => x.id === _ppProjetoId);
+  if (!p || _ppDragIdx === null || _ppDragIdx === destino) return;
+  const movida = p.tarefas.splice(_ppDragIdx, 1)[0];
+  p.tarefas.splice(destino, 0, movida);
+  _ppDragIdx = null;
+  save('gc-projetos', projetos);
+  renderProjetos();
+  renderProjetoPrazosLista();
 }
 
 function addProjetoTask(id) {
