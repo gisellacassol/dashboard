@@ -598,7 +598,8 @@ function toggleColabFixed(key, taskKey, val) { toggleFixed(key, taskKey, val); }
 /* ── TAREFAS AUTOMÁTICAS RECORRENTES (GISELLA) ── */
 // Estas tarefas são criadas automaticamente como tarefas normais (aparecem
 // na aba "Tarefas", filtráveis por colaborador) com a data de hoje.
-const GISELLA_RECORRENTES_DIARIAS = ['Responder WhatsApp', 'Responder e-mails', 'Ajustes no sistema'];
+const GISELLA_RECORRENTES_DIARIAS = ['Responder WhatsApp', 'Responder e-mails'];
+const LUIGGI_RECORRENTES_DIARIAS = ['Ajustes no sistema'];
 const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana Plano Diretor', 'Links da semana Plano Diretor', 'Analisar Planilha de Métricas'];
 const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
 
@@ -608,8 +609,12 @@ function ensureGisellaRecorrentes() {
   let changed = false;
   let idCounter = 0;
 
-  function ensureTask(label, recurKey) {
-    const ja = events.some(e => e.recurKey === recurKey && e.data === todayStr);
+  function ensureTask(label, recurKey, responsavel = 'Gisella') {
+    const normalizedLabel = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    const ja = events.some(e => {
+      const sameTitle = String(e.titulo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase() === normalizedLabel;
+      return e.data === todayStr && (e.recurKey === recurKey || sameTitle);
+    });
     if (ja) return;
     events.push({
       id: Date.now() + (idCounter++),
@@ -617,7 +622,7 @@ function ensureGisellaRecorrentes() {
       titulo: label,
       tipo: 'tarefa',
       data: todayStr,
-      responsavel: 'Gisella',
+      responsavel,
       arquivada: false,
       recurKey,
     });
@@ -625,6 +630,7 @@ function ensureGisellaRecorrentes() {
   }
 
   GISELLA_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'diaria-' + i));
+  LUIGGI_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'luiggi-diaria-' + i, 'Luiggi'));
   if (dow === 1) GISELLA_RECORRENTES_SEGUNDA.forEach((label, i) => ensureTask(label, 'segunda-' + i));
   if (dow === 5) GISELLA_RECORRENTES_SEXTA.forEach((label, i) => ensureTask(label, 'sexta-' + i));
 
@@ -747,10 +753,13 @@ function renderFixedTasks(colab) {
       '</div>';
   }
 
-  dailyEl.innerHTML  = data.daily.map(t => taskRow(t,'daily','d-')).join('') +
+  const dailyTasks = data.daily.slice().sort((a,b) => Number(!!checks['d-'+a.id]) - Number(!!checks['d-'+b.id]));
+  const weeklyTasks = data.weekly.slice().sort((a,b) => Number(!!checks['w-'+a.id]) - Number(!!checks['w-'+b.id]));
+
+  dailyEl.innerHTML  = dailyTasks.map(t => taskRow(t,'daily','d-')).join('') +
     `<button onclick="addFixedTask('${colab}','daily')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ adicionar</button>`;
 
-  weeklyEl.innerHTML = data.weekly.map(t => taskRow(t,'weekly','w-')).join('') +
+  weeklyEl.innerHTML = weeklyTasks.map(t => taskRow(t,'weekly','w-')).join('') +
     `<button onclick="addFixedTask('${colab}','weekly')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ adicionar</button>`;
 }
 
@@ -1171,6 +1180,12 @@ const _TIPO_EMOJI = { burocracia:'⚙️', criativo:'💡', estrategia:'🎯' };
 const _TIPO_ORDER = { burocracia:2, criativo:1, estrategia:0, '':3 };
 function _sortTipo(arr) {
   return arr.slice().sort((a,b) => {
+    // Pendentes sempre ficam acima das concluídas. Dentro de cada bloco,
+    // urgentes vêm primeiro; o tipo e o título só desempatarem depois.
+    const completedDiff = Number(!!a.arquivada) - Number(!!b.arquivada);
+    if (completedDiff !== 0) return completedDiff;
+    const urgentDiff = Number(!!b.urgente) - Number(!!a.urgente);
+    if (urgentDiff !== 0) return urgentDiff;
     const oa = _TIPO_ORDER[a.tipoTarefa||''] ?? 3;
     const ob = _TIPO_ORDER[b.tipoTarefa||''] ?? 3;
     return oa !== ob ? oa - ob : (a.titulo||'').localeCompare(b.titulo||'');
@@ -1643,6 +1658,50 @@ function fmtDateTarefa(val) {
   return `${d} ${ms[m-1]}`;
 }
 
+function automaticTaskOwner(title, fallback = '') {
+  const normalized = String(title || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().toLowerCase();
+  if (normalized.includes('devolutiva')) return 'Milena';
+  if (/ajustes? no sistema/.test(normalized)) return 'Luiggi';
+  return fallback;
+}
+
+// Corrige também registros antigos. Assim, ao abrir o dashboard, tarefas de
+// devolutiva passam para a agenda da Milena e ajustes do sistema para Luiggi.
+function applyAutomaticTaskOwners() {
+  let eventsChanged = false;
+  events.forEach(event => {
+    if (event.tipo !== 'tarefa') return;
+    const owner = automaticTaskOwner(event.titulo, event.responsavel || '');
+    if (owner !== (event.responsavel || '')) {
+      event.responsavel = owner;
+      eventsChanged = true;
+    }
+  });
+  if (eventsChanged) save('gc-events', events);
+
+  let booksChanged = false;
+  livros.forEach(book => (book.etapas || []).forEach(stage => {
+    const owner = automaticTaskOwner(stage.nome, stage.resp || '');
+    if (owner !== (stage.resp || '')) {
+      stage.resp = owner;
+      booksChanged = true;
+    }
+  }));
+  if (booksChanged) save('gc-livros', livros);
+
+  let projectsChanged = false;
+  projetos.forEach(project => (project.tarefas || []).forEach(task => {
+    const owner = automaticTaskOwner(task.nome, task.resp || '');
+    if (owner !== (task.resp || '')) {
+      task.resp = owner;
+      projectsChanged = true;
+    }
+  }));
+  if (projectsChanged) save('gc-projetos', projetos);
+}
+
 let editingEventId = null;
 
 function openQuickAdd() {
@@ -1971,7 +2030,8 @@ function submitQuickAdd() {
     closeModal('modal-quickadd'); return;
   }
 
-  const responsavel = tipo === 'evento' ? getQaVal('qa-responsavel-evento') : getQaVal('qa-responsavel');
+  const selectedResponsavel = tipo === 'evento' ? getQaVal('qa-responsavel-evento') : getQaVal('qa-responsavel');
+  const responsavel = tipo === 'tarefa' ? automaticTaskOwner(titulo, selectedResponsavel) : selectedResponsavel;
   const observacao = tipo === 'evento' ? getQaVal('qa-observacao-evento') : getQaVal('qa-observacao');
   const urgenteVal = document.getElementById('qa-urgente') ? document.getElementById('qa-urgente').checked : false;
   const eventData = {
@@ -2041,7 +2101,7 @@ function submitQuickAdd() {
   buildPrioridades();
   // Notify if task assigned to someone
   if (tipo === 'tarefa' && !editingEventId) {
-    const resp = getQaVal('qa-responsavel');
+    const resp = automaticTaskOwner(getQaVal('qa-titulo').trim(), getQaVal('qa-responsavel'));
     if (resp) notifyTaskAssigned(getQaVal('qa-titulo').trim(), resp);
   }
   // Se for edição de tarefa vinculada a projeto, sincronizar nome e responsável
@@ -3468,7 +3528,10 @@ function buildTarefas() {
     return;
   }
 
-  ativas.sort((a,b)=>(a.data||'9').localeCompare(b.data||'9'));
+  ativas.sort((a,b) => {
+    const urgentDiff = Number(!!b.urgente) - Number(!!a.urgente);
+    return urgentDiff || (a.data||'9').localeCompare(b.data||'9');
+  });
   arquivadas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
 
   // Calcular limites de semana corretamente (segunda a domingo)
@@ -3483,8 +3546,9 @@ function buildTarefas() {
   const fimProxSemStr = fimProxSem.toISOString().slice(0,10);
 
   // Separar atrasadas de hoje
-  const groups = {atrasadas:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
+  const groups = {urgentes:[], atrasadas:[], hoje:[], semana:[], proxSemana:[], proximas:[]};
   ativas.forEach(t=>{
+    if (t.urgente) { groups.urgentes.push(t); return; }
     if (!t.data) { groups.proximas.push(t); return; }
     const diff = Math.round((new Date(t.data+'T00:00:00')-today)/86400000);
     if (diff < 0)                      groups.atrasadas.push(t);
@@ -3545,6 +3609,9 @@ function buildTarefas() {
   }
 
   let html = '';
+  if (groups.urgentes.length > 0) {
+    html += renderGroup(`❗ Urgentes · ${groups.urgentes.length}`, groups.urgentes, 'var(--danger)', 'urgentes');
+  }
   if (groups.atrasadas.length > 0 || arqGroups.atrasadas.length > 0) {
     html += renderGroup(`⚠️ Atrasadas · ${groups.atrasadas.length}`, groups.atrasadas, 'var(--danger)', 'atrasadas');
   }
@@ -4334,8 +4401,10 @@ function buildColabTarefas() {
     const ativas = tasks.filter(t => !t.arquivada);
     const arquivadas = tasks.filter(t => t.arquivada);
 
-    // Ordenar: atrasadas → hoje → amanhã → futuras → sem data
+    // Ordenar: urgentes primeiro; depois atrasadas → hoje → futuras → sem data.
     ativas.sort((a,b) => {
+      const urgentDiff = Number(!!b.urgente) - Number(!!a.urgente);
+      if (urgentDiff !== 0) return urgentDiff;
       const da = a.data || '9999-99-99';
       const db = b.data || '9999-99-99';
       return da.localeCompare(db);
@@ -6368,6 +6437,7 @@ function initApp(cloudData) {
   renderMenteeList();
   renderMarco0List();
   renderConteudos();
+  applyAutomaticTaskOwners();
   ensureGisellaRecorrentes();
   buildTarefas();
   buildColabTarefas();
@@ -6398,7 +6468,14 @@ function initApp(cloudData) {
       // fbListen já ignora o eco de uma gravação confirmada por este aparelho.
       // Não descartamos mudanças recentes: esse bloqueio de 15 s deixava uma aba
       // com a cópia antiga em memória e ela podia reverter checks de outra origem.
-      ['gc-events',    v => { events = v.map(e=>({...e,tipo:e.tipo||'tarefa'})); buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars(); }],
+      ['gc-events',    v => {
+        events = v.map(e => {
+          const normalized = {...e, tipo:e.tipo||'tarefa'};
+          if (normalized.tipo === 'tarefa') normalized.responsavel = automaticTaskOwner(normalized.titulo, normalized.responsavel || '');
+          return normalized;
+        });
+        buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars();
+      }],
       ['gc-livros',    v => { livros = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
       ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
       ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
