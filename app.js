@@ -2724,14 +2724,14 @@ function deleteMentee(id, program) {
 
 /* ── CONTEUDO ── */
 let currentConteudoId = null;
-const ST_MAP = {copy:{l:'Copy',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Em edição',c:'s-edicao'},aprovado:{l:'Aprovado',c:'s-aprovado'},agendado:{l:'Agendado',c:'s-agendado'},postado:{l:'Postado',c:'s-postado'},turbinar:{l:'Turbinar',c:'s-turbinar'},metricas:{l:'Métricas',c:'s-metricas'},turbinar2:{l:'Turbinar nov.',c:'s-turbinar'}};
+const ST_MAP = {copy:{l:'Para criar a copy',c:'s-copy'},gravado:{l:'Para gravar',c:'s-gravado'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},turbinar:{l:'Para turbinar',c:'s-turbinar'},metricas:{l:'Para analisar métricas',c:'s-metricas'},turbinar2:{l:'Para turbinar novamente',c:'s-turbinar'}};
 const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda'};
 const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo'};
 const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
 const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
 
 // Etapas padrão de um conteúdo (baseadas no fluxo de status)
-const CONTEUDO_ETAPAS_PADRAO = ['Copy','Gravado','Em edição','Aprovado','Agendado','Postado','Turbinar','Métricas'];
+const CONTEUDO_ETAPAS_PADRAO = ['Para criar a copy','Para gravar','Para editar','Para aprovar','Para agendar','Para postar','Para turbinar','Para analisar métricas'];
 const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado','turbinar','metricas'];
 const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
 const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
