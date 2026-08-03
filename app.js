@@ -556,31 +556,13 @@ function criarTarefasEventos(allEvents) {
     const nome = ev.title.trim();
     const nomeKey = nome.replace(/\s+/g,'_').slice(0, 30);
     const diaEvento = new Date(ev.start + 'T12:00:00');
-    const diaPrep   = new Date(diaEvento); diaPrep.setDate(diaEvento.getDate() - 1);
-    const diaEnc    = new Date(diaEvento); diaEnc.setDate(diaEvento.getDate() + 1);
     const strEvento = diaEvento.toISOString().slice(0,10);
-    const strPrep   = diaPrep.toISOString().slice(0,10);
-    const strEnc    = diaEnc.toISOString().slice(0,10);
-    const keyPrep = 'gcal-prep-' + ev.start + '-' + nomeKey;
     const keyDia  = 'gcal-dia-'  + ev.start + '-' + nomeKey;
-    const keyEnc  = 'gcal-enc-'  + ev.start + '-' + nomeKey;
     const _bl = getGcalBlacklist();
-    if (!events.some(e => e.gcalKey === keyPrep) && !_bl.has(keyPrep)) {
-      events.push({ id: Date.now()+Math.floor(Math.random()*9999),
-        titulo: 'Preparar ' + nome, empresa: 'gisella', tipo: 'tarefa',
-        data: strPrep, responsavel: 'Gisella', gcalKey: keyPrep, arquivada: false });
-      changed = true;
-    }
     if (!events.some(e => e.gcalKey === keyDia) && !_bl.has(keyDia)) {
       events.push({ id: Date.now()+Math.floor(Math.random()*9999)+1,
         titulo: nome, empresa: 'gisella', tipo: 'tarefa',
         data: strEvento, responsavel: 'Gisella', gcalKey: keyDia, arquivada: false });
-      changed = true;
-    }
-    if (!events.some(e => e.gcalKey === keyEnc) && !_bl.has(keyEnc)) {
-      events.push({ id: Date.now()+Math.floor(Math.random()*9999)+2,
-        titulo: 'Encerrar ' + nome, empresa: 'gisella', tipo: 'tarefa',
-        data: strEnc, responsavel: 'Gisella', gcalKey: keyEnc, arquivada: false });
       changed = true;
     }
   });
@@ -595,9 +577,10 @@ function limparTarefasEventosRemovidos(allEvents) {
   allEvents.forEach(ev => {
     if (!ev.start || !ev.title) return;
     const nomeKey = ev.title.trim().replace(/\s+/g,'_').slice(0, 30);
-    validKeys.add('gcal-prep-' + ev.start + '-' + nomeKey);
+    // A agenda Daily mantém somente a tarefa do próprio evento. As antigas
+    // tarefas automáticas de preparar/encerrar deixam de ser válidas e são
+    // removidas na próxima sincronização, sem afetar tarefas manuais.
     validKeys.add('gcal-dia-'  + ev.start + '-' + nomeKey);
-    validKeys.add('gcal-enc-'  + ev.start + '-' + nomeKey);
   });
   const antes = events.length;
   events = events.filter(e => !e.gcalKey || validKeys.has(e.gcalKey));
