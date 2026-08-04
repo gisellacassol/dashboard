@@ -2756,13 +2756,25 @@ function prazoUtilAntesDaPostagem(dataPostagem, diasAntes) {
 
 function prazosIniciaisDoConteudo(rede, dataPostagem) {
   // O fluxo de e-mail tem etapas próprias e não usa Edição/Aprovação/Agendamento.
-  if (rede === 'emanda' || !dataPostagem) return {};
+  if (rede === 'emanda') return {};
 
   return {
-    edicao:    { prazo: prazoUtilAntesDaPostagem(dataPostagem, 2) },
-    aprovado:  { prazo: prazoUtilAntesDaPostagem(dataPostagem, 1) },
-    agendado:  { prazo: prazoUtilAntesDaPostagem(dataPostagem, 1) },
-    postado:   { prazo: dataPostagem },
+    edicao: {
+      prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 2) : '',
+      resp: 'Luiggi',
+    },
+    aprovado: {
+      prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 1) : '',
+      resp: 'Milena',
+    },
+    agendado: {
+      prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 1) : '',
+      resp: 'Milena',
+    },
+    postado: {
+      prazo: dataPostagem || '',
+      resp: 'Milena',
+    },
   };
 }
 
