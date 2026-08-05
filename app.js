@@ -1468,6 +1468,13 @@ function save(key, val) {
   
   function updateQaFields() {
     const tipo = document.getElementById('qa-tipo').value;
+    if (tipo === 'livro' && !window._editingEtapa) {
+      const empresa = ['editora','leia','gisella'].find(key => document.getElementById('qa-emp-'+key)?.checked) || 'editora';
+      document.getElementById('qa-tipo').value = 'tarefa';
+      closeModal('modal-quickadd');
+      setTimeout(() => openAddLivro(empresa), 60);
+      return;
+    }
     ['tarefa','evento','projeto','conteudo','livro'].forEach(t => {
       const el = document.getElementById('qa-fields-' + t);
       if (el) el.style.display = t === tipo ? 'block' : 'none';
@@ -1965,7 +1972,7 @@ function save(key, val) {
   
   function getQaVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
   
-  function submitQuickAdd() {
+  async function submitQuickAdd() {
     const empresa = getEmpresaStr('qa-emp-', 'editora');
     const tipo = getQaVal('qa-tipo');
     const titulo = getQaVal('qa-titulo').trim();
@@ -1976,12 +1983,16 @@ function save(key, val) {
       const {livroId, idx} = window._editingEtapa;
       const l = livros.find(x => x.id === livroId);
       if (l && l.etapas[idx]) {
+        const previousPrazo = l.etapas[idx].prazo || '';
+        const nextPrazo = getQaVal('qa-prazo');
         l.etapas[idx].nome = titulo;
-        l.etapas[idx].prazo = getQaVal('qa-prazo');
         l.etapas[idx].resp = getQaVal('qa-responsavel');
-        save('gc-livros', livros);
-        renderLivros();
-        buildTarefas();
+        if (previousPrazo !== nextPrazo) await updateEtapaPrazoInline(livroId, idx, nextPrazo);
+        else {
+          save('gc-livros', livros);
+          renderLivros();
+          buildTarefas();
+        }
         buildColabTarefas();
       }
       window._editingEtapa = null;
@@ -2177,11 +2188,76 @@ function save(key, val) {
   /* ── LIVROS ── */
   let addLivroEmpresa = 'editora';
   let editingLivroId = null;
+  const CRONOGRAMA_EDITORIAL = [
+    ['Briefing', 0, 'Gisella'],
+    ['Escolha do ilustrador', 7, 'Gisella'],
+    ['Texto em andamento', 10, 'Gisella'],
+    ['Reunião de alinhamento de conceito', 14, 'Gisella'],
+    ['Pré-diagramação', 14, 'Gisella'],
+    ['Texto preparado', 20, 'Gisella'],
+    ['Esboços', 34, 'Gisella'],
+    ['Texto finalizado', 40, 'Gisella'],
+    ['Estado da arte — coloração', 45, 'Gisella'],
+    ['Finalização das ilustrações', 75, 'Gisella'],
+    ['ISBN + Código de barras + Ficha catalográfica', 76, 'Gisella'],
+    ['Diagramação final', 80, 'Gisella'],
+    ['UV', 80, 'Gisella'],
+    ['Envio para gráfica', 80, 'Gisella'],
+    ['Receber boneco', 82, 'Gisella'],
+    ['Revisar boneco', 84, 'Gisella'],
+    ['Aplicar revisão final', 86, 'Gisella'],
+    ['Ajuste fino', 86, 'Gisella'],
+    ['Reenviar para gráfica', 86, 'Gisella'],
+    ['Enviar contrato para assinatura', 88, 'Gisella'],
+    ['Aprovar para impressão', 90, 'Gisella'],
+    ['Fazer marca página', 92, 'Milena'],
+    ['Enviar marca página para gráfica', 94, 'Milena'],
+    ['Receber o estoque', 110, 'Milena'],
+    ['Receber o marca página', 110, 'Milena'],
+    ['Cadastrar no sistema', 110, 'Milena'],
+    ['Liberar no site', 110, 'Milena'],
+    ['Post avisando sobre o novo livro', 112, 'Milena'],
+  ];
+
+  function parseDashboardDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''));
+    return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12) : null;
+  }
+  function dashboardDateString(date) {
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  }
+  function addCalendarDays(date, days) {
+    const next = new Date(date);
+    next.setDate(next.getDate() + Number(days || 0));
+    return next;
+  }
+  function moveToNextWeekday(date) {
+    const next = new Date(date);
+    if (next.getDay() === 6) next.setDate(next.getDate() + 2);
+    if (next.getDay() === 0) next.setDate(next.getDate() + 1);
+    return next;
+  }
+  function nextAvailableEditorialDate(candidate, previousDate, occupied) {
+    let next = moveToNextWeekday(candidate);
+    if (previousDate && next <= previousDate) next = moveToNextWeekday(addCalendarDays(previousDate, 1));
+    while (occupied.has(dashboardDateString(next))) next = moveToNextWeekday(addCalendarDays(next, 1));
+    return next;
+  }
+  function criarCronogramaEditorial(briefingDate) {
+    const briefing = parseDashboardDate(briefingDate);
+    if (!briefing) return [];
+    const occupied = new Set();
+    let previousDate = null;
+    return CRONOGRAMA_EDITORIAL.map(([nome, offsetDays, resp]) => {
+      const prazoDate = nextAvailableEditorialDate(addCalendarDays(briefing, offsetDays), previousDate, occupied);
+      const prazo = dashboardDateString(prazoDate);
+      occupied.add(prazo);
+      previousDate = prazoDate;
+      return { nome, feito: false, prazo, resp, offsetDays };
+    });
+  }
   function openAddLivroTodos() {
-    // Open quickadd modal with livro type
-    openQuickAdd();
-    document.getElementById('qa-tipo').value = 'livro';
-    updateQaFields();
+    openAddLivro('editora');
   }
   
   function openAddLivro(emp) {
@@ -2189,6 +2265,10 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-briefing','nl-lancamento'].forEach(id => {
+      const field = document.getElementById(id);
+      if (field) field.value = '';
+    });
     ['editora','leia','gisella'].forEach(e => {
       const cb = document.getElementById('nl-emp-'+e);
       if (cb) cb.checked = (e === emp);
@@ -2208,6 +2288,14 @@ function save(key, val) {
   function submitAddLivro() {
     const titulo = document.getElementById('nl-titulo').value.trim();
     if (!titulo) { document.getElementById('nl-titulo').focus(); return; }
+    const autor = document.getElementById('nl-autor').value.trim();
+    const ano = document.getElementById('nl-ano')?.value.trim() || '';
+    const briefingDate = document.getElementById('nl-briefing')?.value || '';
+    const lancamentoDate = document.getElementById('nl-lancamento').value;
+    if (!autor) { document.getElementById('nl-autor').focus(); return; }
+    if (!ano) { document.getElementById('nl-ano').focus(); return; }
+    if (!briefingDate) { document.getElementById('nl-briefing').focus(); return; }
+    if (!lancamentoDate) { document.getElementById('nl-lancamento').focus(); return; }
     // Get selected empresas from checkboxes (or fall back to addLivroEmpresa)
     const checkboxes = ['editora','leia','gisella'].filter(e => {
       const cb = document.getElementById('nl-emp-'+e);
@@ -2216,8 +2304,6 @@ function save(key, val) {
     const empresas = checkboxes.length > 0 ? checkboxes : [addLivroEmpresa || 'editora'];
     const empresaStr = empresas.join(',');
     const tipopub = document.querySelector('input[name="nl-tipopub"]:checked')?.value || 'lancamento';
-    const lancamentoDate = document.getElementById('nl-lancamento').value;
-    const etapasUsar = tipopub === 'reimpressao' ? ETAPAS_REIMP : ETAPAS_DEFAULT;
     const menteeOpt = document.querySelector('input[name="nl-mentee-opt"]:checked')?.value;
     const menteeIdSel = menteeOpt === 'sim' ? parseInt(document.getElementById('nl-mentee-id')?.value||'0')||null : null;
     const tipoAutoriaVal = document.getElementById('nl-tipo-autoria')?.value || '';
@@ -2226,7 +2312,7 @@ function save(key, val) {
       id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
       tipopub, menteeId: menteeIdSel, tipoAutoriaMenteeId: tipoAutoriaMenteeId,
       info: {
-        autor: document.getElementById('nl-autor').value.trim(),
+        autor,
         ilustrador: document.getElementById('nl-ilustrador').value.trim(),
         publico: document.getElementById('nl-publico').value.trim(),
         faixa: document.getElementById('nl-faixa').value.trim(),
@@ -2237,11 +2323,12 @@ function save(key, val) {
         colecao: document.getElementById('nl-colecao').value.trim(),
         editora: document.getElementById('nl-editora').value.trim(),
         lancamento: lancamentoDate,
+        briefing: briefingDate,
         sinopse: document.getElementById('nl-sinopse').value.trim(),
         os: document.getElementById('nl-os')?.value.trim()||'',
-        ano: document.getElementById('nl-ano')?.value.trim()||'',
+        ano,
       },
-      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : etapasUsar.map(nome => ({nome, feito: false, prazo: ''}))
+      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : criarCronogramaEditorial(briefingDate)
     };
     const _wasEditing = !!editingLivroId;
     let _newLivroId = null;
@@ -2277,7 +2364,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-briefing'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -2445,6 +2532,7 @@ function save(key, val) {
     if (reimpRad) reimpRad.checked = tipopubEdit === 'reimpressao';
     const nlOs = document.getElementById('nl-os'); if(nlOs) nlOs.value = info.os||'';
     const nlAno = document.getElementById('nl-ano'); if(nlAno) nlAno.value = info.ano||'';
+    const nlBriefing = document.getElementById('nl-briefing'); if(nlBriefing) nlBriefing.value = info.briefing||'';
     document.getElementById('nl-autor').value = info.autor||'';
     document.getElementById('nl-ilustrador').value = info.ilustrador||'';
     document.getElementById('nl-publico').value = info.publico||'';
@@ -2488,7 +2576,7 @@ function save(key, val) {
       }
     } 
   }
-  function setPrazoEtapa(id,i,val) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].prazo=val; save('gc-livros',livros); renderLivros(); } }
+  function setPrazoEtapa(id,i,val) { updateEtapaPrazoInline(id, i, val); }
   function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
   function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildColabTarefas(); } }
   
@@ -5574,13 +5662,77 @@ function save(key, val) {
     input.onkeydown = e => { if(e.key==='Enter') save_(); if(e.key==='Escape') renderEpLista(); };
   }
   
-  function updateEtapaPrazoInline(livroId, idx, val) {
+  function escolherAplicacaoDataEtapa(etapaNome) {
+    return new Promise(resolve => {
+      const layer = document.createElement('div');
+      layer.className = 'modal-overlay open';
+      layer.style.zIndex = '10050';
+      layer.innerHTML = `<div class="modal" style="width:460px;">
+        <button class="modal-close" type="button" data-choice="cancel">×</button>
+        <div class="modal-title">Como deseja aplicar esta alteração?</div>
+        <p style="font-size:12px;color:var(--text-soft);margin:6px 0 16px;">${String(etapaNome || 'Etapa').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}</p>
+        <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;cursor:pointer;">
+          <input type="radio" name="etapa-date-choice" value="single" checked style="margin-top:2px;accent-color:var(--gisella);">
+          <span><strong style="display:block;font-size:13px;">Alterar somente esta etapa</strong><small style="color:var(--text-soft);">Nenhuma outra data será modificada.</small></span>
+        </label>
+        <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+          <input type="radio" name="etapa-date-choice" value="following" style="margin-top:2px;accent-color:var(--gisella);">
+          <span><strong style="display:block;font-size:13px;">Recalcular todas as etapas seguintes</strong><small style="color:var(--text-soft);">A nova data vira a referência, respeitando fins de semana, conflitos e ordem.</small></span>
+        </label>
+        <div class="btn-row" style="margin-top:18px;"><button type="button" class="btn" data-choice="cancel">Cancelar</button><button type="button" class="btn btn-primary" data-choice="confirm">Aplicar alteração</button></div>
+      </div>`;
+      document.body.appendChild(layer);
+      const finish = choice => { layer.remove(); resolve(choice); };
+      layer.querySelectorAll('[data-choice="cancel"]').forEach(button => button.addEventListener('click', () => finish(null)));
+      layer.querySelector('[data-choice="confirm"]').addEventListener('click', () => {
+        finish(layer.querySelector('input[name="etapa-date-choice"]:checked')?.value || 'single');
+      });
+      layer.addEventListener('click', event => { if (event.target === layer) finish(null); });
+    });
+  }
+
+  function recalcularEtapasSeguintes(livro, editedIndex, newDateValue) {
+    const referenceDate = parseDashboardDate(newDateValue);
+    if (!referenceDate) return;
+    const editedStage = livro.etapas[editedIndex];
+    const templateByName = new Map(CRONOGRAMA_EDITORIAL.map(item => [item[0], item[1]]));
+    const referenceOffset = Number.isFinite(Number(editedStage.offsetDays))
+      ? Number(editedStage.offsetDays)
+      : Number(templateByName.get(editedStage.nome) || 0);
+    const occupied = new Set(livro.etapas.slice(0, editedIndex + 1).map(stage => stage.prazo).filter(Boolean));
+    let previousDate = referenceDate;
+    for (let index = editedIndex + 1; index < livro.etapas.length; index += 1) {
+      const stage = livro.etapas[index];
+      const stageOffset = Number.isFinite(Number(stage.offsetDays))
+        ? Number(stage.offsetDays)
+        : templateByName.get(stage.nome);
+      const candidate = Number.isFinite(Number(stageOffset))
+        ? addCalendarDays(referenceDate, Math.max(0, Number(stageOffset) - referenceOffset))
+        : addCalendarDays(previousDate, 1);
+      const nextDate = nextAvailableEditorialDate(candidate, previousDate, occupied);
+      stage.prazo = dashboardDateString(nextDate);
+      occupied.add(stage.prazo);
+      previousDate = nextDate;
+    }
+  }
+
+  async function updateEtapaPrazoInline(livroId, idx, val) {
     const l = livros.find(x => x.id === livroId);
     if (!l || !l.etapas[idx]) return;
+    const previousValue = l.etapas[idx].prazo || '';
+    if (previousValue === val) return;
+    const choice = idx < l.etapas.length - 1 ? await escolherAplicacaoDataEtapa(l.etapas[idx].nome) : 'single';
+    if (!choice) {
+      renderLivros();
+      renderEpLista();
+      return;
+    }
     l.etapas[idx].prazo = val;
+    if (choice === 'following' && val) recalcularEtapasSeguintes(l, idx, val);
     save('gc-livros', livros);
     renderLivros();
     buildTarefas();
+    if (_epLivroId === livroId) renderEpLista();
   }
   
   /* ── NOTAS RÁPIDAS ── */

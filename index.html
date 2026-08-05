@@ -299,8 +299,8 @@
 <!-- LIVROS -->
 <div class="page" id="page-livros">
   <div class="page-header">
-    <div class="page-title">Livros</div>
-    <div class="page-subtitle">Todos os livros em produção</div>
+    <div><div class="page-title">Livros</div><div class="page-subtitle">Todos os livros em produção</div></div>
+    <button class="btn btn-primary" onclick="openAddLivroTodos()">+ Novo livro</button>
   </div>
   <div class="filter-bar" id="filter-bar-livros">
     <button class="filter-btn active" onclick="setFilter('livros','all',this)">Todas</button>
@@ -723,7 +723,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="radio" name="nl-tipopub" id="nl-tipopub-reimp" value="reimpressao" onchange="updateNlTipo()"> Reimpressão</label>
           </div>
         </div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Título *</label><input class="form-input" id="nl-titulo" type="text" placeholder="Título do livro"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Título *</label><input class="form-input" id="nl-titulo" type="text" placeholder="Título do livro" required></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Tipo de autoria</label>
           <select class="form-select" id="nl-tipo-autoria">
             <option value="">Não se aplica</option>
@@ -736,7 +736,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="nl-emp-gisella" value="gisella" style="accent-color:var(--gisella);"> <span style="color:var(--gisella);">GC Estratégias</span></label>
           </div>
         </div>
-        <div class="form-group"><label class="form-label">Autor</label><input class="form-input" id="nl-autor" type="text"></div>
+        <div class="form-group"><label class="form-label">Autor *</label><input class="form-input" id="nl-autor" type="text" required></div>
         <div class="form-group"><label class="form-label">Ilustrador</label><input class="form-input" id="nl-ilustrador" type="text"></div>
         <div class="form-group"><label class="form-label">Público-alvo</label><input class="form-input" id="nl-publico" type="text"></div>
         <div class="form-group"><label class="form-label">Faixa etária</label><input class="form-input" id="nl-faixa" type="text"></div>
@@ -747,8 +747,9 @@
         <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="nl-colecao" type="text"></div>
         <div class="form-group"><label class="form-label">Editora responsável</label><input class="form-input" id="nl-editora" type="text"></div>
         <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="nl-os" type="text" placeholder="Número da OS"></div>
-        <div class="form-group"><label class="form-label">Ano</label><input class="form-input" id="nl-ano" type="text" placeholder="Ex: 2026"></div>
-        <div class="form-group"><label class="form-label">Data de lançamento</label><input class="form-input" id="nl-lancamento" type="date"></div>
+        <div class="form-group"><label class="form-label">Ano *</label><input class="form-input" id="nl-ano" type="number" min="1900" max="2200" placeholder="Ex: 2026" required></div>
+        <div class="form-group"><label class="form-label">Data do briefing *</label><input class="form-input" id="nl-briefing" type="date" required></div>
+        <div class="form-group"><label class="form-label">Data de lançamento *</label><input class="form-input" id="nl-lancamento" type="date" required></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Sinopse</label><textarea class="notes-area" id="nl-sinopse" style="min-height:70px;"></textarea></div>
       </div>
       <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-livro')">Cancelar</button><button type="submit" class="btn btn-primary">Criar livro</button></div>
@@ -1038,6 +1039,6 @@
 </div>
 
 
-<script src="app.js"></script>
+<script src="app.js?v=3.1.0"></script>
 </body>
 </html>
