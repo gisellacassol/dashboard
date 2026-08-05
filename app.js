@@ -938,13 +938,18 @@
     const normalized = names.map(name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase());
     return ['luiggi','gisella','milena'].filter(recipient => normalized.some(name => name === recipient || name.includes(recipient)));
   }
-  function scheduleChecklistCentralSync(key, changedItems) {
+  function scheduleChecklistCentralSync(key, changedItems, previousChangedItems = []) {
     const token = sessionStorage.getItem('gc-dashboard-session-token');
     if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
     clearTimeout(checklistDirectSyncTimer);
     checklistDirectSyncTimer = setTimeout(async () => {
       try {
-        const recipients = checklistRecipientsForChanges(key, changedItems);
+        // Inclui responsáveis antigos e novos. Assim, uma transferência não
+        // deixa a tarefa presa no Checklist da pessoa anterior.
+        const recipients = [...new Set([
+          ...checklistRecipientsForChanges(key, previousChangedItems),
+          ...checklistRecipientsForChanges(key, changedItems),
+        ])];
         if (!recipients.length) return;
         const results = await Promise.allSettled(recipients.map(async recipient => {
           const response = await fetch(CHECKLIST_SYNC_URL, {
@@ -961,17 +966,34 @@
       }
   }, 0);
 }
+async function syncChecklistAfterDashboardDeletion(key, previousItems) {
+  const token = sessionStorage.getItem('gc-dashboard-session-token');
+  const recipients = checklistRecipientsForChanges(key, previousItems);
+  if (!token || !recipients.length) return;
+  await Promise.allSettled(recipients.map(recipient => fetch(CHECKLIST_SYNC_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
+    body:JSON.stringify({operation:'dashboard_session_pull',recipients:[recipient]}),
+  })));
+}
 function save(key, val) {
   const previousValue = load(key, []);
   const previousById = new Map((Array.isArray(previousValue) ? previousValue : []).map(item => [String(item?.id ?? ''), JSON.stringify(item)]));
   const changedItems = (Array.isArray(val) ? val : []).filter(item => previousById.get(String(item?.id ?? '')) !== JSON.stringify(item));
+  const nextIds = new Set((Array.isArray(val) ? val : []).map(item => String(item?.id ?? '')));
+  const removedItems = (Array.isArray(previousValue) ? previousValue : []).filter(item => !nextIds.has(String(item?.id ?? '')));
+  const changedIds = new Set(changedItems.map(item => String(item?.id ?? '')));
+  const previousChangedItems = (Array.isArray(previousValue) ? previousValue : []).filter(item => changedIds.has(String(item?.id ?? '')));
   localStorage.setItem(key, JSON.stringify(val));
   _lastLocalSave[key] = Date.now();
   // O Checklist recebe a alteração imediatamente. A persistência no Firebase
   // continua em paralelo como cópia compartilhada do Dashboard.
-  scheduleChecklistCentralSync(key, changedItems);
+  scheduleChecklistCentralSync(key, changedItems, previousChangedItems);
   if (window.fbSave) window.fbSave(key, val)
-    .then(savedAt => { if (!savedAt) console.warn('Firebase não confirmou a gravação:', key); })
+    .then(savedAt => {
+      if (!savedAt) console.warn('Firebase não confirmou a gravação:', key);
+      else if (removedItems.length) syncChecklistAfterDashboardDeletion(key, removedItems);
+    })
     .catch(e => console.warn('fbSave err:', key, e));
     autoSave();
   }
