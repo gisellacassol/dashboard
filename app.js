@@ -923,13 +923,29 @@ const _lastLocalSave = {};
 const CHECKLIST_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const CHECKLIST_SYNCED_DOCUMENTS = new Set(['gc-events','gc-conteudos','gc-livros','gc-projetos']);
 let checklistDirectSyncTimer = null;
+function checklistRecipientsForChanges(key, items) {
+  const names = [];
+  const add = value => { if (value) names.push(String(value)); };
+  items.forEach(item => {
+    if (key === 'gc-events') add(item?.responsavel);
+    if (key === 'gc-conteudos') Object.values(item?.etapasStatus || {}).forEach(stage => add(stage?.resp));
+    if (key === 'gc-livros') {
+      add(item?.responsavel);
+      (item?.etapas || []).forEach(stage => add(stage?.resp));
+    }
+    if (key === 'gc-projetos') (item?.tarefas || []).forEach(task => add(task?.resp));
+  });
+  const normalized = names.map(name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase());
+  return ['luiggi','gisella','milena'].filter(recipient => normalized.some(name => name === recipient || name.includes(recipient)));
+}
 function scheduleChecklistCentralSync(key, changedItems) {
   const token = sessionStorage.getItem('gc-dashboard-session-token');
   if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
   clearTimeout(checklistDirectSyncTimer);
   checklistDirectSyncTimer = setTimeout(async () => {
     try {
-      const recipients = ['luiggi','gisella','milena'];
+      const recipients = checklistRecipientsForChanges(key, changedItems);
+      if (!recipients.length) return;
       const results = await Promise.allSettled(recipients.map(async recipient => {
         const response = await fetch(CHECKLIST_SYNC_URL, {
           method:'POST',
