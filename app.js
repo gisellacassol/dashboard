@@ -929,12 +929,17 @@ function scheduleChecklistCentralSync(key) {
   clearTimeout(checklistDirectSyncTimer);
   checklistDirectSyncTimer = setTimeout(async () => {
     try {
-      const response = await fetch(CHECKLIST_SYNC_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
-        body:JSON.stringify({operation:'dashboard_session_pull',source_document:key}),
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const recipients = ['luiggi','gisella','milena'];
+      const results = await Promise.allSettled(recipients.map(async recipient => {
+        const response = await fetch(CHECKLIST_SYNC_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
+          body:JSON.stringify({operation:'dashboard_session_pull',source_document:key,recipients:[recipient]}),
+        });
+        if (!response.ok) throw new Error(`${recipient}: HTTP ${response.status}`);
+      }));
+      const failed = results.find(result => result.status === 'rejected');
+      if (failed) throw failed.reason;
     } catch (error) {
       console.warn('Sincronização central indisponível; o mecanismo de segurança tentará novamente.', error);
     }
