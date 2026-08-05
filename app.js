@@ -2189,34 +2189,36 @@ function save(key, val) {
   let addLivroEmpresa = 'editora';
   let editingLivroId = null;
   const CRONOGRAMA_EDITORIAL = [
-    ['Briefing', 0, 'Gisella'],
-    ['Escolha do ilustrador', 7, 'Gisella'],
-    ['Texto em andamento', 10, 'Gisella'],
-    ['Reunião de alinhamento de conceito', 14, 'Gisella'],
-    ['Pré-diagramação', 14, 'Gisella'],
-    ['Texto preparado', 20, 'Gisella'],
-    ['Esboços', 34, 'Gisella'],
-    ['Texto finalizado', 40, 'Gisella'],
-    ['Estado da arte — coloração', 45, 'Gisella'],
-    ['Finalização das ilustrações', 75, 'Gisella'],
-    ['ISBN + Código de barras + Ficha catalográfica', 76, 'Gisella'],
-    ['Diagramação final', 80, 'Gisella'],
-    ['UV', 80, 'Gisella'],
-    ['Envio para gráfica', 80, 'Gisella'],
-    ['Receber boneco', 82, 'Gisella'],
-    ['Revisar boneco', 84, 'Gisella'],
-    ['Aplicar revisão final', 86, 'Gisella'],
-    ['Ajuste fino', 86, 'Gisella'],
-    ['Reenviar para gráfica', 86, 'Gisella'],
-    ['Enviar contrato para assinatura', 88, 'Gisella'],
-    ['Aprovar para impressão', 90, 'Gisella'],
-    ['Fazer marca página', 92, 'Milena'],
-    ['Enviar marca página para gráfica', 94, 'Milena'],
-    ['Receber o estoque', 110, 'Milena'],
-    ['Receber o marca página', 110, 'Milena'],
-    ['Cadastrar no sistema', 110, 'Milena'],
-    ['Liberar no site', 110, 'Milena'],
-    ['Post avisando sobre o novo livro', 112, 'Milena'],
+    ['Briefing', -110, 'Gisella'],
+    ['Escolha do ilustrador', -103, 'Gisella'],
+    ['Texto em andamento', -98, 'Gisella'],
+    ['Reunião de alinhamento de conceito', -94, 'Gisella'],
+    ['Pré-diagramação', -92, 'Gisella'],
+    ['Texto preparado', -88, 'Gisella'],
+    ['Esboços', -74, 'Gisella'],
+    ['Texto finalizado', -68, 'Gisella'],
+    ['Estado da arte — coloração', -63, 'Gisella'],
+    ['Finalização das ilustrações', -38, 'Gisella'],
+    ['ISBN + Código de barras + Ficha catalográfica', -36, 'Gisella'],
+    ['Diagramação final', -34, 'Gisella'],
+    ['UV', -33, 'Gisella'],
+    ['Envio para gráfica (boneco)', -32, 'Gisella'],
+    ['Plano de divulgação e lançamento', -30, 'Milena'],
+    ['Receber boneco', -29, 'Gisella'],
+    ['Revisar boneco', -27, 'Gisella'],
+    ['Aplicar revisão final', -25, 'Gisella'],
+    ['Ajuste fino', -24, 'Gisella'],
+    ['Reenviar para gráfica', -23, 'Gisella'],
+    ['Enviar contrato para assinatura', -22, 'Gisella'],
+    ['Aprovar para impressão', -20, 'Gisella'],
+    ['Fazer marca-página', -18, 'Milena'],
+    ['Enviar marca-página para gráfica', -16, 'Milena'],
+    ['Receber o estoque', -5, 'Milena'],
+    ['Receber o marca-página', -5, 'Milena'],
+    ['Cadastrar no sistema', -5, 'Milena'],
+    ['Lançamento', 0, ''],
+    ['Liberar no site', 1, 'Milena'],
+    ['Post avisando sobre o novo livro', 1, 'Milena'],
   ];
 
   function parseDashboardDate(value) {
@@ -2243,13 +2245,13 @@ function save(key, val) {
     while (occupied.has(dashboardDateString(next))) next = moveToNextWeekday(addCalendarDays(next, 1));
     return next;
   }
-  function criarCronogramaEditorial(briefingDate) {
-    const briefing = parseDashboardDate(briefingDate);
-    if (!briefing) return [];
+  function criarCronogramaEditorial(lancamentoDate) {
+    const lancamento = parseDashboardDate(lancamentoDate);
+    if (!lancamento) return [];
     const occupied = new Set();
     let previousDate = null;
     return CRONOGRAMA_EDITORIAL.map(([nome, offsetDays, resp]) => {
-      const prazoDate = nextAvailableEditorialDate(addCalendarDays(briefing, offsetDays), previousDate, occupied);
+      const prazoDate = nextAvailableEditorialDate(addCalendarDays(lancamento, offsetDays), previousDate, occupied);
       const prazo = dashboardDateString(prazoDate);
       occupied.add(prazo);
       previousDate = prazoDate;
@@ -2265,7 +2267,7 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-briefing','nl-lancamento'].forEach(id => {
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -2290,11 +2292,9 @@ function save(key, val) {
     if (!titulo) { document.getElementById('nl-titulo').focus(); return; }
     const autor = document.getElementById('nl-autor').value.trim();
     const ano = document.getElementById('nl-ano')?.value.trim() || '';
-    const briefingDate = document.getElementById('nl-briefing')?.value || '';
     const lancamentoDate = document.getElementById('nl-lancamento').value;
     if (!autor) { document.getElementById('nl-autor').focus(); return; }
     if (!ano) { document.getElementById('nl-ano').focus(); return; }
-    if (!briefingDate) { document.getElementById('nl-briefing').focus(); return; }
     if (!lancamentoDate) { document.getElementById('nl-lancamento').focus(); return; }
     // Get selected empresas from checkboxes (or fall back to addLivroEmpresa)
     const checkboxes = ['editora','leia','gisella'].filter(e => {
@@ -2323,38 +2323,38 @@ function save(key, val) {
         colecao: document.getElementById('nl-colecao').value.trim(),
         editora: document.getElementById('nl-editora').value.trim(),
         lancamento: lancamentoDate,
-        briefing: briefingDate,
         sinopse: document.getElementById('nl-sinopse').value.trim(),
         os: document.getElementById('nl-os')?.value.trim()||'',
         ano,
       },
-      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : criarCronogramaEditorial(briefingDate)
+      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : criarCronogramaEditorial(lancamentoDate)
     };
     const _wasEditing = !!editingLivroId;
     let _newLivroId = null;
     if (editingLivroId) {
       const i = livros.findIndex(x=>x.id===editingLivroId);
-      if (i>-1) { livros[i].titulo = livro.titulo; livros[i].empresa = livro.empresa; livros[i].info = livro.info; livros[i].tipopub = tipopub; livros[i].tipoAutoriaMenteeId = tipoAutoriaMenteeId; }
+      if (i>-1) {
+        const livroExistente = livros[i];
+        const lancamentoAnterior = livroExistente.info?.lancamento || '';
+        if (lancamentoAnterior !== lancamentoDate) {
+          const conclusaoPorNome = new Map((livroExistente.etapas || []).map(etapa => [etapa.nome, !!etapa.feito]));
+          livroExistente.etapas = criarCronogramaEditorial(lancamentoDate).map(etapa => ({
+            ...etapa,
+            feito: conclusaoPorNome.get(etapa.nome) || false,
+          }));
+        }
+        livroExistente.titulo = livro.titulo;
+        livroExistente.empresa = livro.empresa;
+        livroExistente.info = livro.info;
+        livroExistente.tipopub = tipopub;
+        livroExistente.tipoAutoriaMenteeId = tipoAutoriaMenteeId;
+      }
       editingLivroId = null;
     } else {
       livro.id = Date.now();
       _newLivroId = livro.id;
       livros.push(livro);
       console.log('Novo livro criado, id:', livro.id, '_newLivroId:', _newLivroId);
-      if (lancamentoDate) {
-        const primeiraEmp = empresaStr.split(',')[0] || 'editora';
-        events.push({
-          id: Date.now() + 1,
-          empresa: primeiraEmp,
-          titulo: 'Lançamento ' + titulo,
-          tipo: 'evento',
-          data: lancamentoDate,
-          dataFim: lancamentoDate,
-          observacao: 'Criado automaticamente ao cadastrar livro',
-        });
-        save('gc-events', events);
-        refreshCalendars();
-      }
     }
     save('gc-livros', livros);
     renderLivros();
@@ -2364,7 +2364,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-briefing'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -2390,13 +2390,12 @@ function save(key, val) {
         const diff = Math.round((new Date(e.prazo+'T00:00:00')-today2)/86400000);
         return diff<0?'var(--danger)':diff===0?'var(--gisella)':diff<=7?'var(--warn)':'var(--text-soft)';
       })() : 'var(--text-soft)';
-      const respColor = e.resp==='Gisella'?'var(--gisella)':e.resp==='Milena'?'var(--leia)':'var(--editora)';
       return '<div class="livro-etapa-row" style="'+(e.feito?'opacity:0.6;':'')+'">' +
         '<input type="checkbox" '+(e.feito?'checked':'')+' onchange="toggleEtapa('+l.id+','+i+')" onclick="event.stopPropagation()">' +
         '<span class="livro-etapa-nome'+(e.feito?' done':'')+'" style="flex:1;">['+l.titulo+'] '+e.nome+'</span>' +
         '<span style="font-size:11px;color:'+(prazoColor||'var(--text-soft)')+';font-weight:'+(e.prazo?'500':'400')+';">'+(e.prazo?fmtDate(e.prazo):'—')+'</span>' +
         '<select onchange="setEtapaResp('+l.id+','+i+',this.value)" onclick="event.stopPropagation()" '+
-          'style="font-size:10px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:'+(e.resp?respColor:'var(--text-soft)')+';cursor:pointer;max-width:80px;">' +
+          'style="font-size:10px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:'+(e.resp?'#000':'var(--text-soft)')+';cursor:pointer;max-width:80px;">' +
           '<option value="" '+((!e.resp)?'selected':'')+'>—</option>' +
           '<option value="Gisella" '+(e.resp==='Gisella'?'selected':'')+'>Gisella</option>' +
           '<option value="Milena" '+(e.resp==='Milena'?'selected':'')+'>Milena</option>' +
@@ -2532,7 +2531,6 @@ function save(key, val) {
     if (reimpRad) reimpRad.checked = tipopubEdit === 'reimpressao';
     const nlOs = document.getElementById('nl-os'); if(nlOs) nlOs.value = info.os||'';
     const nlAno = document.getElementById('nl-ano'); if(nlAno) nlAno.value = info.ano||'';
-    const nlBriefing = document.getElementById('nl-briefing'); if(nlBriefing) nlBriefing.value = info.briefing||'';
     document.getElementById('nl-autor').value = info.autor||'';
     document.getElementById('nl-ilustrador').value = info.ilustrador||'';
     document.getElementById('nl-publico').value = info.publico||'';
@@ -3655,7 +3653,7 @@ function save(key, val) {
               style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;"
               title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
         </td>
-        <td style="font-weight:500;${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
+        <td style="font-weight:500;${!isArquivada && e._livroId !== undefined ? `color:${((e.empresa||'').split(',')[0]==='editora'?'var(--editora)':(e.empresa||'').split(',')[0]==='leia'?'var(--leia)':'var(--gisella)')};` : ''}${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
           <span>${e.titulo}</span>
           ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
           ${e._conteudoId!==undefined?`<button onclick="openConteudoEtapasPrazos(${e._conteudoId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Ver prazos">📅</button>`:!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
@@ -3666,7 +3664,7 @@ function save(key, val) {
         </td>
         <td>
           ${empBadgesHtml(e.empresa)}
-          ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${e.responsavel==='Gisella'?'var(--gisella)':e.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${e.responsavel}</span>`:''}
+          ${e.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${e.responsavel==='Gisella'?'var(--gisella-bg)':e.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:#000;">${e.responsavel}</span>`:''}
         </td>
         <td style="font-size:12px;color:${prazoColor};font-weight:500;">${e.data?fmtDateTarefa(e.data):'—'}</td>
       </tr>`;
@@ -4026,13 +4024,12 @@ function save(key, val) {
         const diff = Math.round((new Date(data+'T00:00:00')-today)/86400000);
         return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
       })() : 'var(--text-soft)';
-      const respColor = resp==='Gisella'?'var(--gisella)':resp==='Milena'?'var(--leia)':'var(--editora)';
       const respBg = resp==='Gisella'?'var(--gisella-bg)':resp==='Milena'?'var(--leia-bg)':'var(--editora-bg)';
       return `<div class="projeto-task-row" style="${isArq?'opacity:0.6;':''}">
         <input type="checkbox" ${isArq?'checked':''} onchange="toggleProjetoTask(${p.id},${i})" style="accent-color:var(--gisella);width:14px;height:14px;cursor:pointer;flex-shrink:0;">
         <span class="projeto-task-nome${isArq?' done':''}" style="flex:1;">
           ${t.nome}
-          ${resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${respBg};color:${respColor};">${resp}</span>`:''}
+          ${resp?`<span style="font-size:10px;font-weight:500;padding:1px 5px;border-radius:10px;margin-left:4px;background:${respBg};color:#000;">${resp}</span>`:''}
         </span>
         ${data?`<span style="font-size:11px;color:${prazoColor};font-weight:500;">${fmtDate(data)}</span>`:''}
         ${ev?`<button onclick="openEditEvent(${ev.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`:''}
@@ -4588,13 +4585,13 @@ function save(key, val) {
                 style="accent-color:var(--gisella);width:16px;height:16px;cursor:pointer;">
             </div>
           </td>
-          <td style="font-weight:500;${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
+          <td style="font-weight:500;${!isArq && String(t.id).startsWith('livro-') ? `color:${((t.empresa||'').split(',')[0]==='editora'?'var(--editora)':(t.empresa||'').split(',')[0]==='leia'?'var(--leia)':'var(--gisella)')};` : ''}${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
             ${t.urgente ? '<span title="Urgente" style="font-size:13px;vertical-align:middle;margin-right:3px;">❗</span>' : ''}${t.titulo}
             ${editBtn}${delBtn}
           </td>
           <td>
             ${empBadgesHtml(t.empresa)}
-            ${t.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${t.responsavel==='Gisella'?'var(--gisella-bg)':t.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:${t.responsavel==='Gisella'?'var(--gisella)':t.responsavel==='Milena'?'var(--leia)':'var(--editora)'};">${t.responsavel}</span>`:''}
+            ${t.responsavel?`<span style="font-size:11px;font-weight:500;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:2px;background:${t.responsavel==='Gisella'?'var(--gisella-bg)':t.responsavel==='Milena'?'var(--leia-bg)':'var(--editora-bg)'};color:#000;">${t.responsavel}</span>`:''}
           </td>
           <td style="font-size:12px;color:${prazoColor};font-weight:500;">${t.data?fmtDateTarefa(t.data):'—'}</td>
         </tr>`;
