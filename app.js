@@ -923,9 +923,9 @@ const _lastLocalSave = {};
 const CHECKLIST_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const CHECKLIST_SYNCED_DOCUMENTS = new Set(['gc-events','gc-conteudos','gc-livros','gc-projetos']);
 let checklistDirectSyncTimer = null;
-function scheduleChecklistCentralSync(key) {
+function scheduleChecklistCentralSync(key, changedItems) {
   const token = sessionStorage.getItem('gc-dashboard-session-token');
-  if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key)) return;
+  if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
   clearTimeout(checklistDirectSyncTimer);
   checklistDirectSyncTimer = setTimeout(async () => {
     try {
@@ -934,7 +934,7 @@ function scheduleChecklistCentralSync(key) {
         const response = await fetch(CHECKLIST_SYNC_URL, {
           method:'POST',
           headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
-          body:JSON.stringify({operation:'dashboard_session_pull',source_document:key,recipients:[recipient]}),
+          body:JSON.stringify({operation:'dashboard_session_pull',source_document:key,document_value:changedItems,recipients:[recipient]}),
         });
         if (!response.ok) throw new Error(`${recipient}: HTTP ${response.status}`);
       }));
@@ -946,10 +946,16 @@ function scheduleChecklistCentralSync(key) {
   }, 180);
 }
 function save(key, val) {
+  const previousValue = load(key, []);
   localStorage.setItem(key, JSON.stringify(val));
   _lastLocalSave[key] = Date.now();
   if (window.fbSave) window.fbSave(key, val)
-    .then(savedAt => { if (savedAt) scheduleChecklistCentralSync(key); })
+    .then(savedAt => {
+      if (!savedAt) return;
+      const previousById = new Map((Array.isArray(previousValue) ? previousValue : []).map(item => [String(item?.id ?? ''), JSON.stringify(item)]));
+      const changedItems = (Array.isArray(val) ? val : []).filter(item => previousById.get(String(item?.id ?? '')) !== JSON.stringify(item));
+      scheduleChecklistCentralSync(key, changedItems);
+    })
     .catch(e => console.warn('fbSave err:', key, e));
   autoSave();
 }
