@@ -536,6 +536,22 @@
       <!-- TAREFA FIELDS -->
       <div id="qa-fields-tarefa">
         <div class="form-group"><label class="form-label">Data de entrega</label><input class="form-input" id="qa-prazo" type="date"></div>
+        <div class="form-group"><label class="form-label">Recorrência</label>
+          <select class="form-select" id="qa-recorrencia" onchange="updateQaRecorrenciaFields()">
+            <option value="none">Não repetir</option>
+            <option value="interval15">A cada 15 dias</option>
+            <option value="weekdays">Dias específicos da semana</option>
+            <option value="googleMentoring">Quando houver mentoria no Google Calendar</option>
+          </select>
+        </div>
+        <div id="qa-recorrencia-weekdays" class="form-group" style="display:none;"><label class="form-label">Repetir em</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <label><input type="checkbox" value="1" class="qa-recorrencia-day"> Seg</label><label><input type="checkbox" value="2" class="qa-recorrencia-day"> Ter</label><label><input type="checkbox" value="3" class="qa-recorrencia-day"> Qua</label><label><input type="checkbox" value="4" class="qa-recorrencia-day"> Qui</label><label><input type="checkbox" value="5" class="qa-recorrencia-day"> Sex</label><label><input type="checkbox" value="6" class="qa-recorrencia-day"> Sáb</label><label><input type="checkbox" value="0" class="qa-recorrencia-day"> Dom</label>
+          </div>
+        </div>
+        <div id="qa-recorrencia-mentoring" class="form-group" style="display:none;"><label class="form-label">Quando criar em relação à mentoria</label>
+          <select class="form-select" id="qa-mentoring-offset"><option value="-1">1 dia antes</option><option value="0">No mesmo dia</option><option value="1" selected>1 dia depois</option></select>
+        </div>
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">

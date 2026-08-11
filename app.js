@@ -246,7 +246,7 @@
       return;
     }
   
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-recurring-tasks'];
   
     // Verificar se há dados no localStorage
     const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -1000,6 +1000,75 @@ function save(key, val) {
   
   /* ── DATA ── */
   let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
+  let recurringTasks = load('gc-recurring-tasks', []);
+
+  function dashboardDate(value = new Date()) {
+    return new Date(value).toLocaleDateString('sv-SE');
+  }
+
+  function addDashboardDays(dateStr, amount) {
+    const date = new Date(`${dateStr}T12:00:00`);
+    date.setDate(date.getDate() + Number(amount || 0));
+    return dashboardDate(date);
+  }
+
+  function isMentoringCalendarEvent(event) {
+    return /mentoria/i.test(String(event?.title || event?.titulo || ''));
+  }
+
+  function ensureCustomRecurringTasks(calendarEvents = []) {
+    const today = dashboardDate();
+    const horizon = addDashboardDays(today, 120);
+    let changed = false;
+    const createOccurrence = (template, date, sourceKey) => {
+      if (!date || date < today) return;
+      const recurrenceKey = `custom-recurrence-${template.id}-${sourceKey}`;
+      if (events.some(event => event.recurrenceKey === recurrenceKey)) return;
+      events.push({
+        id: Date.now() + Math.floor(Math.random() * 100000),
+        titulo: template.titulo,
+        empresa: template.empresa,
+        tipo: 'tarefa',
+        data: date,
+        responsavel: template.responsavel,
+        observacao: template.observacao || '',
+        urgente: Boolean(template.urgente),
+        arquivada: false,
+        recurrenceKey,
+        recurrenceTemplateId: template.id,
+      });
+      changed = true;
+    };
+    recurringTasks.forEach(template => {
+      if (template.kind === 'interval15') {
+        const anchor = template.anchorDate || today;
+        let date = anchor >= today ? anchor : today;
+        const elapsed = Math.round((new Date(`${date}T12:00:00`) - new Date(`${anchor}T12:00:00`)) / 86400000);
+        if (elapsed > 0) date = addDashboardDays(date, (15 - (elapsed % 15)) % 15);
+        while (date <= horizon) {
+          createOccurrence(template, date, date);
+          date = addDashboardDays(date, 15);
+        }
+      } else if (template.kind === 'weekdays') {
+        const selectedDays = (template.weekdays || []).map(Number);
+        for (let offset = 0; offset <= 120; offset++) {
+          const date = addDashboardDays(today, offset);
+          if (selectedDays.includes(new Date(`${date}T12:00:00`).getDay())) createOccurrence(template, date, date);
+        }
+      } else if (template.kind === 'googleMentoring') {
+        calendarEvents.filter(isMentoringCalendarEvent).forEach(event => {
+          const eventDate = String(event.start || event.data || '').slice(0, 10);
+          if (!eventDate) return;
+          const date = addDashboardDays(eventDate, template.mentoringOffset);
+          createOccurrence(template, date, `${eventDate}-${String(event.title || event.titulo || '').trim().toLowerCase()}`);
+        });
+      }
+    });
+    if (changed) {
+      save('gc-events', events);
+      buildTarefas(); buildColabTarefas(); buildPrioridades(); refreshCalendars();
+    }
+  }
   const MENTEES_DEFAULT = [
     {id:1,  name:'Dionysio Ofra',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1SGsDhwGmimnuiQk06NQqiS6bvi2HRwE3_VDAm85VAYc/edit?usp=sharing'},
     {id:2,  name:'Ângela Basso',            status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1VpQVSkAmtufEFSTwG9mkHe9jsUfi0KEAGqDR9NmyGkU/edit?usp=sharing'},
@@ -1502,6 +1571,15 @@ function save(key, val) {
       if (el) el.style.display = t === tipo ? 'block' : 'none';
     });
     if (tipo === 'conteudo') updateQaConteudoRede();
+    if (tipo === 'tarefa') updateQaRecorrenciaFields();
+  }
+
+  function updateQaRecorrenciaFields() {
+    const kind = getQaVal('qa-recorrencia') || 'none';
+    const weekdays = document.getElementById('qa-recorrencia-weekdays');
+    const mentoring = document.getElementById('qa-recorrencia-mentoring');
+    if (weekdays) weekdays.style.display = kind === 'weekdays' ? 'block' : 'none';
+    if (mentoring) mentoring.style.display = kind === 'googleMentoring' ? 'block' : 'none';
   }
   
   function updateQaConteudoRede() {
@@ -1806,6 +1884,11 @@ function save(key, val) {
     document.getElementById('qa-tipo').value = defaultTipo;
     const urgenteEl = document.getElementById('qa-urgente');
     if (urgenteEl) urgenteEl.checked = false;
+    const recurrenceEl = document.getElementById('qa-recorrencia');
+    if (recurrenceEl) recurrenceEl.value = 'none';
+    document.querySelectorAll('.qa-recorrencia-day').forEach(day => { day.checked = false; });
+    const mentoringOffset = document.getElementById('qa-mentoring-offset');
+    if (mentoringOffset) mentoringOffset.value = '1';
     // Reset all fields
     ['qa-l-autor','qa-l-ilustrador','qa-l-publico','qa-l-faixa','qa-l-paginas',
      'qa-l-tiragem','qa-l-isbn','qa-l-formato','qa-l-colecao','qa-l-editora','qa-l-sinopse'].forEach(id => {
@@ -1866,6 +1949,9 @@ function save(key, val) {
     document.getElementById('qa-observacao').value = ev.observacao || '';
     const urgenteEdit = document.getElementById('qa-urgente');
     if (urgenteEdit) urgenteEdit.checked = !!ev.urgente;
+    const recurrenceEl = document.getElementById('qa-recorrencia');
+    if (recurrenceEl) recurrenceEl.value = 'none';
+    updateQaFields();
     // Mostrar e popular comentários
     const comWrap = document.getElementById('qa-comentarios-wrap');
     if (comWrap) {
@@ -2116,6 +2202,29 @@ function save(key, val) {
     const responsavel = tipo === 'tarefa' ? automaticTaskOwner(titulo, selectedResponsavel) : selectedResponsavel;
     const observacao = tipo === 'evento' ? getQaVal('qa-observacao-evento') : getQaVal('qa-observacao');
     const urgenteVal = document.getElementById('qa-urgente') ? document.getElementById('qa-urgente').checked : false;
+    const recurrenceKind = tipo === 'tarefa' ? (getQaVal('qa-recorrencia') || 'none') : 'none';
+    if (!editingEventId && recurrenceKind !== 'none') {
+      const weekdays = [...document.querySelectorAll('.qa-recorrencia-day:checked')].map(day => Number(day.value));
+      const anchorDate = getQaVal('qa-prazo');
+      if (recurrenceKind === 'interval15' && !anchorDate) {
+        alert('Informe a primeira data para repetir esta tarefa a cada 15 dias.');
+        return;
+      }
+      if (recurrenceKind === 'weekdays' && weekdays.length === 0) {
+        alert('Selecione pelo menos um dia da semana.');
+        return;
+      }
+      recurringTasks.push({
+        id: `rec-${Date.now()}`,
+        titulo, empresa, responsavel, observacao, urgente: urgenteVal,
+        kind: recurrenceKind, anchorDate, weekdays,
+        mentoringOffset: Number(getQaVal('qa-mentoring-offset') || 1),
+      });
+      save('gc-recurring-tasks', recurringTasks);
+      ensureCustomRecurringTasks(window.gcalEventsCache || []);
+      closeModal('modal-quickadd');
+      return;
+    }
     const eventData = {
       empresa, titulo, tipo,
       data: tipo === 'tarefa' ? getQaVal('qa-prazo') : getQaVal('qa-evento-inicio'),
@@ -2881,15 +2990,15 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Para criar a copy',c:'s-copy'},gravado:{l:'Para gravar',c:'s-gravado'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},turbinar:{l:'Para turbinar',c:'s-turbinar'},metricas:{l:'Para analisar métricas',c:'s-metricas'},turbinar2:{l:'Para turbinar novamente',c:'s-turbinar'}};
+  const ST_MAP = {corrigir:{l:'Corrigir etapas conteúdo',c:'s-edicao'},copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Editado',c:'s-edicao'},aprovado:{l:'Aprovado',c:'s-aprovado'},agendado:{l:'Agendado',c:'s-agendado'},postado:{l:'Postado',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda'};
   const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
   
   // Etapas padrão de um conteúdo (baseadas no fluxo de status)
-  const CONTEUDO_ETAPAS_PADRAO = ['Para criar a copy','Para gravar','Para editar','Para aprovar','Para agendar','Para postar','Para turbinar','Para analisar métricas'];
-  const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado','turbinar','metricas'];
+  const CONTEUDO_ETAPAS_PADRAO = ['Corrigir etapas conteúdo','Copy criada','Gravado','Editado','Aprovado','Agendado','Postado'];
+  const CONTEUDO_ETAPAS_KEYS   = ['corrigir','copy','gravado','edicao','aprovado','agendado','postado'];
   const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
   const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
   
@@ -4530,7 +4639,7 @@ function save(key, val) {
       // From events (primary source)
       events.filter(e => e.responsavel === colab && e.titulo).forEach(e => {
         coveredEventIds.add(e.id);
-        tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', responsavel: e.responsavel||'', projetoId: e.projetoId||null, arquivada: e.arquivada||false, urgente: e.urgente||false});
+        tasks.push({id: e.id.toString(), titulo: e.titulo, empresa: e.empresa, data: e.data||'', responsavel: e.responsavel||'', projetoId: e.projetoId||null, arquivada: e.arquivada||false, urgente: e.urgente||false, gcalSource: !!(e.gcalKey || e.recurrenceTemplateId)});
       });
   
       // From livros (etapas not in events)
@@ -4573,6 +4682,10 @@ function save(key, val) {
       ativas.sort((a,b) => {
         const urgentDiff = Number(!!b.urgente) - Number(!!a.urgente);
         if (urgentDiff !== 0) return urgentDiff;
+        if (colab === 'Gisella') {
+          const calendarDiff = Number(!!b.gcalSource) - Number(!!a.gcalSource);
+          if (calendarDiff !== 0) return calendarDiff;
+        }
         const da = a.data || '9999-99-99';
         const db = b.data || '9999-99-99';
         return da.localeCompare(db);
@@ -4608,7 +4721,7 @@ function save(key, val) {
             </div>
           </td>
           <td style="font-weight:500;${!isArq && String(t.id).startsWith('livro-') ? `color:${((t.empresa||'').split(',')[0]==='editora'?'var(--editora)':(t.empresa||'').split(',')[0]==='leia'?'var(--leia)':'var(--gisella)')};` : ''}${isArq?'text-decoration:line-through;color:var(--text-soft);':''}">
-            ${t.urgente ? '<span title="Urgente" style="font-size:13px;vertical-align:middle;margin-right:3px;">❗</span>' : ''}${t.titulo}
+            ${t.urgente ? '<span title="Urgente" style="font-size:13px;vertical-align:middle;margin-right:3px;">❗</span>' : ''}${t.gcalSource ? '<span title="Vinda do Google Calendar" style="font-size:12px;vertical-align:middle;margin-right:4px;">📅</span>' : ''}${t.titulo}
             ${editBtn}${delBtn}
           </td>
           <td>
@@ -5209,6 +5322,7 @@ function save(key, val) {
       countMentoriasSemana();
       limparTarefasEventosRemovidos(mapped);
       criarTarefasEventos(mapped);
+      ensureCustomRecurringTasks(window.gcalEventsCache);
   
     } catch(e) {
       el.innerHTML = `<div style="padding:1rem;color:var(--danger);font-size:13px;">Erro de rede: ${e.message}</div>`;
@@ -6620,6 +6734,7 @@ function save(key, val) {
       apply('gc-livros',      v => { livros     = v; });
       apply('gc-conteudos',   v => { conteudos  = v; });
       apply('gc-projetos',    v => { projetos   = v; });
+      apply('gc-recurring-tasks', v => { recurringTasks = v; });
       apply('gc-kanban',      v => { kanbanData = v; });
       apply('gc-steira',      v => { steiraData = v; });
       apply('gc-colab-ordem', v => { colabOrdem = v; });
@@ -6711,6 +6826,7 @@ function save(key, val) {
         ['gc-livros',    v => { livros = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
         ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
         ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
+        ['gc-recurring-tasks', v => { recurringTasks = v || []; ensureCustomRecurringTasks(window.gcalEventsCache || []); }],
         ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
         ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
         ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
@@ -6767,6 +6883,7 @@ function save(key, val) {
             'gc-events':   v => { events   = v.map(e => ({...e, tipo: e.tipo||'tarefa'})); },
             'gc-livros':   v => { livros   = v; },
             'gc-projetos': v => { projetos = v; },
+            'gc-recurring-tasks': v => { recurringTasks = v || []; },
           };
           const keysToUpload = []; // local data that needs to be pushed to Firebase
           Object.entries(TASK_KEYS).forEach(([key, setter]) => {
@@ -6827,7 +6944,7 @@ function save(key, val) {
   
           // Other keys: fill in only if missing locally
           ['gc-conteudos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira',
-           'gc-colab-ordem','gc-links','gc-links-empresa'].forEach(key => {
+           'gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks'].forEach(key => {
             if (!localStorage.getItem(key) && cloudData[key]?.value) {
               localStorage.setItem(key, JSON.stringify(cloudData[key].value));
               changed = true;
@@ -6836,6 +6953,7 @@ function save(key, val) {
   
           if (changed) {
             conteudos     = load('gc-conteudos', []);
+            recurringTasks = load('gc-recurring-tasks', []);
             mentees       = load('gc-mentees', MENTEES_DEFAULT);
             menteesMarco0 = load('gc-mentees-marco0', []);
             renderLivros(); renderMenteeList(); renderConteudos();

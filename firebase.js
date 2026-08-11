@@ -82,7 +82,7 @@ window.fbLoadAll = async function() {
     'gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa',
     'gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi',
     'gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi',
-    'gc-notas-gisella','gc-notas-milena','gc-notas-luiggi',
+    'gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-recurring-tasks',
   ];
   const results = {};
   await Promise.all(KEYS.map(async key => {
