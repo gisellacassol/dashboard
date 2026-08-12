@@ -598,7 +598,6 @@
   /* ── TAREFAS AUTOMÁTICAS RECORRENTES (GISELLA) ── */
   // Estas tarefas são criadas automaticamente como tarefas normais (aparecem
   // na aba "Tarefas", filtráveis por colaborador) com a data de hoje.
-  const GISELLA_RECORRENTES_DIARIAS = ['Responder WhatsApp', 'Responder e-mails'];
   const LUIGGI_RECORRENTES_DIARIAS = ['Ajustes no sistema'];
   const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana Plano Diretor', 'Links da semana Plano Diretor', 'Analisar Planilha de Métricas'];
   const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
@@ -608,6 +607,14 @@
     const dow = new Date().getDay(); // 0=dom,1=seg,...5=sex,6=sab
     let changed = false;
     let idCounter = 0;
+
+    // A recorrência agora é configurada no formulário de tarefas. Removemos
+    // apenas as duas cópias que eram criadas automaticamente pelo sistema,
+    // reconhecidas pela chave interna, sem tocar em tarefas manuais.
+    const retiredRecurringKeys = new Set(['diaria-0', 'diaria-1']);
+    const beforeRetiredCleanup = events.length;
+    events = events.filter(event => !retiredRecurringKeys.has(event.recurKey));
+    if (events.length !== beforeRetiredCleanup) changed = true;
   
     function ensureTask(label, recurKey, responsavel = 'Gisella') {
       const normalizedLabel = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -629,7 +636,6 @@
       changed = true;
     }
   
-    GISELLA_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'diaria-' + i));
     LUIGGI_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'luiggi-diaria-' + i, 'Luiggi'));
     if (dow === 1) GISELLA_RECORRENTES_SEGUNDA.forEach((label, i) => ensureTask(label, 'segunda-' + i));
     if (dow === 5) GISELLA_RECORRENTES_SEXTA.forEach((label, i) => ensureTask(label, 'sexta-' + i));
@@ -637,6 +643,7 @@
     if (changed) {
       save('gc-events', events);
       buildTarefas();
+      buildColabTarefas();
       buildPrioridades();
     }
   }
