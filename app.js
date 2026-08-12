@@ -3124,6 +3124,43 @@ function save(key, val) {
     </div>`;
   }
   
+  function contentStageLink(c, key) {
+    if (key === 'edicao') return String(c.link || '').trim();
+    if (key === 'gravado') return String(c.observacao || '').trim();
+    return '';
+  }
+
+  function validContentStageLink(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function contentStageLinkButton(c, key) {
+    const link = validContentStageLink(contentStageLink(c, key));
+    if (!link) return '';
+    return `<a href="${link.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="Abrir link" style="color:var(--gisella);font-size:14px;text-decoration:none;line-height:1;">🔗</a>`;
+  }
+
+  function requestContentStageLink(c, key) {
+    if (key !== 'edicao' && key !== 'gravado') return true;
+    const current = contentStageLink(c, key);
+    const label = key === 'edicao' ? 'Link da edição' : 'Link do gravado';
+    const value = window.prompt(`${label}:`, current);
+    if (value === null) return false;
+    const link = validContentStageLink(value);
+    if (!link) {
+      alert('Informe um link válido, começando com http:// ou https://.');
+      return false;
+    }
+    if (key === 'edicao') c.link = link;
+    else c.observacao = link;
+    return true;
+  }
+
   function renderConteudoEtapasInline(c, etapas) {
     // Feitas sobem pro topo
     const sorted = [...etapas].sort((a,b) => {
@@ -3139,7 +3176,7 @@ function save(key, val) {
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
         <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapa(${c.id},'${e.key}')"
           style="accent-color:var(--gisella);width:15px;height:15px;flex-shrink:0;cursor:pointer;">
-        <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+        <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${c.id},'${e.key}',this.value)"
           style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);">
           <option value="" ${!e.resp?'selected':''}>—</option>
@@ -3167,6 +3204,12 @@ function save(key, val) {
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     const wasFeito = c.etapasStatus[key].feito;
+    if (!wasFeito && !requestContentStageLink(c, key)) {
+      renderConteudos();
+      buildTarefas();
+      buildColabTarefas();
+      return;
+    }
     c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
     const etapas = getConteudoEtapas(c);
     const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
@@ -3236,7 +3279,7 @@ function save(key, val) {
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
         <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapaCep('${e.key}')"
           style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
-        <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+        <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${_epConteudoId},'${e.key}',this.value)"
           style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
           <option value="" ${!e.resp?'selected':''}>—</option>
