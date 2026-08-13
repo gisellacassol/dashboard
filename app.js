@@ -993,6 +993,11 @@ function save(key, val) {
   const previousChangedItems = (Array.isArray(previousValue) ? previousValue : []).filter(item => changedIds.has(String(item?.id ?? '')));
   localStorage.setItem(key, JSON.stringify(val));
   _lastLocalSave[key] = Date.now();
+  // Cópia local da última lista não vazia: se uma lista vazia aparecer nesta
+  // Central, a pessoa recebe a opção de restaurar os livros imediatamente.
+  if (key === 'gc-livros' && Array.isArray(val) && val.length > 0) {
+    localStorage.setItem('gc-livros-last-nonempty', JSON.stringify(val));
+  }
   // O Checklist recebe a alteração imediatamente. A persistência no Firebase
   // continua em paralelo como cópia compartilhada do Dashboard.
   scheduleChecklistCentralSync(key, changedItems, previousChangedItems);
@@ -1030,6 +1035,7 @@ function save(key, val) {
     const createOccurrence = (template, date, sourceKey) => {
       if (!date || date < today) return;
       const recurrenceKey = `custom-recurrence-${template.id}-${sourceKey}`;
+      if ((template.excludedOccurrenceKeys || []).includes(recurrenceKey)) return;
       if (events.some(event => event.recurrenceKey === recurrenceKey)) return;
       events.push({
         id: Date.now() + Math.floor(Math.random() * 100000),
@@ -1116,6 +1122,17 @@ function save(key, val) {
   let mentees      = load('gc-mentees',       MENTEES_DEFAULT);
   let menteesMarco0 = load('gc-mentees-marco0', []);
   let livros = load('gc-livros', []);
+  function offerLivrosRecovery() {
+    const backup = load('gc-livros-last-nonempty', []);
+    if (livros.length || !Array.isArray(backup) || !backup.length) return;
+    if (sessionStorage.getItem('gc-livros-recovery-offered')) return;
+    sessionStorage.setItem('gc-livros-recovery-offered', '1');
+    if (window.confirm(`A Central está sem livros, mas existe uma cópia de segurança neste dispositivo com ${backup.length} livro(s). Deseja restaurá-la agora?`)) {
+      livros = backup;
+      save('gc-livros', livros);
+      renderLivros();
+    }
+  }
   let conteudos = load('gc-conteudos', []);
   let steiraData = load('gc-steira', {});
   let kanbanData = load('gc-kanban', {});
@@ -1393,7 +1410,7 @@ function save(key, val) {
       if (isConteudoFinalizado(c)) return;
       const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
       if (!empMatch) return;
-      const etapas = getConteudoEtapas(c);
+      const etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(e => {
         if (!e.prazo) return; // só aparece no cal se tiver prazo
         if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
@@ -2019,7 +2036,59 @@ function save(key, val) {
     renderComentariosTarefa(ev);
   }
   
+  let recurringDeleteEventId = null;
+
   function deleteEventDirect(id) {
+    const ev = events.find(x => x.id === id);
+    if (!ev) return;
+    if (ev.recurrenceTemplateId) {
+      recurringDeleteEventId = id;
+      openModal('modal-excluir-recorrencia');
+      return;
+    }
+    deleteEventNow(id);
+  }
+
+  function cancelRecurringDeletion() {
+    recurringDeleteEventId = null;
+    closeModal('modal-excluir-recorrencia');
+  }
+
+  function deleteOnlyRecurringOccurrence() {
+    const ev = events.find(x => x.id === recurringDeleteEventId);
+    if (!ev) return cancelRecurringDeletion();
+    const template = recurringTasks.find(item => item.id === ev.recurrenceTemplateId);
+    if (template && ev.recurrenceKey) {
+      template.excludedOccurrenceKeys = [...new Set([...(template.excludedOccurrenceKeys || []), ev.recurrenceKey])];
+      save('gc-recurring-tasks', recurringTasks);
+    }
+    cancelRecurringDeletion();
+    deleteEventNow(ev.id);
+  }
+
+  function deleteAllRecurringOccurrences() {
+    const ev = events.find(x => x.id === recurringDeleteEventId);
+    if (!ev) return cancelRecurringDeletion();
+    const templateId = ev.recurrenceTemplateId;
+    const removedTemplate = recurringTasks.find(item => item.id === templateId);
+    const removedEvents = events.filter(item => item.recurrenceTemplateId === templateId);
+    recurringTasks = recurringTasks.filter(item => item.id !== templateId);
+    events = events.filter(item => item.recurrenceTemplateId !== templateId);
+    cancelRecurringDeletion();
+    save('gc-recurring-tasks', recurringTasks);
+    save('gc-events', events);
+    refreshCalendars(); buildCalendar('cal-eventos', 'all');
+    buildTarefas(); buildColabTarefas(); buildPrioridades(); renderProjetos();
+    pushUndo(ev.titulo || 'Tarefas recorrentes', () => {
+      if (removedTemplate) recurringTasks.push(removedTemplate);
+      events = [...events, ...removedEvents];
+      save('gc-recurring-tasks', recurringTasks);
+      save('gc-events', events);
+      buildTarefas(); buildColabTarefas(); buildPrioridades();
+    });
+  }
+
+  function deleteEventNow(id) {
     const ev = events.find(x => x.id === id);
     if (!ev) return;
     const snapEv = [...events];
@@ -2075,14 +2144,10 @@ function save(key, val) {
   
   function deleteCurrentEvent() {
     if (!editingEventId) return;
-    events = events.filter(x => x.id !== editingEventId);
-    save('gc-events', events);
-    refreshCalendars();
-    buildCalendar('cal-eventos', 'all');
-    buildTarefas();
-    buildColabTarefas();
+    const id = editingEventId;
     closeModal('modal-quickadd');
     editingEventId = null;
+    deleteEventDirect(id);
   }
   
   function getQaVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
@@ -3077,6 +3142,15 @@ function save(key, val) {
       prazo: c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.prazo || '',
     }));
   }
+
+  // No fluxo de conteúdo, apenas a próxima etapa pendente vira uma tarefa
+  // ativa. As etapas já concluídas permanecem disponíveis como histórico.
+  function getConteudoEtapasLiberadas(c) {
+    const etapas = getConteudoEtapas(c);
+    const nextPendingIndex = etapas.findIndex(etapa => !etapa.feito);
+    if (nextPendingIndex < 0) return etapas;
+    return etapas.filter((etapa, index) => etapa.feito || index === nextPendingIndex);
+  }
   
   // Conteúdo não possui check próprio: ele é concluído automaticamente quando
   // todas as tarefas/etapas do seu fluxo estiverem concluídas.
@@ -3793,7 +3867,7 @@ function save(key, val) {
       if (isConteudoFinalizado(c)) return;
       const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
       if (!empMatch) return;
-      const etapas = getConteudoEtapas(c);
+      const etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(e => {
         if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
         etapaEvents.push({
@@ -4628,7 +4702,7 @@ function save(key, val) {
     // Etapas de conteúdos
     conteudos.forEach(function(c){
       if (isConteudoFinalizado(c)) return;
-      var etapas = getConteudoEtapas(c);
+      var etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(function(e){
         if ((e.resp||'').toLowerCase()===key && e.prazo) {
           allTarefas.push({_isEtapa:false,_conteudoId:c.id,_conteudoKey:e.key,id:'cont-'+c.id+'-'+e.key,titulo:'['+c.nome+'] '+e.nome,empresa:c.empresa,data:_fds(e.prazo),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
@@ -4705,7 +4779,7 @@ function save(key, val) {
       // From conteudos (etapas as virtual tasks)
       conteudos.forEach(c => {
       if (isConteudoFinalizado(c)) return;
-        const etapas = getConteudoEtapas(c);
+        const etapas = getConteudoEtapasLiberadas(c);
         etapas.forEach(e => {
           if (e.resp === colab) {
             const tid = `cont-${c.id}-${e.key}`;
@@ -6831,6 +6905,7 @@ function save(key, val) {
   
     initCalendars();
     renderLivros();
+    offerLivrosRecovery();
     renderMenteeList();
     renderMarco0List();
     renderConteudos();

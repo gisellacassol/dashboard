@@ -1012,6 +1012,19 @@
   </div>
 </div>
 
+<!-- MODAL EXCLUSÃO DE RECORRÊNCIA -->
+<div class="modal-overlay" id="modal-excluir-recorrencia" onclick="if(event.target===this)cancelRecurringDeletion()">
+  <div class="modal" style="width:420px;">
+    <button class="modal-close" onclick="cancelRecurringDeletion()">×</button>
+    <div class="modal-title">Excluir tarefa recorrente?</div>
+    <div style="font-size:13px;color:var(--text-soft);line-height:1.5;margin:8px 0 20px;">Deseja apagar somente esta ocorrência ou todas as ocorrências futuras dessa recorrência?</div>
+    <div class="btn-row" style="gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="deleteOnlyRecurringOccurrence()">Apagar só esta</button>
+      <button class="btn" style="color:var(--danger);border-color:var(--danger);" onclick="deleteAllRecurringOccurrences()">Apagar todas</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DIA DO CALENDÁRIO -->
 <div class="modal-overlay" id="modal-dia-cal" onclick="if(event.target===this)closeModal('modal-dia-cal')">
   <div class="modal" style="width:420px;max-height:80vh;overflow-y:auto;">
