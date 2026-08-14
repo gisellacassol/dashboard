@@ -1376,7 +1376,7 @@ function save(key, val) {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const inicioSemana = new Date(hoje);
     const _dow0 = hoje.getDay();
-    const _dm   = -_dow0; // domingo é o primeiro dia da semana
+    const _dm   = _dow0 === 0 ? -6 : 1 - _dow0; // segunda é o primeiro dia
     inicioSemana.setDate(hoje.getDate() + _dm + (_tarefasCalWeekOffset * 7));
     const dias = Array.from({length:7}, (_,i) => {
       const d = new Date(inicioSemana);
@@ -1385,7 +1385,7 @@ function save(key, val) {
     });
   
     const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    const dows  = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+    const dows  = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
     const hojeStr = hoje.toISOString().slice(0,10);
     const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
   
@@ -3309,6 +3309,16 @@ function save(key, val) {
     }
     c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
     const etapas = getConteudoEtapas(c);
+    // A próxima pessoa nunca recebe uma etapa vencida. Quando a etapa anterior
+    // for concluída depois do prazo, a nova tarefa passa para hoje (ou para a
+    // segunda-feira quando hoje for domingo).
+    if (c.etapasStatus[key].feito) {
+      const proxima = etapas.find(etapa => !etapa.feito);
+      const dataDeLiberacao = prazoUtilAntesDaPostagem(dashboardDate(), 0);
+      if (proxima && (!proxima.prazo || proxima.prazo < dataDeLiberacao)) {
+        c.etapasStatus[proxima.key].prazo = dataDeLiberacao;
+      }
+    }
     const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
     c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || 'copy');
     atualizarConclusaoConteudo(c);
@@ -4700,11 +4710,11 @@ function save(key, val) {
     var hoje = new Date(); hoje.setHours(0,0,0,0);
     var ini = new Date(hoje);
     var dw = hoje.getDay();
-    ini.setDate(hoje.getDate() - dw + (off*7));
+    ini.setDate(hoje.getDate() + (dw===0 ? -6 : 1-dw) + (off*7));
     var dias = Array.from({length:7}, function(_,i){var d=new Date(ini);d.setDate(ini.getDate()+i);return d;});
     var fim = dias[6];
     var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    var dows  = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+    var dows  = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
     var hojeStr = hoje.toISOString().slice(0,10);
     var rangeLabel = ini.getDate()+' '+meses[ini.getMonth()] + (ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
   
