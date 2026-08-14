@@ -2256,7 +2256,7 @@ function save(key, val) {
         if (i > -1) conteudos[i] = {...conteudos[i], ...c};
         editingEventId = null;
       } else {
-        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.dataPost);
+        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.dataPost, c.empresa);
         conteudos.push(c);
       }
       save('gc-conteudos', conteudos); renderConteudos();
@@ -3092,9 +3092,24 @@ function save(key, val) {
     return `${y}-${m}-${d}`;
   }
   
-  function prazosIniciaisDoConteudo(rede, dataPostagem) {
+  function prazosIniciaisDoConteudo(rede, dataPostagem, empresa = '') {
     // O fluxo de e-mail tem etapas próprias e não usa Edição/Aprovação/Agendamento.
     if (rede === 'emanda') return {};
+
+    // Conteúdos da GC Estratégias já nascem com todo o fluxo organizado:
+    // uma etapa por dia, terminando na data de postagem. A liberação para cada
+    // pessoa continua sequencial em getConteudoEtapasLiberadas / Checklist.
+    if (String(empresa).split(',').includes('gisella')) {
+      const prazoEm = diasAntes => dataPostagem ? addDashboardDays(dataPostagem, -diasAntes) : '';
+      return {
+        copy:     { prazo: prazoEm(5), resp: 'Gisella' },
+        gravado:  { prazo: prazoEm(4), resp: 'Gisella' },
+        edicao:   { prazo: prazoEm(3), resp: 'Luiggi' },
+        aprovado: { prazo: prazoEm(2), resp: 'Gisella' },
+        agendado: { prazo: prazoEm(1), resp: 'Milena' },
+        postado:  { prazo: dataPostagem || '', resp: 'Milena' },
+      };
+    }
   
     return {
       edicao: {
@@ -3531,7 +3546,7 @@ function save(key, val) {
     else conteudos.push({
       id:Date.now(),
       done:false,
-      etapasStatus: prazosIniciaisDoConteudo(data.rede, data.dataPost),
+      etapasStatus: prazosIniciaisDoConteudo(data.rede, data.dataPost, data.empresa),
       ...data
     });
     save('gc-conteudos',conteudos); renderConteudos();
