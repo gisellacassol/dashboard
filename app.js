@@ -1376,18 +1376,18 @@ function save(key, val) {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const inicioSemana = new Date(hoje);
     const _dow0 = hoje.getDay();
-    const _dm   = _dow0 === 0 ? -6 : 1 - _dow0;
+    const _dm   = -_dow0; // domingo é o primeiro dia da semana
     inicioSemana.setDate(hoje.getDate() + _dm + (_tarefasCalWeekOffset * 7));
-    const dias = Array.from({length:5}, (_,i) => {
+    const dias = Array.from({length:7}, (_,i) => {
       const d = new Date(inicioSemana);
       d.setDate(inicioSemana.getDate() + i);
       return d;
     });
   
     const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    const dows  = ['SEG','TER','QUA','QUI','SEX'];
+    const dows  = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
     const hojeStr = hoje.toISOString().slice(0,10);
-    const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[4].getDate()} ${meses[dias[4].getMonth()]} ${dias[4].getFullYear()}`;
+    const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
   
     const _tf  = getFilter('tarefas');
     const _tfc = getFilterColab('tarefas');
@@ -1447,7 +1447,7 @@ function save(key, val) {
         <div class="cal-month">${label}</div>
         <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start;">`;
       dias.forEach((dia,idx) => {
         const ds = dia.toISOString().slice(0,10);
         const isToday = ds === hojeStr;
@@ -1475,7 +1475,7 @@ function save(key, val) {
         <div class="cal-month">${label}</div>
         <button class="cal-nav" onclick="_tarefasCalWeekOffset++;buildTarefasCalSemana()">›</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">`;
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start;">`;
       dias.forEach((dia,idx) => {
         const ds = dia.toISOString().slice(0,10);
         const isToday = ds === hojeStr;
@@ -3075,7 +3075,8 @@ function save(key, val) {
   const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
   
   // Na criação de um conteúdo, os prazos do fluxo padrão acompanham a data de
-  // postagem. Prazos que cairiam no fim de semana são antecipados para sexta.
+  // postagem. Tarefas atribuídas nunca ficam no fim de semana: sábado vai
+  // para sexta e domingo vai para a segunda-feira seguinte.
   function prazoUtilAntesDaPostagem(dataPostagem, diasAntes) {
     if (!dataPostagem || !/^\d{4}-\d{2}-\d{2}$/.test(dataPostagem)) return '';
   
@@ -3084,7 +3085,7 @@ function save(key, val) {
     data.setDate(data.getDate() - diasAntes);
   
     if (data.getDay() === 6) data.setDate(data.getDate() - 1); // sábado → sexta
-    if (data.getDay() === 0) data.setDate(data.getDate() - 2); // domingo → sexta
+    if (data.getDay() === 0) data.setDate(data.getDate() + 1); // domingo → segunda
   
     const y = data.getFullYear();
     const m = String(data.getMonth() + 1).padStart(2, '0');
@@ -3100,14 +3101,14 @@ function save(key, val) {
     // uma etapa por dia, terminando na data de postagem. A liberação para cada
     // pessoa continua sequencial em getConteudoEtapasLiberadas / Checklist.
     if (String(empresa).split(',').includes('gisella')) {
-      const prazoEm = diasAntes => dataPostagem ? addDashboardDays(dataPostagem, -diasAntes) : '';
+      const prazoEm = diasAntes => dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, diasAntes) : '';
       return {
         copy:     { prazo: prazoEm(5), resp: 'Gisella' },
         gravado:  { prazo: prazoEm(4), resp: 'Gisella' },
         edicao:   { prazo: prazoEm(3), resp: 'Luiggi' },
         aprovado: { prazo: prazoEm(2), resp: 'Gisella' },
         agendado: { prazo: prazoEm(1), resp: 'Milena' },
-        postado:  { prazo: dataPostagem || '', resp: 'Milena' },
+        postado:  { prazo: prazoEm(0), resp: 'Milena' },
       };
     }
   
@@ -3125,7 +3126,7 @@ function save(key, val) {
         resp: 'Milena',
       },
       postado: {
-        prazo: dataPostagem || '',
+        prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 0) : '',
         resp: 'Milena',
       },
     };
@@ -4699,11 +4700,11 @@ function save(key, val) {
     var hoje = new Date(); hoje.setHours(0,0,0,0);
     var ini = new Date(hoje);
     var dw = hoje.getDay();
-    ini.setDate(hoje.getDate() + (dw===0?-6:1-dw) + (off*7));
-    var dias = Array.from({length:5}, function(_,i){var d=new Date(ini);d.setDate(ini.getDate()+i);return d;});
-    var fim = dias[4];
+    ini.setDate(hoje.getDate() - dw + (off*7));
+    var dias = Array.from({length:7}, function(_,i){var d=new Date(ini);d.setDate(ini.getDate()+i);return d;});
+    var fim = dias[6];
     var meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-    var dows  = ['SEG','TER','QUA','QUI','SEX'];
+    var dows  = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
     var hojeStr = hoje.toISOString().slice(0,10);
     var rangeLabel = ini.getDate()+' '+meses[ini.getMonth()] + (ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
   
@@ -4731,7 +4732,7 @@ function save(key, val) {
       '<button class="cal-nav" data-k="'+key+'" data-d="1" onclick="_colabCalOff[this.dataset.k]=(_colabCalOff[this.dataset.k]||0)+Number(this.dataset.d);_buildColabCal(this.dataset.k)">&#8250;</button>' +
       '</div>';
   
-    var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;align-items:start;">';
+    var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:start;">';
     dias.forEach(function(dia,idx){
       var ds = dia.toISOString().slice(0,10);
       var isT = ds===hojeStr;
