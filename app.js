@@ -599,7 +599,7 @@
   // Estas tarefas são criadas automaticamente como tarefas normais (aparecem
   // na aba "Tarefas", filtráveis por colaborador) com a data de hoje.
   const LUIGGI_RECORRENTES_DIARIAS = ['Ajustes no sistema'];
-  const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana Plano Diretor', 'Links da semana Plano Diretor', 'Analisar Planilha de Métricas'];
+  const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana - Plano Diretor', 'Links da semana - Plano Diretor', 'Analisar Planilha de Métricas'];
   const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
   
   function ensureGisellaRecorrentes() {
@@ -615,6 +615,19 @@
     const beforeRetiredCleanup = events.length;
     events = events.filter(event => !retiredRecurringKeys.has(event.recurKey));
     if (events.length !== beforeRetiredCleanup) changed = true;
+    // As duas tarefas semanais do Plano Diretor passam a ser da Milena.
+    const milenaWeeklyKeys = new Set(['segunda-0', 'segunda-1']);
+    events.forEach(event => {
+      if (milenaWeeklyKeys.has(event.recurKey) && event.responsavel !== 'Milena') {
+        event.responsavel = 'Milena';
+        changed = true;
+      }
+      const weeklyIndex = event.recurKey === 'segunda-0' ? 0 : event.recurKey === 'segunda-1' ? 1 : -1;
+      if (weeklyIndex >= 0 && event.titulo !== GISELLA_RECORRENTES_SEGUNDA[weeklyIndex]) {
+        event.titulo = GISELLA_RECORRENTES_SEGUNDA[weeklyIndex];
+        changed = true;
+      }
+    });
   
     function ensureTask(label, recurKey, responsavel = 'Gisella') {
       const normalizedLabel = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -637,7 +650,7 @@
     }
   
     LUIGGI_RECORRENTES_DIARIAS.forEach((label, i) => ensureTask(label, 'luiggi-diaria-' + i, 'Luiggi'));
-    if (dow === 1) GISELLA_RECORRENTES_SEGUNDA.forEach((label, i) => ensureTask(label, 'segunda-' + i));
+    if (dow === 1) GISELLA_RECORRENTES_SEGUNDA.forEach((label, i) => ensureTask(label, 'segunda-' + i, i < 2 ? 'Milena' : 'Gisella'));
     if (dow === 5) GISELLA_RECORRENTES_SEXTA.forEach((label, i) => ensureTask(label, 'sexta-' + i));
   
     if (changed) {
@@ -659,8 +672,8 @@
     gisella: {
       daily:  [{id:'g-d-1', label:'Whats'}, {id:'g-d-2', label:'Email'}, {id:'g-d-3', label:'Direct'}],
       weekly: [
-        {id:'g-w-1', label:'Avisos da semana Plano Diretor'},
-        {id:'g-w-2', label:'Links da semana Plano Diretor'},
+        {id:'g-w-1', label:'Avisos da semana - Plano Diretor'},
+        {id:'g-w-2', label:'Links da semana - Plano Diretor'},
         {id:'g-w-3', label:'Analisar planilha de métricas', link:'https://docs.google.com/spreadsheets/d/1ROG9DTW7jQemiMf8mwfDEvC2oOTrTP4TwDCxMN3KlKI/edit?gid=0#gid=0'},
         {id:'g-w-4', label:'Rodar novos anúncios'},
         {id:'g-w-5', label:'Resumo da semana Plano Diretor'},
@@ -1401,7 +1414,7 @@ function save(key, val) {
         etapaEvents.push({
           _isEtapa:true, livroId:l.id, etapaIdx:i,
           titulo:`[${l.titulo}] ${e.nome}`, empresa:l.empresa,
-          data:_fds(e.prazo||''), responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
+          data:e.prazo||'', responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
         });
       });
     });
@@ -1418,13 +1431,13 @@ function save(key, val) {
           _isEtapa:false, _conteudoId:c.id, _conteudoKey:e.key,
           id:`cont-${c.id}-${e.key}`,
           titulo:`[${c.nome}] ${e.nome}`, empresa:c.empresa,
-          data:_fds(e.prazo), responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
+          data:e.prazo, responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
         });
       });
     });
     const todas = [
       ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc))
-        .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:_fds(e.data||''), responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
+        .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
       ...etapaEvents,
     ];
   
@@ -4719,10 +4732,10 @@ function save(key, val) {
     var rangeLabel = ini.getDate()+' '+meses[ini.getMonth()] + (ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
   
     var allTarefas = events.filter(function(e){ return e.tipo==='tarefa' && e.responsavel && e.responsavel.toLowerCase()===key; })
-      .map(function(e){ return {_isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:_fds(e.data||''), arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||''}; });
+      .map(function(e){ return {_isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||''}; });
     livros.forEach(function(l){ (l.etapas||[]).forEach(function(e,i){
       if ((e.resp||'').toLowerCase()===key) {
-        allTarefas.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+l.titulo+'] '+e.nome,empresa:l.empresa,data:_fds(e.prazo||''),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+        allTarefas.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+l.titulo+'] '+e.nome,empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});
       }
     }); });
     // Etapas de conteúdos
@@ -4731,7 +4744,7 @@ function save(key, val) {
       var etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(function(e){
         if ((e.resp||'').toLowerCase()===key && e.prazo) {
-          allTarefas.push({_isEtapa:false,_conteudoId:c.id,_conteudoKey:e.key,id:'cont-'+c.id+'-'+e.key,titulo:'['+c.nome+'] '+e.nome,empresa:c.empresa,data:_fds(e.prazo),arquivada:!!e.feito,urgente:false,tipoTarefa:''});
+          allTarefas.push({_isEtapa:false,_conteudoId:c.id,_conteudoKey:e.key,id:'cont-'+c.id+'-'+e.key,titulo:'['+c.nome+'] '+e.nome,empresa:c.empresa,data:e.prazo,arquivada:!!e.feito,urgente:false,tipoTarefa:''});
         }
       });
     });
@@ -4747,7 +4760,7 @@ function save(key, val) {
       var ds = dia.toISOString().slice(0,10);
       var isT = ds===hojeStr;
       var dayT = _sortTipo(allTarefas.filter(function(t){return t.data===ds;}));
-      html += '<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid '+(isT?cor:'var(--border)')+';">';
+      html += '<div ondragover="event.preventDefault();this.style.background=\'var(--gisella-bg)\';" ondragleave="this.style.background=\'var(--surface)\';" ondrop="tarefaCalDrop(event,\''+ds+'\')" style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid '+(isT?cor:'var(--border)')+';transition:background 0.1s;">';
       html += '<div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;margin-bottom:4px;">'+dows[idx]+'</div>';
       html += '<div style="font-size:'+(isT?'16px':'14px')+';font-weight:'+(isT?700:500)+';color:'+(isT?cor:'var(--text)')+';margin-bottom:6px;">'+dia.getDate()+'</div>';
       if (dayT.length===0) { html += '<div style="font-size:10px;color:var(--text-soft);opacity:0.5;">—</div>'; }
