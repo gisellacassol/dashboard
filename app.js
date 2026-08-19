@@ -2525,7 +2525,7 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -2576,6 +2576,7 @@ function save(key, val) {
         faixa: document.getElementById('nl-faixa').value.trim(),
         paginas: document.getElementById('nl-paginas').value.trim(),
         tiragem: document.getElementById('nl-tiragem').value.trim(),
+        valor: document.getElementById('nl-valor').value.trim(),
         isbn: document.getElementById('nl-isbn').value.trim(),
         formato: document.getElementById('nl-formato').value.trim(),
         colecao: document.getElementById('nl-colecao').value.trim(),
@@ -2622,7 +2623,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -2687,7 +2688,7 @@ function save(key, val) {
         <span class="livro-toggle" onclick="event.stopPropagation();toggleLivro(${l.id})">${l.expandido ? '▾' : '▸'}</span>
       </div>
       <div class="livro-body${l.expandido?' open':''}">
-        ${l.info ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;">${l.info.autor?`<span class="badge b-gray">Autor: ${l.info.autor}</span>`:''}${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}${l.tipopub?`<span class="badge ${l.tipopub==='reimpressao'?'b-warn':'b-editora'}">${l.tipopub==='reimpressao'?'Reimpressão':'Lançamento'}</span>`:''}${l.info.os?`<span class="badge b-gray">OS: ${l.info.os}</span>`:''}${l.info.ano?`<span class="badge b-gray">Ano: ${l.info.ano}</span>`:''}</div>` : ''}
+        ${l.info ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;">${l.info.autor?`<span class="badge b-gray">Autor: ${l.info.autor}</span>`:''}${l.info.valor?`<span class="badge b-ok">Valor: ${l.info.valor}</span>`:''}${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}${l.tipopub?`<span class="badge ${l.tipopub==='reimpressao'?'b-warn':'b-editora'}">${l.tipopub==='reimpressao'?'Reimpressão':'Lançamento'}</span>`:''}${l.info.os?`<span class="badge b-gray">OS: ${l.info.os}</span>`:''}${l.info.ano?`<span class="badge b-gray">Ano: ${l.info.ano}</span>`:''}</div>` : ''}
         ${renderLivroEtapas(l)}
         <button class="add-btn" style="margin-top:8px;font-size:12px;" onclick="adicionarEtapa(${l.id})">+ etapa</button>
       </div>
@@ -2795,6 +2796,7 @@ function save(key, val) {
     document.getElementById('nl-faixa').value = info.faixa||'';
     document.getElementById('nl-paginas').value = info.paginas||'';
     document.getElementById('nl-tiragem').value = info.tiragem||'';
+    document.getElementById('nl-valor').value = info.valor||'';
     document.getElementById('nl-isbn').value = info.isbn||'';
     document.getElementById('nl-formato').value = info.formato||'';
     document.getElementById('nl-colecao').value = info.colecao||'';
