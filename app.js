@@ -1054,10 +1054,29 @@ function save(key, val) {
     ].filter(Boolean).join(' '));
   }
 
+  function isMentoringFeedbackTask(item) {
+    const title = String(item?.titulo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return title === 'devolutivas da mentoria';
+  }
+
   function ensureCustomRecurringTasks(calendarEvents = []) {
     const today = dashboardDate();
     const horizon = addDashboardDays(today, 120);
     let changed = false;
+    let templatesChanged = false;
+    recurringTasks.forEach(template => {
+      if (isMentoringFeedbackTask(template) && template.responsavel !== 'Milena') {
+        template.responsavel = 'Milena';
+        templatesChanged = true;
+      }
+    });
+    const feedbackTemplateIds = new Set(recurringTasks.filter(isMentoringFeedbackTask).map(template => template.id));
+    events.forEach(event => {
+      if (feedbackTemplateIds.has(event.recurrenceTemplateId) && event.responsavel !== 'Milena') {
+        event.responsavel = 'Milena';
+        changed = true;
+      }
+    });
     const createOccurrence = (template, date, sourceKey) => {
       if (!date || date < today) return;
       const recurrenceKey = `custom-recurrence-${template.id}-${sourceKey}`;
@@ -1113,6 +1132,7 @@ function save(key, val) {
       save('gc-events', events);
       buildTarefas(); buildColabTarefas(); buildPrioridades(); refreshCalendars();
     }
+    if (templatesChanged) save('gc-recurring-tasks', recurringTasks);
   }
   const MENTEES_DEFAULT = [
     {id:1,  name:'Dionysio Ofra',           status:'ok', notes:'', sessions:[], tasks:[], docsLink:'https://docs.google.com/document/d/1SGsDhwGmimnuiQk06NQqiS6bvi2HRwE3_VDAm85VAYc/edit?usp=sharing'},
