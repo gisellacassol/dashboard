@@ -540,6 +540,13 @@
     try { return new Set(JSON.parse(localStorage.getItem('gc-gcal-blacklist') || '[]')); }
     catch(e) { return new Set(); }
   }
+  function getLegacyRecurringSet(key) {
+    try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); }
+    catch (_) { return new Set(); }
+  }
+  function saveLegacyRecurringSet(key, set) {
+    localStorage.setItem(key, JSON.stringify([...set]));
+  }
   function addToGcalBlacklist(key) {
     const bl = getGcalBlacklist();
     bl.add(key);
@@ -630,6 +637,9 @@
     });
   
     function ensureTask(label, recurKey, responsavel = 'Gisella') {
+      const disabledKeys = getLegacyRecurringSet('gc-legacy-recur-disabled');
+      const excludedOccurrences = getLegacyRecurringSet('gc-legacy-recur-exclusions');
+      if (disabledKeys.has(recurKey) || excludedOccurrences.has(`${recurKey}:${todayStr}`)) return;
       const normalizedLabel = label.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
       const ja = events.some(e => {
         const sameTitle = String(e.titulo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase() === normalizedLabel;
@@ -1038,7 +1048,10 @@ function save(key, val) {
   }
 
   function isMentoringCalendarEvent(event) {
-    return /mentoria/i.test(String(event?.title || event?.titulo || ''));
+    return /mentoria|mentoring/i.test([
+      event?.title, event?.titulo, event?.description, event?.descricao,
+      event?.location, event?.local,
+    ].filter(Boolean).join(' '));
   }
 
   function ensureCustomRecurringTasks(calendarEvents = []) {
@@ -1065,6 +1078,12 @@ function save(key, val) {
       });
       changed = true;
     };
+    const calendarSources = [...calendarEvents, ...(window.gcalEventsCache || [])];
+    const knownCalendarEvents = [...new Map(calendarSources.map(event => {
+      const date = String(event?.start || event?.data || '').slice(0, 10);
+      const title = String(event?.title || event?.titulo || '').trim().toLowerCase();
+      return [`${date}|${title}|${String(event?.link || '')}`, event];
+    })).values()];
     recurringTasks.forEach(template => {
       if (template.kind === 'interval15') {
         const anchor = template.anchorDate || today;
@@ -1081,8 +1100,8 @@ function save(key, val) {
           const date = addDashboardDays(today, offset);
           if (selectedDays.includes(new Date(`${date}T12:00:00`).getDay())) createOccurrence(template, date, date);
         }
-      } else if (template.kind === 'googleMentoring') {
-        calendarEvents.filter(isMentoringCalendarEvent).forEach(event => {
+      } else if (['googleMentoring', 'googleCalendarMentoring', 'mentoring'].includes(template.kind)) {
+        knownCalendarEvents.filter(isMentoringCalendarEvent).forEach(event => {
           const eventDate = String(event.start || event.data || '').slice(0, 10);
           if (!eventDate) return;
           const date = addDashboardDays(eventDate, template.mentoringOffset);
@@ -2054,7 +2073,7 @@ function save(key, val) {
   function deleteEventDirect(id) {
     const ev = events.find(x => x.id === id);
     if (!ev) return;
-    if (ev.recurrenceTemplateId) {
+    if (ev.recurrenceTemplateId || ev.recurKey) {
       recurringDeleteEventId = id;
       openModal('modal-excluir-recorrencia');
       return;
@@ -2074,6 +2093,10 @@ function save(key, val) {
     if (template && ev.recurrenceKey) {
       template.excludedOccurrenceKeys = [...new Set([...(template.excludedOccurrenceKeys || []), ev.recurrenceKey])];
       save('gc-recurring-tasks', recurringTasks);
+    } else if (ev.recurKey) {
+      const exclusions = getLegacyRecurringSet('gc-legacy-recur-exclusions');
+      exclusions.add(`${ev.recurKey}:${ev.data}`);
+      saveLegacyRecurringSet('gc-legacy-recur-exclusions', exclusions);
     }
     cancelRecurringDeletion();
     deleteEventNow(ev.id);
@@ -2082,6 +2105,25 @@ function save(key, val) {
   function deleteAllRecurringOccurrences() {
     const ev = events.find(x => x.id === recurringDeleteEventId);
     if (!ev) return cancelRecurringDeletion();
+    if (!ev.recurrenceTemplateId && ev.recurKey) {
+      const disabled = getLegacyRecurringSet('gc-legacy-recur-disabled');
+      disabled.add(ev.recurKey);
+      saveLegacyRecurringSet('gc-legacy-recur-disabled', disabled);
+      const removedEvents = events.filter(item => item.recurKey === ev.recurKey);
+      events = events.filter(item => item.recurKey !== ev.recurKey);
+      cancelRecurringDeletion();
+      save('gc-events', events);
+      refreshCalendars(); buildCalendar('cal-eventos', 'all');
+      buildTarefas(); buildColabTarefas(); buildPrioridades();
+      pushUndo(ev.titulo || 'Tarefas recorrentes', () => {
+        disabled.delete(ev.recurKey);
+        saveLegacyRecurringSet('gc-legacy-recur-disabled', disabled);
+        events = [...events, ...removedEvents];
+        save('gc-events', events);
+        buildTarefas(); buildColabTarefas(); buildPrioridades();
+      });
+      return;
+    }
     const templateId = ev.recurrenceTemplateId;
     const removedTemplate = recurringTasks.find(item => item.id === templateId);
     const removedEvents = events.filter(item => item.recurrenceTemplateId === templateId);
@@ -5438,9 +5480,10 @@ function save(key, val) {
     weekEnd.setDate(weekEnd.getDate() + 6);
     weekEnd.setHours(23,59,59);
   
-    // Busca 6 meses ao redor de hoje para cobrir navegação nos calendários
+    // Busca um ano à frente para que recorrências vinculadas a mentorias sejam
+    // criadas mesmo quando o evento foi agendado com bastante antecedência.
     const rangeStart = new Date(); rangeStart.setMonth(rangeStart.getMonth() - 2); rangeStart.setDate(1);
-    const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 4); rangeEnd.setDate(1);
+    const rangeEnd   = new Date(); rangeEnd.setMonth(rangeEnd.getMonth() + 12); rangeEnd.setDate(1);
   
     try {
       // Buscar agenda principal + agendas compartilhadas em paralelo
