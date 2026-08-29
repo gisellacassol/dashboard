@@ -605,9 +605,9 @@
   /* ── TAREFAS AUTOMÁTICAS RECORRENTES (GISELLA) ── */
   // Estas tarefas são criadas automaticamente como tarefas normais (aparecem
   // na aba "Tarefas", filtráveis por colaborador) com a data de hoje.
-  const LUIGGI_RECORRENTES_DIARIAS = ['Ajustes no sistema'];
+  const LUIGGI_RECORRENTES_DIARIAS = [];
   const GISELLA_RECORRENTES_SEGUNDA = ['Avisos da semana - Plano Diretor', 'Links da semana - Plano Diretor', 'Analisar Planilha de Métricas'];
-  const GISELLA_RECORRENTES_SEXTA   = ['Resumo da semana Plano Diretor', 'Checkout da semana'];
+  const GISELLA_RECORRENTES_SEXTA   = [];
   
   function ensureGisellaRecorrentes() {
     const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD horário local
@@ -618,7 +618,11 @@
     // A recorrência agora é configurada no formulário de tarefas. Removemos
     // apenas as duas cópias que eram criadas automaticamente pelo sistema,
     // reconhecidas pela chave interna, sem tocar em tarefas manuais.
-    const retiredRecurringKeys = new Set(['diaria-0', 'diaria-1']);
+    const retiredRecurringKeys = new Set([
+      'diaria-0', 'diaria-1',
+      'luiggi-diaria-0',
+      'sexta-0', 'sexta-1',
+    ]);
     const beforeRetiredCleanup = events.length;
     events = events.filter(event => !retiredRecurringKeys.has(event.recurKey));
     if (events.length !== beforeRetiredCleanup) changed = true;
@@ -686,19 +690,29 @@
         {id:'g-w-2', label:'Links da semana - Plano Diretor'},
         {id:'g-w-3', label:'Analisar planilha de métricas', link:'https://docs.google.com/spreadsheets/d/1ROG9DTW7jQemiMf8mwfDEvC2oOTrTP4TwDCxMN3KlKI/edit?gid=0#gid=0'},
         {id:'g-w-4', label:'Rodar novos anúncios'},
-        {id:'g-w-5', label:'Resumo da semana Plano Diretor'},
-        {id:'g-w-6', label:'Checkout da semana'},
       ]
     },
     milena: { daily: [], weekly: [] },
     luiggi: { daily: [], weekly: [] },
   };
+  // Itens aposentados do checklist fixo. Os IDs garantem que uma tarefa manual
+  // com o mesmo texto não seja apagada.
+  const RETIRED_FIXED_TASK_IDS = new Set(['g-w-5', 'g-w-6']);
   
   function getFixedData(colab) {
     const key = 'gc-fixed-' + colab;
     try {
       const stored = localStorage.getItem(key);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const data = JSON.parse(stored);
+        const weekly = Array.isArray(data.weekly) ? data.weekly : [];
+        const activeWeekly = weekly.filter(task => !RETIRED_FIXED_TASK_IDS.has(task.id));
+        if (activeWeekly.length !== weekly.length) {
+          data.weekly = activeWeekly;
+          localStorage.setItem(key, JSON.stringify(data));
+        }
+        return data;
+      }
     } catch(e) {}
     // Primeira vez: usar defaults
     const def = JSON.parse(JSON.stringify(FIXED_DEFAULTS[colab] || {daily:[], weekly:[]}));
@@ -3139,14 +3153,14 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Editado',c:'s-edicao'},aprovado:{l:'Aprovado',c:'s-aprovado'},agendado:{l:'Agendado',c:'s-agendado'},postado:{l:'Postado',c:'s-postado'}};
+  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda'};
   const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
   
   // Etapas padrão de um conteúdo (baseadas no fluxo de status)
-  const CONTEUDO_ETAPAS_PADRAO = ['Copy criada','Gravado','Editado','Aprovado','Agendado','Postado'];
+  const CONTEUDO_ETAPAS_PADRAO = ['Copy criada','Gravado','Para editar','Para aprovar','Para agendar','Para postar'];
   const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado'];
   const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
   const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
