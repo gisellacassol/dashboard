@@ -285,6 +285,7 @@
     <button class="filter-btn" onclick="setFilterColab('tarefas','Gisella',this)">Gisella</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Milena',this)">Milena</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Luiggi',this)">Luiggi</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Marília',this)">Marília</button>
   </div>
 
   <div class="section">
@@ -555,7 +556,7 @@
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
-            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
           </select></div>
           <div style="padding-top:18px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;">
@@ -575,6 +576,7 @@
                 <option value="Gisella">Gisella</option>
                 <option value="Milena">Milena</option>
                 <option value="Luiggi">Luiggi</option>
+                <option value="Marília">Marília</option>
               </select>
               <textarea class="notes-area" id="qa-comentario-texto" placeholder="Escreva um comentário..." style="min-height:48px;font-size:13px;resize:none;"></textarea>
             </div>
@@ -595,7 +597,7 @@
         </div>
         <div class="form-group"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel-evento">
-            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
           </select></div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao-evento" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
@@ -610,7 +612,7 @@
             </select></div>
           <div class="form-group"><label class="form-label">Responsável</label>
             <select class="form-select" id="qa-responsavel-projeto">
-              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
             </select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -710,6 +712,7 @@
             <option value="Gisella">Gisella</option>
             <option value="Milena">Milena</option>
             <option value="Luiggi">Luiggi</option>
+            <option value="Marília">Marília</option>
           </select></div>
         <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="mp-inicio" type="date"></div>
         <div class="form-group"><label class="form-label">Data de fim</label><input class="form-input" id="mp-fim" type="date"></div>
@@ -853,6 +856,7 @@
         <select class="form-select" id="mcd-responsavel" onchange="saveConteudoDetalhe()">
           <option value="">— nenhum —</option><option value="Gisella">Gisella</option>
           <option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+          <option value="Marília">Marília</option>
         </select>
       </div>
       <div>
@@ -956,6 +960,7 @@
         <option value="Gisella">Gisella</option>
         <option value="Milena">Milena</option>
         <option value="Luiggi">Luiggi</option>
+        <option value="Marília">Marília</option>
       </select>
       <div style="display:flex;gap:8px;align-items:flex-end;">
         <textarea class="notes-area" id="modal-com-texto" placeholder="Escreva um comentário..." style="flex:1;min-height:48px;font-size:13px;resize:none;"></textarea>
@@ -1068,6 +1073,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.2"></script>
+  <script src="app.js?v=3.2.3"></script>
 </body>
 </html>

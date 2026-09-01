@@ -1456,7 +1456,7 @@ function save(key, val) {
     const label = `${dias[0].getDate()} ${meses[dias[0].getMonth()]} — ${dias[6].getDate()} ${meses[dias[6].getMonth()]} ${dias[6].getFullYear()}`;
   
     const _tf  = getFilter('tarefas');
-    const _tfc = getFilterColab('tarefas');
+    const _tfc = getTaskAssigneeRestriction() || getFilterColab('tarefas');
   
     const etapaEvents = [];
     livros.forEach(l => {
@@ -1609,6 +1609,10 @@ function save(key, val) {
   
   function showPage(id, btn) {
     closeMobileNav();
+    if (!canAccessDashboardPage(id)) {
+      id = 'tarefas';
+      btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'tarefas'"));
+    }
     let el = document.getElementById('page-' + id);
     // Fallback de segurança: se a página não existir (ex: link antigo/salvo
     // para uma aba removida), cai na aba Tarefas em vez de deixar tela em branco.
@@ -3959,7 +3963,7 @@ function save(key, val) {
     const todayStr2 = today.toISOString().slice(0,10);
   
     const _tf = getFilter('tarefas');
-    const _tfc = getFilterColab('tarefas');
+    const _tfc = getTaskAssigneeRestriction() || getFilterColab('tarefas');
     // Etapas de livros como tarefas virtuais
     const etapaEvents = [];
     livros.forEach(l => {
@@ -4248,6 +4252,11 @@ function save(key, val) {
   const pageFiltersColab = {};
   
   function setFilterColab(pageId, colab, btn) {
+    const restrictedAssignee = getTaskAssigneeRestriction();
+    if (pageId === 'tarefas' && restrictedAssignee) {
+      colab = restrictedAssignee;
+      btn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(button => button.textContent.trim() === restrictedAssignee) || btn;
+    }
     pageFiltersColab[pageId] = colab;
     const bar = document.getElementById('filter-bar-' + pageId + '-colab');
     if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -7236,14 +7245,45 @@ function save(key, val) {
     gisella: { name: 'Gisella', color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'G' },
     milena:  { name: 'Milena',  color: 'var(--leia)',    bg: 'var(--leia-bg)',    initial: 'M' },
     luiggi:  { name: 'Luiggi',  color: 'var(--editora)', bg: 'var(--editora-bg)', initial: 'L' },
+    marilia: { name: 'Marília', color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'M' },
   };
-  // Permissões por usuário — 'all' = acesso total
-  // No futuro, substituir por array de pageIds permitidos
+  // Permissões por usuário — 'all' = acesso total. Perfis restritos também
+  // recebem o responsável obrigatório das tarefas que podem visualizar.
   const LOGIN_PERMS = {
     gisella: 'all',
     milena:  'all',
     luiggi:  'all',
+    marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília' },
   };
+
+  function currentDashboardUser() {
+    return window._currentUser || localStorage.getItem('gc-session-user') || '';
+  }
+
+  function canAccessDashboardPage(pageId) {
+    const permission = LOGIN_PERMS[currentDashboardUser()] || 'all';
+    return permission === 'all' || permission.pages.includes(pageId);
+  }
+
+  function getTaskAssigneeRestriction() {
+    const permission = LOGIN_PERMS[currentDashboardUser()] || 'all';
+    return permission !== 'all' ? permission.taskAssignee || '' : '';
+  }
+
+  function applyDashboardPermissions(user) {
+    const permission = LOGIN_PERMS[user] || 'all';
+    const restricted = permission !== 'all';
+    document.querySelectorAll('.nav-item').forEach(button => {
+      const pageId = (button.getAttribute('onclick') || '').match(/showPage\('([^']+)'/)?.[1];
+      button.style.display = !restricted || (pageId && permission.pages.includes(pageId)) ? '' : 'none';
+    });
+    document.querySelectorAll('.nav-section').forEach(section => {
+      const items = Array.from(section.querySelectorAll('.nav-item'));
+      if (items.length) section.style.display = items.some(item => item.style.display !== 'none') ? '' : 'none';
+    });
+    const collaborators = document.getElementById('filter-bar-tarefas-colab');
+    if (collaborators) collaborators.style.display = restricted ? 'none' : '';
+  }
   async function doLogin() {
     const name = (document.getElementById('login-name').value || '').trim();
     const pass = document.getElementById('login-pass').value;
@@ -7288,6 +7328,13 @@ function save(key, val) {
   function showApp(user, displayName) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-shell').style.display = 'flex';
+    window._currentUser = user;
+    window._currentUserName = (LOGIN_USERS[user] && LOGIN_USERS[user].name) || displayName || user;
+    applyDashboardPermissions(user);
+    const rememberedPage = localStorage.getItem('gc-current-page');
+    if (rememberedPage && !canAccessDashboardPage(rememberedPage)) {
+      localStorage.removeItem('gc-current-page');
+    }
     // Show bottom nav on mobile
     const bn = document.getElementById('bottom-nav');
     if (bn) bn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
@@ -7306,7 +7353,7 @@ function save(key, val) {
       if (window.innerWidth > 768) closeMobileNav();
     });
     // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
-    if (['gisella','milena','luiggi'].includes(user)) {
+    if (['gisella','milena','luiggi','marilia'].includes(user)) {
       const savedPg = localStorage.getItem('gc-current-page');
       if (!savedPg) {
         setTimeout(() => {
@@ -7331,7 +7378,7 @@ function save(key, val) {
               if (btn) btn.classList.add('active');
               localStorage.setItem('gc-current-page', 'tarefas');
               buildTarefas();
-              const nome = user === 'milena' ? 'Milena' : 'Luiggi';
+              const nome = user === 'milena' ? 'Milena' : user === 'marilia' ? 'Marília' : 'Luiggi';
               const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
               if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
             }
@@ -7340,8 +7387,6 @@ function save(key, val) {
       }
     }
     // Set chat author selector
-    window._currentUser = user;
-    window._currentUserName = displayName || user;
     // Mostrar nome do usuário logado no footer
     const footer = document.querySelector('.sidebar-footer');
     if (footer) {
