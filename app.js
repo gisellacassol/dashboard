@@ -3379,6 +3379,7 @@ function save(key, val) {
           <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
           <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
           <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+          <option value="Marília" ${e.resp==='Marília'?'selected':''}>Marília</option>
         </select>
         <input type="date" value="${e.prazo||''}" onchange="setConteudoEtapaPrazo(${c.id},'${e.key}',this.value)"
           style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
@@ -5979,6 +5980,7 @@ function save(key, val) {
           <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
           <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
           <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+          <option value="Marília" ${e.resp==='Marília'?'selected':''}>Marília</option>
         </select>
         <input type="date" value="${e.prazo||''}"
           onchange="updateEtapaPrazoInline(${_epLivroId},${i},this.value)"
