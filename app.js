@@ -2555,10 +2555,14 @@ function save(key, val) {
     });
   }
   function openAddLivroTodos() {
+    // O botão flutuante do celular pode ter aberto o modal genérico antes de
+    // chegar aqui. O cadastro de livro usa somente sua ficha técnica própria.
+    closeModal('modal-quickadd');
     openAddLivro('editora');
   }
   
   function openAddLivro(emp) {
+    closeModal('modal-quickadd');
     addLivroEmpresa = emp;
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
@@ -6427,6 +6431,12 @@ function save(key, val) {
   }
   
   function bottomNavAdd() {
+    // Na aba Livros, o botão + abre diretamente a ficha técnica. Isso evita
+    // manter o modal genérico por baixo e exibir dois modais ao mesmo tempo.
+    if (document.getElementById('page-livros')?.classList.contains('active')) {
+      openAddLivroTodos();
+      return;
+    }
     // Open modal with default type based on current page
     openQuickAdd();
   }
