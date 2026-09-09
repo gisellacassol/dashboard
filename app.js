@@ -135,6 +135,7 @@
     editingEventId = null;
     openQuickAdd();
     window._editingEtapa = {livroId, idx};
+    setBookStageAssigneeOption(true);
     document.getElementById('qa-tipo').value = 'tarefa';
     updateQaFields();
     document.getElementById('qa-titulo').value = e.nome;
@@ -143,6 +144,19 @@
     setEmpresasChecked('qa-emp-', l.empresa || 'editora');
     document.getElementById('qa-modal-title').textContent = `Editar etapa · ${l.titulo}`;
     document.getElementById('qa-submit-btn').textContent = 'Salvar etapa';
+  }
+
+  function setBookStageAssigneeOption(enabled) {
+    const field = document.getElementById('qa-responsavel');
+    if (!field) return;
+    field.querySelectorAll('option[data-book-stage-assignee]').forEach(option => option.remove());
+    if (enabled) {
+      const option = document.createElement('option');
+      option.value = 'Marília';
+      option.textContent = 'Marília';
+      option.dataset.bookStageAssignee = 'true';
+      field.appendChild(option);
+    }
   }
   
   function adicionarEtapa(livroId) {
@@ -246,7 +260,7 @@
       return;
     }
   
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-recurring-tasks'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks'];
   
     // Verificar se há dados no localStorage
     const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -1294,7 +1308,7 @@ function save(key, val) {
       const ds = dia.toISOString().slice(0,10);
       const isToday = ds === hoje.toISOString().slice(0,10);
       const dayConts = conteudos.filter(c =>
-        !isConteudoFinalizado(c) && c.dataPost === ds &&
+        c.dataPost === ds &&
         (filter === 'all' || (c.empresa||'').split(',').includes(filter))
       );
   
@@ -1304,7 +1318,8 @@ function save(key, val) {
   
       dayConts.forEach(c => {
         const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
-        html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}15;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${cor};" title="Postagem: ${c.nome}">📤 ${c.nome}</div>`;
+        const finalizado = isConteudoFinalizado(c);
+        html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}15;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${cor};${finalizado?'opacity:0.55;text-decoration:line-through;':''}" title="${finalizado?'Conteúdo concluído':'Postagem'}: ${c.nome}">${finalizado?'✓':'📤'} ${c.nome}</div>`;
       });
   
       html += '</div>';
@@ -1437,7 +1452,9 @@ function save(key, val) {
     const wrapC1 = document.getElementById('colab-cal-semana-gisella');
     const wrapC2 = document.getElementById('colab-cal-semana-milena');
     const wrapC3 = document.getElementById('colab-cal-semana-luiggi');
-    if (!wrap && !wrapV && !wrapC1 && !wrapC2 && !wrapC3) return;
+    const wrapC4 = document.getElementById('colab-cal-semana-marilia');
+    const wrapC5 = document.getElementById('colab-cal-semana-bruna');
+    if (!wrap && !wrapV && !wrapC1 && !wrapC2 && !wrapC3 && !wrapC4 && !wrapC5) return;
   
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const inicioSemana = new Date(hoje);
@@ -1473,7 +1490,6 @@ function save(key, val) {
     });
     // Etapas de conteúdos como tarefas virtuais no calendário semanal
     conteudos.forEach(c => {
-      if (isConteudoFinalizado(c)) return;
       const empMatch = _tf==='all'||(c.empresa||'').split(',').includes(_tf);
       if (!empMatch) return;
       const etapas = getConteudoEtapasLiberadas(c);
@@ -1495,7 +1511,11 @@ function save(key, val) {
     ];
   
     function _chipHtml(t, cor) {
-      const dragStart = t._isEtapa ? `tarefaCalDragStart(event,'etapa',${t.livroId},${t.etapaIdx})` : `tarefaCalDragStart(event,'evento',${t.id},null)`;
+      const dragStart = t._isEtapa
+        ? `tarefaCalDragStart(event,'etapa',${t.livroId},${t.etapaIdx})`
+        : t._conteudoId
+          ? `tarefaCalDragStart(event,'conteudo',${t._conteudoId},'${t._conteudoKey}')`
+          : `tarefaCalDragStart(event,'evento',${t.id},null)`;
       const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `openConteudoEtapasPrazos(${t._conteudoId})` : `openEditEvent(${t.id})`);
       const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `toggleConteudoEtapa(${t._conteudoId},'${t._conteudoKey}')` : `toggleTarefaArquivada(${t.id})`);
       return `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
@@ -1561,14 +1581,18 @@ function save(key, val) {
       wrapV.innerHTML = hVG;
     }
   
-    [wrapC1,wrapC2,wrapC3].filter(Boolean).forEach(w => {
+    [wrapC1,wrapC2,wrapC3,wrapC4,wrapC5].filter(Boolean).forEach(w => {
       const key = w.id.replace('colab-cal-semana-','');
       _buildColabCal(key);
     });
   }
   
   function tarefaCalDragStart(e, kind, a, b) {
-    _tarefaCalDragSrc = kind === 'etapa' ? { kind:'etapa', livroId:a, idx:b } : { kind:'evento', id:a };
+    _tarefaCalDragSrc = kind === 'etapa'
+      ? { kind:'etapa', livroId:a, idx:b }
+      : kind === 'conteudo'
+        ? { kind:'conteudo', conteudoId:a, key:b }
+        : { kind:'evento', id:a };
     e.dataTransfer.effectAllowed = 'move';
   }
   
@@ -1580,6 +1604,8 @@ function save(key, val) {
     _tarefaCalDragSrc = null;
     if (src.kind === 'etapa') {
       updateEtapaPrazoInline(src.livroId, src.idx, novaData);
+    } else if (src.kind === 'conteudo') {
+      setConteudoEtapaPrazo(src.conteudoId, src.key, novaData);
     } else {
       const ev = events.find(x => x.id === src.id);
       if (!ev) return;
@@ -1633,6 +1659,8 @@ function save(key, val) {
     if (id === 'colab-gisella') { loadGcal(); renderNotas('gisella'); setTimeout(() => renderNotas('gisella'), 300); setTimeout(countMentoriasSemana, 800); buildColabTarefas(); }
     if (id === 'colab-milena')  { renderNotas('milena');  buildColabTarefas(); }
     if (id === 'colab-luiggi') { renderNotas('luiggi'); buildColabTarefas(); }
+    if (id === 'colab-marilia') { renderNotas('marilia'); buildColabTarefas(); }
+    if (id === 'colab-bruna') { renderNotas('bruna'); buildColabTarefas(); }
     if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
     if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
     if (id === 'links') { renderLinks(); }
@@ -1797,7 +1825,7 @@ function save(key, val) {
       const showEventos = (id !== 'cal-conteudo');
       const _calFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
       const dayConteudos = showConteudos
-        ? conteudos.filter(c => !isConteudoFinalizado(c) && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
+        ? conteudos.filter(c => c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
         : [];
       const allEventsRaw = showEventos ? [...events, ...gcalEventsNative] : [];
       // Deduplicar por id (gcal ids são strings como 'gcal-...')
@@ -1825,7 +1853,8 @@ function save(key, val) {
       const _maxItems = (id === 'cal-visao') ? 99 : 3;
       evHtml += dayConteudos.slice(0,_maxItems).map(c => {
         const cc = contColors[c.empresa||'editora']||contColors.editora;
-        return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;" onclick="event.stopPropagation();openConteudo(${c.id})">✏ ${c.nome}</div>`;
+        const finalizado = isConteudoFinalizado(c);
+        return `<div class="cal-event" style="background:${cc.bg};color:${cc.color};cursor:pointer;font-style:italic;${finalizado?'opacity:0.55;text-decoration:line-through;':''}" title="${finalizado?'Conteúdo concluído':'Conteúdo'}" onclick="event.stopPropagation();openConteudo(${c.id})">${finalizado?'✓':'✏'} ${c.nome}</div>`;
       }).join('');
       evHtml += dayEvs.slice(0,_maxItems).map(e => {
         if (e._gcal || e.gcal) {
@@ -1957,6 +1986,7 @@ function save(key, val) {
   function openQuickAdd() {
     editingEventId = null;
     window._editingEtapa = null;
+    setBookStageAssigneeOption(false);
     document.getElementById('qa-modal-title').textContent = 'Adicionar item';
     const delBtnQa = document.getElementById('qa-delete-btn');
     if (delBtnQa) delBtnQa.style.display = 'none';
@@ -2701,6 +2731,7 @@ function save(key, val) {
           '<option value="Gisella" '+(e.resp==='Gisella'?'selected':'')+'>Gisella</option>' +
           '<option value="Milena" '+(e.resp==='Milena'?'selected':'')+'>Milena</option>' +
           '<option value="Luiggi" '+(e.resp==='Luiggi'?'selected':'')+'>Luiggi</option>' +
+          '<option value="Marília" '+(e.resp==='Marília'?'selected':'')+'>Marília</option>' +
         '</select>' +
       '</div>';
     }).join('');
@@ -2878,7 +2909,7 @@ function save(key, val) {
   }
   function setPrazoEtapa(id,i,val) { updateEtapaPrazoInline(id, i, val); }
   function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
-  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildColabTarefas(); } }
+  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildTarefas(); buildColabTarefas(); } }
   
   /* ── MENTEES ── */
   let currentMenteeId = null;
@@ -3230,6 +3261,29 @@ function save(key, val) {
       },
     };
   }
+
+  // Mantém a data de postagem (calendário) e os prazos exibidos na lista do
+  // conteúdo no mesmo fluxo. Etapas já concluídas preservam o histórico.
+  function sincronizarPrazosConteudoComPostagem(c, dataAnterior, novaData) {
+    if (!c || !novaData || dataAnterior === novaData) return;
+    const novosPrazos = prazosIniciaisDoConteudo(c.rede, novaData, c.empresa);
+    if (!c.etapasStatus) c.etapasStatus = {};
+    Object.entries(novosPrazos).forEach(([key, padrao]) => {
+      if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+      if (!c.etapasStatus[key].feito) c.etapasStatus[key].prazo = padrao.prazo || '';
+      if (!c.etapasStatus[key].resp && padrao.resp) c.etapasStatus[key].resp = padrao.resp;
+    });
+  }
+
+  function refreshConteudoViews() {
+    renderConteudos();
+    refreshCalendars();
+    buildConteudoCalSemana();
+    buildVisaoConteudos();
+    buildTarefas();
+    buildColabTarefas();
+    buildPrioridades();
+  }
   
   function getConteudoEtapasByRede(c) {
     if ((c.rede||'') === 'emanda') {
@@ -3379,7 +3433,7 @@ function save(key, val) {
           <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
           <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
           <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
-          <option value="Marília" ${e.resp==='Marília'?'selected':''}>Marília</option>
+          <option value="Bruna" ${e.resp==='Bruna'?'selected':''}>Bruna</option>
         </select>
         <input type="date" value="${e.prazo||''}" onchange="setConteudoEtapaPrazo(${c.id},'${e.key}',this.value)"
           style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
@@ -3423,9 +3477,7 @@ function save(key, val) {
     c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || 'copy');
     atualizarConclusaoConteudo(c);
     save('gc-conteudos', conteudos);
-    renderConteudos();
-    buildTarefas();
-    buildColabTarefas();
+    refreshConteudoViews();
     // Notify if completed
     if (!wasFeito && c.etapasStatus[key].feito) {
       const etapaNome = CONTEUDO_ETAPAS_PADRAO[CONTEUDO_ETAPAS_KEYS.indexOf(key)] || key;
@@ -3441,8 +3493,7 @@ function save(key, val) {
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     c.etapasStatus[key].resp = resp;
     save('gc-conteudos', conteudos);
-    buildTarefas();
-    buildColabTarefas();
+    refreshConteudoViews();
   }
   
   function setConteudoEtapaPrazo(id, key, prazo) {
@@ -3450,10 +3501,14 @@ function save(key, val) {
     if (!c) return;
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+    const dataAnterior = c.dataPost || '';
+    if (key === 'postado') {
+      c.dataPost = prazo;
+      sincronizarPrazosConteudoComPostagem(c, dataAnterior, prazo);
+    }
     c.etapasStatus[key].prazo = prazo;
     save('gc-conteudos', conteudos);
-    buildTarefas();
-    buildColabTarefas();
+    refreshConteudoViews();
   }
   
   // Modal de prazos (estilo openEtapasPrazos dos livros)
@@ -3493,6 +3548,7 @@ function save(key, val) {
           <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
           <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
           <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+          <option value="Bruna" ${e.resp==='Bruna'?'selected':''}>Bruna</option>
         </select>
         <input type="date" value="${e.prazo||''}" onchange="setConteudoEtapaPrazo(${_epConteudoId},'${e.key}',this.value);renderCepLista()"
           style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
@@ -3653,16 +3709,22 @@ function save(key, val) {
     const nome = document.getElementById('mc-nome').value.trim();
     if (!nome) { document.getElementById('mc-nome').focus(); return; }
     const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
-    if (currentConteudoId) { const i=conteudos.findIndex(x=>x.id===currentConteudoId); if(i>-1) conteudos[i]={...conteudos[i],...data}; }
+    if (currentConteudoId) {
+      const i=conteudos.findIndex(x=>x.id===currentConteudoId);
+      if(i>-1) {
+        const dataAnterior = conteudos[i].dataPost || '';
+        conteudos[i]={...conteudos[i],...data};
+        sincronizarPrazosConteudoComPostagem(conteudos[i], dataAnterior, data.dataPost);
+      }
+    }
     else conteudos.push({
       id:Date.now(),
       done:false,
       etapasStatus: prazosIniciaisDoConteudo(data.rede, data.dataPost, data.empresa),
       ...data
     });
-    save('gc-conteudos',conteudos); renderConteudos();
-    refreshCalendars(); buildConteudoCalSemana(); buildVisaoConteudos();
-    buildTarefas(); buildColabTarefas(); buildPrioridades();
+    save('gc-conteudos',conteudos);
+    refreshConteudoViews();
     closeModal('modal-conteudo');
   }
   
@@ -3672,11 +3734,11 @@ function save(key, val) {
     const snapshot = [...conteudos];
     conteudos = conteudos.filter(x => x.id !== id);
     save('gc-conteudos', conteudos);
-    renderConteudos(); buildPrioridades();
+    refreshConteudoViews();
     pushUndo(c.nome || 'Conteúdo', () => {
       conteudos = snapshot;
       save('gc-conteudos', conteudos);
-      renderConteudos(); buildPrioridades();
+      refreshConteudoViews();
     });
   }
   
@@ -3719,6 +3781,7 @@ function save(key, val) {
           <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
           <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
           <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
+          <option value="Bruna" ${e.resp==='Bruna'?'selected':''}>Bruna</option>
         </select>
         <input type="date" value="${e.prazo||''}" onchange="setMcdEtapaPrazo(${i},this.value)"
           style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
@@ -3730,13 +3793,15 @@ function save(key, val) {
   function saveConteudoDetalhe() {
     const c = conteudos.find(x => x.id === _mcdConteudoId);
     if (!c) return;
+    const dataAnterior = c.dataPost || '';
     c.status = document.getElementById('mcd-status').value;
     c.responsavel = document.getElementById('mcd-responsavel').value;
     c.dataProd = document.getElementById('mcd-dataprod').value;
     c.dataPost = document.getElementById('mcd-datapost').value;
+    sincronizarPrazosConteudoComPostagem(c, dataAnterior, c.dataPost);
     c.legenda = document.getElementById('mcd-legenda').value;
     save('gc-conteudos', conteudos);
-    renderConteudos();
+    refreshConteudoViews();
   }
   
   function addConteudoEtapa() {
@@ -4805,12 +4870,16 @@ function save(key, val) {
   /* ── COLABORADORES ── */
   // Ordem manual das tarefas dos colaboradores
   let colabOrdem = load('gc-colab-ordem', {});
+
+  function collaboratorKey(value) {
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
   
   var _colabCalOff = {};
   function _buildColabCal(key) {
     var wrap = document.getElementById('colab-cal-semana-' + key);
     if (!wrap) return;
-    var cor = key==='gisella'?'var(--gisella)':key==='milena'?'var(--leia)':'var(--editora)';
+    var cor = key==='gisella'||key==='marilia'?'var(--gisella)':key==='milena'||key==='bruna'?'var(--leia)':'var(--editora)';
     var off = _colabCalOff[key] || 0;
     var hoje = new Date(); hoje.setHours(0,0,0,0);
     var ini = new Date(hoje);
@@ -4823,19 +4892,18 @@ function save(key, val) {
     var hojeStr = hoje.toISOString().slice(0,10);
     var rangeLabel = ini.getDate()+' '+meses[ini.getMonth()] + (ini.getMonth()!==fim.getMonth()?' — '+fim.getDate()+' '+meses[fim.getMonth()]:'–'+fim.getDate());
   
-    var allTarefas = events.filter(function(e){ return e.tipo==='tarefa' && e.responsavel && e.responsavel.toLowerCase()===key; })
+    var allTarefas = events.filter(function(e){ return e.tipo==='tarefa' && e.responsavel && collaboratorKey(e.responsavel)===key; })
       .map(function(e){ return {_isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||''}; });
     livros.forEach(function(l){ (l.etapas||[]).forEach(function(e,i){
-      if ((e.resp||'').toLowerCase()===key) {
+      if (collaboratorKey(e.resp)===key) {
         allTarefas.push({_isEtapa:true,livroId:l.id,etapaIdx:i,titulo:'['+l.titulo+'] '+e.nome,empresa:l.empresa,data:e.prazo||'',arquivada:!!e.feito,urgente:false,tipoTarefa:''});
       }
     }); });
     // Etapas de conteúdos
     conteudos.forEach(function(c){
-      if (isConteudoFinalizado(c)) return;
       var etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(function(e){
-        if ((e.resp||'').toLowerCase()===key && e.prazo) {
+        if (collaboratorKey(e.resp)===key && e.prazo) {
           allTarefas.push({_isEtapa:false,_conteudoId:c.id,_conteudoKey:e.key,id:'cont-'+c.id+'-'+e.key,titulo:'['+c.nome+'] '+e.nome,empresa:c.empresa,data:e.prazo,arquivada:!!e.feito,urgente:false,tipoTarefa:''});
         }
       });
@@ -4859,7 +4927,11 @@ function save(key, val) {
       dayT.forEach(function(t){
         var prE=(t.empresa||'').split(',')[0];
         var c=prE==='editora'?'var(--editora)':prE==='leia'?'var(--leia)':'var(--gisella)';
-        var dragStart=t._isEtapa?'tarefaCalDragStart(event,\'etapa\','+t.livroId+','+t.etapaIdx+')':'tarefaCalDragStart(event,\'evento\','+t.id+',null)';
+        var dragStart=t._isEtapa
+          ? 'tarefaCalDragStart(event,\'etapa\','+t.livroId+','+t.etapaIdx+')'
+          : t._conteudoId
+            ? 'tarefaCalDragStart(event,\'conteudo\','+t._conteudoId+',\''+t._conteudoKey+'\')'
+            : 'tarefaCalDragStart(event,\'evento\','+t.id+',null)';
         var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'openConteudoEtapasPrazos('+t._conteudoId+')':'openEditEvent('+t.id+')';
         var chk=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'toggleConteudoEtapa('+t._conteudoId+',\''+t._conteudoKey+'\')':'toggleTarefaArquivada('+t.id+')';
         html+='<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:'+c+'15;color:'+c+';border-left:2px solid '+c+';'+(t.arquivada?'opacity:0.45;':'')+'display:flex;align-items:flex-start;gap:4px;">';
@@ -4876,15 +4948,14 @@ function save(key, val) {
   
   function buildColabTarefas() {
     const today = new Date(); today.setHours(0,0,0,0);
-    const colabs = ['Gisella','Milena','Luiggi'];
+    const colabs = ['Gisella','Milena','Luiggi','Marília','Bruna'];
     const EMP_BADGE = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
     const EMP_LABEL = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
   
     colabs.forEach(colab => {
-      const el = document.getElementById('colab-tarefas-' + colab.toLowerCase());
+      const colabKey = collaboratorKey(colab);
+      const el = document.getElementById('colab-tarefas-' + colabKey);
       if (!el) return;
-  
-      const colabKey = colab.toLowerCase();
   
       const tasks = [];
   
@@ -5014,7 +5085,7 @@ function save(key, val) {
       el.innerHTML = html;
     });
     // Build weekly calendars for each colab
-    ['gisella','milena','luiggi'].forEach(function(k){ _buildColabCal(k); });
+    ['gisella','milena','luiggi','marilia','bruna'].forEach(function(k){ _buildColabCal(k); });
   }
   
   function colabTaskDragStart(event, taskId, colabKey) {
@@ -7003,7 +7074,7 @@ function save(key, val) {
       apply('gc-colab-ordem', v => { colabOrdem = v; });
       apply('gc-links',       v => { links      = v; });
       apply('gc-links-empresa', v => { linksEmpresa = v; });
-      ['gisella','milena','luiggi'].forEach(c => {
+      ['gisella','milena','luiggi','marilia','bruna'].forEach(c => {
         const key = 'gc-notas-' + c;
         const entry = cloudData[key];
         const val = entry?.value ?? entry;
@@ -7058,7 +7129,7 @@ function save(key, val) {
     loadGcal();
     loadGcalLeia();
     buildHomeCards();
-    ['gisella','milena','luiggi'].forEach(renderNotas);
+    ['gisella','milena','luiggi','marilia','bruna'].forEach(renderNotas);
     renderSteiraList();
   
     // Initialize chat + notifications
@@ -7089,13 +7160,15 @@ function save(key, val) {
         }],
         ['gc-livros',    v => { livros = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
         ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
-        ['gc-conteudos', v => { conteudos = v; renderConteudos(); buildPrioridades(); }],
+        ['gc-conteudos', v => { conteudos = v; refreshConteudoViews(); }],
         ['gc-recurring-tasks', v => { recurringTasks = v || []; ensureCustomRecurringTasks(window.gcalEventsCache || []); }],
         ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
         ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
         ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
         ['gc-notas-milena',  v => { localStorage.setItem('gc-notas-milena',  JSON.stringify(v)); renderNotas('milena');  }],
         ['gc-notas-luiggi',  v => { localStorage.setItem('gc-notas-luiggi',  JSON.stringify(v)); renderNotas('luiggi');  }],
+        ['gc-notas-marilia', v => { localStorage.setItem('gc-notas-marilia', JSON.stringify(v)); renderNotas('marilia'); }],
+        ['gc-notas-bruna', v => { localStorage.setItem('gc-notas-bruna', JSON.stringify(v)); renderNotas('bruna'); }],
         ['gc-fixed-gisella', v => { localStorage.setItem('gc-fixed-gisella', JSON.stringify(v)); renderFixedTasks('gisella'); }],
         ['gc-fixed-milena',  v => { localStorage.setItem('gc-fixed-milena',  JSON.stringify(v)); renderFixedTasks('milena');  }],
         ['gc-fixed-luiggi',  v => { localStorage.setItem('gc-fixed-luiggi',  JSON.stringify(v)); renderFixedTasks('luiggi');  }],
@@ -7258,6 +7331,7 @@ function save(key, val) {
     milena:  { name: 'Milena',  color: 'var(--leia)',    bg: 'var(--leia-bg)',    initial: 'M' },
     luiggi:  { name: 'Luiggi',  color: 'var(--editora)', bg: 'var(--editora-bg)', initial: 'L' },
     marilia: { name: 'Marília', color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'M' },
+    bruna:   { name: 'Bruna',   color: 'var(--leia)',    bg: 'var(--leia-bg)',    initial: 'B' },
   };
   // Permissões por usuário — 'all' = acesso total. Perfis restritos também
   // recebem o responsável obrigatório das tarefas que podem visualizar.
@@ -7266,6 +7340,7 @@ function save(key, val) {
     milena:  'all',
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília' },
+    bruna:   { pages: ['tarefas', 'conteudo-menu'], taskAssignee: 'Bruna' },
   };
 
   function currentDashboardUser() {
@@ -7295,6 +7370,23 @@ function save(key, val) {
     });
     const collaborators = document.getElementById('filter-bar-tarefas-colab');
     if (collaborators) collaborators.style.display = restricted ? 'none' : '';
+  }
+
+  function isolateRestrictedDashboardData(user) {
+    if (user !== 'bruna') return;
+    // A conta da Bruna trabalha somente com conteúdos. Removemos qualquer
+    // cache deixado por outro login neste navegador antes de mostrar o app.
+    const blockedKeys = ['gc-events','gc-livros','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks'];
+    blockedKeys.forEach(key => {
+      localStorage.removeItem(key);
+      localStorage.removeItem('_fbts_' + key);
+    });
+    events = [];
+    livros = [];
+    projetos = [];
+    mentees = [];
+    menteesMarco0 = [];
+    recurringTasks = [];
   }
   async function doLogin() {
     const name = (document.getElementById('login-name').value || '').trim();
@@ -7343,6 +7435,7 @@ function save(key, val) {
     window._currentUser = user;
     window._currentUserName = (LOGIN_USERS[user] && LOGIN_USERS[user].name) || displayName || user;
     applyDashboardPermissions(user);
+    isolateRestrictedDashboardData(user);
     const rememberedPage = localStorage.getItem('gc-current-page');
     if (rememberedPage && !canAccessDashboardPage(rememberedPage)) {
       localStorage.removeItem('gc-current-page');
@@ -7365,7 +7458,7 @@ function save(key, val) {
       if (window.innerWidth > 768) closeMobileNav();
     });
     // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
-    if (['gisella','milena','luiggi','marilia'].includes(user)) {
+    if (['gisella','milena','luiggi','marilia','bruna'].includes(user)) {
       const savedPg = localStorage.getItem('gc-current-page');
       if (!savedPg) {
         setTimeout(() => {
@@ -7379,6 +7472,17 @@ function save(key, val) {
               if (btn) btn.classList.add('active');
               localStorage.setItem('gc-current-page', 'colab-gisella');
             }
+          } else if (user === 'bruna') {
+            const el = document.getElementById('page-conteudo-menu');
+            const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => (b.getAttribute('onclick')||'').includes("'conteudo-menu'"));
+            if (el) {
+              document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+              document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+              el.classList.add('active');
+              if (btn) btn.classList.add('active');
+              localStorage.setItem('gc-current-page', 'conteudo-menu');
+              buildConteudoCalSemana();
+            }
           } else {
             // Milena/Luiggi: leva para a aba Tarefas já filtrada pelo próprio nome
             const el = document.getElementById('page-tarefas');
@@ -7390,7 +7494,7 @@ function save(key, val) {
               if (btn) btn.classList.add('active');
               localStorage.setItem('gc-current-page', 'tarefas');
               buildTarefas();
-              const nome = user === 'milena' ? 'Milena' : user === 'marilia' ? 'Marília' : 'Luiggi';
+              const nome = user === 'milena' ? 'Milena' : user === 'marilia' ? 'Marília' : user === 'bruna' ? 'Bruna' : 'Luiggi';
               const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
               if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
             }

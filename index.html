@@ -6,7 +6,7 @@
 <title>Central · Grupo Cassol</title>
 <link rel="stylesheet" href="style.css">
 <!-- Firebase (ES module) — exposes fbSave, fbGet, fbLoadAll, fbListen on window -->
-<script type="module" src="firebase.js"></script>
+<script type="module" src="firebase.js?v=3.2.7"></script>
 </head>
 <body>
 
@@ -116,6 +116,8 @@
     <button class="nav-item" onclick="showPage('colab-gisella',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--gisella-bg);color:var(--gisella);">G</span> Gisella</button>
     <button class="nav-item" onclick="showPage('colab-milena',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">M</span> Milena</button>
     <button class="nav-item" onclick="showPage('colab-luiggi',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--editora-bg);color:var(--editora);">L</span> Luiggi</button>
+    <button class="nav-item" onclick="showPage('colab-marilia',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--gisella-bg);color:var(--gisella);">M</span> Marília</button>
+    <button class="nav-item" onclick="showPage('colab-bruna',this)"><span class="avatar" style="width:20px;height:20px;font-size:9px;background:var(--leia-bg);color:var(--leia);">B</span> Bruna</button>
   </div>
 
   <div class="sidebar-footer">Dados salvos localmente<br><span id="last-saved" style="opacity:0.7;">—</span></div>
@@ -286,6 +288,7 @@
     <button class="filter-btn" onclick="setFilterColab('tarefas','Milena',this)">Milena</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Luiggi',this)">Luiggi</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Marília',this)">Marília</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Bruna',this)">Bruna</button>
   </div>
 
   <div class="section">
@@ -403,6 +406,52 @@
       <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
       <div id="luiggi-notas-lista"></div>
       <button onclick="addNotaRapida('luiggi')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLABORADOR: MARÍLIA -->
+<div class="page" id="page-colab-marilia">
+  <div class="page-header">
+    <div class="page-title">Marília</div>
+    <div class="page-subtitle">Semana &middot; Tarefas de livros</div>
+  </div>
+  <div class="section section-title-semana">
+    <div class="section-title">📅 Semana</div>
+    <div id="colab-cal-semana-marilia"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas</div>
+    <div id="colab-tarefas-marilia"></div>
+  </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="marilia-notas-lista"></div>
+      <button onclick="addNotaRapida('marilia')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLABORADOR: BRUNA -->
+<div class="page" id="page-colab-bruna">
+  <div class="page-header">
+    <div class="page-title">Bruna</div>
+    <div class="page-subtitle">Semana &middot; Tarefas de conteúdo</div>
+  </div>
+  <div class="section section-title-semana">
+    <div class="section-title">📅 Semana</div>
+    <div id="colab-cal-semana-bruna"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">Tarefas</div>
+    <div id="colab-tarefas-bruna"></div>
+  </div>
+  <div class="section">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:420px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Notas Rápidas</div>
+      <div id="bruna-notas-lista"></div>
+      <button onclick="addNotaRapida('bruna')" style="margin-top:8px;font-size:11px;background:none;border:1px dashed var(--border-mid);border-radius:6px;padding:4px 8px;color:var(--text-soft);cursor:pointer;width:100%;">+ nota</button>
     </div>
   </div>
 </div>
@@ -556,7 +605,7 @@
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
-            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
           </select></div>
           <div style="padding-top:18px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;">
@@ -576,7 +625,6 @@
                 <option value="Gisella">Gisella</option>
                 <option value="Milena">Milena</option>
                 <option value="Luiggi">Luiggi</option>
-                <option value="Marília">Marília</option>
               </select>
               <textarea class="notes-area" id="qa-comentario-texto" placeholder="Escreva um comentário..." style="min-height:48px;font-size:13px;resize:none;"></textarea>
             </div>
@@ -597,7 +645,7 @@
         </div>
         <div class="form-group"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel-evento">
-            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
           </select></div>
         <div class="form-group"><label class="form-label">Observação</label>
           <textarea class="notes-area" id="qa-observacao-evento" placeholder="Notas adicionais..." style="min-height:60px;"></textarea></div>
@@ -612,7 +660,7 @@
             </select></div>
           <div class="form-group"><label class="form-label">Responsável</label>
             <select class="form-select" id="qa-responsavel-projeto">
-              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Marília">Marília</option>
+              <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
             </select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -712,7 +760,6 @@
             <option value="Gisella">Gisella</option>
             <option value="Milena">Milena</option>
             <option value="Luiggi">Luiggi</option>
-            <option value="Marília">Marília</option>
           </select></div>
         <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="mp-inicio" type="date"></div>
         <div class="form-group"><label class="form-label">Data de fim</label><input class="form-input" id="mp-fim" type="date"></div>
@@ -855,8 +902,7 @@
         <div class="form-label">Responsável</div>
         <select class="form-select" id="mcd-responsavel" onchange="saveConteudoDetalhe()">
           <option value="">— nenhum —</option><option value="Gisella">Gisella</option>
-          <option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
-          <option value="Marília">Marília</option>
+          <option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Bruna">Bruna</option>
         </select>
       </div>
       <div>
@@ -960,7 +1006,6 @@
         <option value="Gisella">Gisella</option>
         <option value="Milena">Milena</option>
         <option value="Luiggi">Luiggi</option>
-        <option value="Marília">Marília</option>
       </select>
       <div style="display:flex;gap:8px;align-items:flex-end;">
         <textarea class="notes-area" id="modal-com-texto" placeholder="Escreva um comentário..." style="flex:1;min-height:48px;font-size:13px;resize:none;"></textarea>
@@ -1073,6 +1118,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.5"></script>
+  <script src="app.js?v=3.2.7"></script>
 </body>
 </html>

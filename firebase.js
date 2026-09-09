@@ -16,10 +16,17 @@ const db  = getFirestore(app);
 window._fbDb    = db;
 window._fbReady = false;
 
+const BRUNA_FIREBASE_KEYS = new Set(['gc-conteudos', 'gc-notas-bruna']);
+function firebaseKeyAllowed(key) {
+  const user = String(localStorage.getItem('gc-session-user') || '').toLowerCase();
+  return user !== 'bruna' || BRUNA_FIREBASE_KEYS.has(key);
+}
+
 /* ── SAVE ── */
 const saveQueues = new Map();
 
 async function saveSafely(key, val) {
+  if (!firebaseKeyAllowed(key)) return false;
   const ref = doc(db, 'dados', key);
   const knownTs = Number(localStorage.getItem('_fbts_' + key) || 0);
   let conflict = null;
@@ -67,6 +74,7 @@ window.fbSave = function(key, val) {
 
 /* ── GET ── */
 window.fbGet = async function(key) {
+  if (!firebaseKeyAllowed(key)) return null;
   try {
     const snap = await getDoc(doc(db, 'dados', key));
     if (snap.exists()) return { value: JSON.parse(snap.data().value), ts: snap.data().ts || 0 };
@@ -82,8 +90,8 @@ window.fbLoadAll = async function() {
     'gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa',
     'gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi',
     'gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi',
-    'gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-recurring-tasks',
-  ];
+    'gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks',
+  ].filter(firebaseKeyAllowed);
   const results = {};
   await Promise.all(KEYS.map(async key => {
     const res = await window.fbGet(key);
@@ -97,10 +105,12 @@ window.fbLoadAll = async function() {
 // confirmado passa a ser a base da próxima gravação local; assim uma aba antiga
 // não consegue sobrescrever um check recebido da nuvem.
 window.fbListen = function(key, callback) {
+  if (!firebaseKeyAllowed(key)) return null;
   try {
     return onSnapshot(
       doc(db, 'dados', key),
       (snap) => {
+        if (!firebaseKeyAllowed(key)) return;
         if (!snap.exists()) return;
         try {
           const data    = snap.data();
