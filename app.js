@@ -1,6 +1,8 @@
   
   /* ── EMPRESA HELPERS ── */
   function getEmpresasChecked(prefix) {
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany) return [restrictedCompany];
     const emps = ['editora','leia','gisella'].filter(e => {
       const cb = document.getElementById(prefix + e);
       return cb && cb.checked;
@@ -9,7 +11,8 @@
   }
   
   function setEmpresasChecked(prefix, empresaStr) {
-    const emps = (empresaStr || '').split(',');
+    const restrictedCompany = getCompanyRestriction();
+    const emps = restrictedCompany ? [restrictedCompany] : (empresaStr || '').split(',');
     ['editora','leia','gisella'].forEach(e => {
       const cb = document.getElementById(prefix + e);
       if (cb) cb.checked = emps.includes(e);
@@ -17,6 +20,8 @@
   }
   
   function getEmpresaStr(prefix, fallback) {
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany) return restrictedCompany;
     const emps = getEmpresasChecked(prefix);
     return emps ? emps.join(',') : (fallback || 'editora');
   }
@@ -624,6 +629,7 @@
   const GISELLA_RECORRENTES_SEXTA   = [];
   
   function ensureGisellaRecorrentes() {
+    if (getCompanyRestriction()) return;
     const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD horário local
     const dow = new Date().getDay(); // 0=dom,1=seg,...5=sex,6=sab
     let changed = false;
@@ -2047,6 +2053,8 @@ function save(key, val) {
   function openEditEvent(id) {
     const ev = events.find(x => x.id === id);
     if (!ev) return;
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany && !(ev.empresa || '').split(',').includes(restrictedCompany)) return;
     editingEventId = id;
     document.getElementById('qa-modal-title').textContent = 'Editar item';
     document.getElementById('qa-submit-btn').textContent = 'Salvar';
@@ -3693,13 +3701,17 @@ function save(key, val) {
   
   function renderConteudos() {
     let datasCorrigidas = false;
-    conteudos.forEach(c => {
+    const restrictedCompany = getCompanyRestriction();
+    const visibleContents = restrictedCompany
+      ? conteudos.filter(c => (c.empresa || '').split(',').includes(restrictedCompany))
+      : conteudos;
+    visibleContents.forEach(c => {
       if (normalizarDataPostagemConteudo(c)) datasCorrigidas = true;
       if (inicializarEtapasConteudo(c)) datasCorrigidas = true;
     });
     if (datasCorrigidas) save('gc-conteudos', conteudos);
-    const ativos = conteudos.filter(c => !isConteudoFinalizado(c));
-    const arquivados = conteudos.filter(c => isConteudoFinalizado(c));
+    const ativos = visibleContents.filter(c => !isConteudoFinalizado(c));
+    const arquivados = visibleContents.filter(c => isConteudoFinalizado(c));
   
     function cardsHtml(lista, showEmpresa) {
       return lista.length === 0
@@ -3776,6 +3788,8 @@ function save(key, val) {
   function openConteudo(id) {
     const c = conteudos.find(x=>x.id===id);
     if (!c) return;
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany && !(c.empresa || '').split(',').includes(restrictedCompany)) return;
     currentConteudoId = id;
     document.getElementById('mc-title').textContent = c.nome;
     document.getElementById('mc-nome').value=c.nome;
@@ -3842,6 +3856,8 @@ function save(key, val) {
   function openConteudoDetalhe(id) {
     const c = conteudos.find(x => x.id === id);
     if (!c) return;
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany && !(c.empresa || '').split(',').includes(restrictedCompany)) return;
     _mcdConteudoId = id;
     document.getElementById('mcd-title').textContent = c.nome;
     const empLabel = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'}[c.empresa] || c.empresa;
@@ -4394,6 +4410,12 @@ function save(key, val) {
   const pageFilters = {};
   
   function setFilter(pageId, empresa, btn) {
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany && ['tarefas','conteudo-menu'].includes(pageId)) {
+      empresa = restrictedCompany;
+      btn = Array.from(document.querySelectorAll('#filter-bar-' + pageId + ' .filter-btn'))
+        .find(button => (button.getAttribute('onclick') || '').includes(`'${restrictedCompany}'`)) || btn;
+    }
     pageFilters[pageId] = empresa;
     // Update button styles
     const bar = document.getElementById('filter-bar-' + pageId);
@@ -4412,7 +4434,11 @@ function save(key, val) {
     if (pageId === 'livros') renderLivros();
   }
   
-  function getFilter(pageId) { return pageFilters[pageId] || 'all'; }
+  function getFilter(pageId) {
+    const restrictedCompany = getCompanyRestriction();
+    if (restrictedCompany && ['tarefas','conteudo-menu'].includes(pageId)) return restrictedCompany;
+    return pageFilters[pageId] || 'all';
+  }
   
   const pageFiltersColab = {};
   
@@ -7221,8 +7247,10 @@ function save(key, val) {
     renderProjetos();
     buildPrioridades();
     buildEventosList();
-    loadGcal();
-    loadGcalLeia();
+    if (!getCompanyRestriction()) {
+      loadGcal();
+      loadGcalLeia();
+    }
     buildHomeCards();
     ['gisella','milena','luiggi','marilia','bruna'].forEach(renderNotas);
     renderSteiraList();
@@ -7435,7 +7463,7 @@ function save(key, val) {
     milena:  'all',
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília' },
-    bruna:   { pages: ['tarefas', 'conteudo-menu'], taskAssignee: 'Bruna' },
+    bruna:   { pages: ['tarefas', 'conteudo-menu'], company: 'editora' },
   };
 
   function currentDashboardUser() {
@@ -7452,6 +7480,11 @@ function save(key, val) {
     return permission !== 'all' ? permission.taskAssignee || '' : '';
   }
 
+  function getCompanyRestriction() {
+    const permission = LOGIN_PERMS[currentDashboardUser()] || 'all';
+    return permission !== 'all' ? permission.company || '' : '';
+  }
+
   function applyDashboardPermissions(user) {
     const permission = LOGIN_PERMS[user] || 'all';
     const restricted = permission !== 'all';
@@ -7464,24 +7497,51 @@ function save(key, val) {
       if (items.length) section.style.display = items.some(item => item.style.display !== 'none') ? '' : 'none';
     });
     const collaborators = document.getElementById('filter-bar-tarefas-colab');
-    if (collaborators) collaborators.style.display = restricted ? 'none' : '';
+    if (collaborators) collaborators.style.display = restricted && permission.taskAssignee ? 'none' : '';
+    const restrictedCompany = restricted ? permission.company || '' : '';
+    ['tarefas','conteudo-menu'].forEach(pageId => {
+      const bar = document.getElementById('filter-bar-' + pageId);
+      if (!bar || !restrictedCompany) return;
+      pageFilters[pageId] = restrictedCompany;
+      bar.querySelectorAll('.filter-btn').forEach(button => {
+        const allowed = (button.getAttribute('onclick') || '').includes(`'${restrictedCompany}'`);
+        button.style.display = allowed ? '' : 'none';
+        button.classList.toggle('active', allowed);
+      });
+    });
+    ['qa-emp-','mc-emp-'].forEach(prefix => {
+      ['editora','leia','gisella'].forEach(company => {
+        const input = document.getElementById(prefix + company);
+        if (!input || !restrictedCompany) return;
+        const allowed = company === restrictedCompany;
+        input.checked = allowed;
+        input.disabled = true;
+        const label = input.closest('label');
+        if (label) label.style.display = allowed ? '' : 'none';
+      });
+    });
   }
 
   function isolateRestrictedDashboardData(user) {
     if (user !== 'bruna') return;
-    // A conta da Bruna trabalha somente com conteúdos. Removemos qualquer
-    // cache deixado por outro login neste navegador antes de mostrar o app.
-    const blockedKeys = ['gc-events','gc-livros','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks'];
+    // A conta da Bruna usa tarefas, recorrências e conteúdos da Editora.
+    // Os demais módulos continuam fora do cache e da navegação dela.
+    const blockedKeys = ['gc-livros','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'];
     blockedKeys.forEach(key => {
       localStorage.removeItem(key);
       localStorage.removeItem('_fbts_' + key);
     });
+    ['gc-events','gc-conteudos','gc-recurring-tasks'].forEach(key => {
+      localStorage.removeItem(key);
+      localStorage.removeItem('_fbts_' + key);
+    });
     events = [];
+    conteudos = [];
+    recurringTasks = [];
     livros = [];
     projetos = [];
     mentees = [];
     menteesMarco0 = [];
-    recurringTasks = [];
   }
   async function doLogin() {
     const name = (document.getElementById('login-name').value || '').trim();
@@ -7510,6 +7570,10 @@ function save(key, val) {
     localStorage.setItem('gc-session-name', name);
     localStorage.setItem('gc-session-date', today);
     errEl.textContent = '';
+    if (matchedUser === 'bruna') {
+      window.location.reload();
+      return;
+    }
     showApp(matchedUser, name);
   }
   

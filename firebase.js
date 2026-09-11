@@ -16,10 +16,39 @@ const db  = getFirestore(app);
 window._fbDb    = db;
 window._fbReady = false;
 
-const BRUNA_FIREBASE_KEYS = new Set(['gc-conteudos', 'gc-notas-bruna']);
+const DASHBOARD_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
+const BRUNA_DIRECT_FIREBASE_KEYS = new Set(['gc-notas-bruna']);
+const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-recurring-tasks']);
+function currentFirebaseUser() {
+  return String(localStorage.getItem('gc-session-user') || '').toLowerCase();
+}
 function firebaseKeyAllowed(key) {
-  const user = String(localStorage.getItem('gc-session-user') || '').toLowerCase();
-  return user !== 'bruna' || BRUNA_FIREBASE_KEYS.has(key);
+  return currentFirebaseUser() !== 'bruna' || BRUNA_DIRECT_FIREBASE_KEYS.has(key) || BRUNA_RESTRICTED_FIREBASE_KEYS.has(key);
+}
+function usesRestrictedDashboardTransport(key) {
+  return currentFirebaseUser() === 'bruna' && BRUNA_RESTRICTED_FIREBASE_KEYS.has(key);
+}
+async function callRestrictedDashboard(operation, key, value, knownTs) {
+  const sessionToken = sessionStorage.getItem('gc-dashboard-session-token') || '';
+  const response = await fetch(DASHBOARD_SYNC_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-cassol-dashboard-session': sessionToken,
+    },
+    body: JSON.stringify({
+      operation,
+      document_key: key,
+      ...(operation === 'dashboard_restricted_write' ? { document_value: value, known_ts: knownTs } : {}),
+    }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(result.error || 'Não foi possível sincronizar os dados permitidos.');
+    if (response.status === 409 || result.code === 'stale-write') error.code = 'stale-write';
+    throw error;
+  }
+  return result;
 }
 
 /* ── SAVE ── */
@@ -27,11 +56,18 @@ const saveQueues = new Map();
 
 async function saveSafely(key, val) {
   if (!firebaseKeyAllowed(key)) return false;
-  const ref = doc(db, 'dados', key);
   const knownTs = Number(localStorage.getItem('_fbts_' + key) || 0);
   let conflict = null;
 
   try {
+    if (usesRestrictedDashboardTransport(key)) {
+      const result = await callRestrictedDashboard('dashboard_restricted_write', key, val, knownTs);
+      const ts = Number(result.ts || Date.now());
+      localStorage.setItem('_fbts_' + key, String(ts));
+      return ts;
+    }
+
+    const ref = doc(db, 'dados', key);
     const ts = await runTransaction(db, async transaction => {
       const current = await transaction.get(ref);
       const cloudTs = current.exists() ? Number(current.data().ts || 0) : 0;
@@ -76,6 +112,10 @@ window.fbSave = function(key, val) {
 window.fbGet = async function(key) {
   if (!firebaseKeyAllowed(key)) return null;
   try {
+    if (usesRestrictedDashboardTransport(key)) {
+      const result = await callRestrictedDashboard('dashboard_restricted_read', key);
+      return { value: Array.isArray(result.value) ? result.value : [], ts: Number(result.ts || 0) };
+    }
     const snap = await getDoc(doc(db, 'dados', key));
     if (snap.exists()) return { value: JSON.parse(snap.data().value), ts: snap.data().ts || 0 };
     return null;
@@ -106,6 +146,29 @@ window.fbLoadAll = async function() {
 // não consegue sobrescrever um check recebido da nuvem.
 window.fbListen = function(key, callback) {
   if (!firebaseKeyAllowed(key)) return null;
+  if (usesRestrictedDashboardTransport(key)) {
+    let stopped = false;
+    let polling = false;
+    const poll = async () => {
+      if (stopped || polling || !usesRestrictedDashboardTransport(key)) return;
+      polling = true;
+      try {
+        const result = await callRestrictedDashboard('dashboard_restricted_read', key);
+        const cloudTs = Number(result.ts || 0);
+        const localTs = Number(localStorage.getItem('_fbts_' + key) || 0);
+        if (cloudTs > localTs) {
+          localStorage.setItem('_fbts_' + key, String(cloudTs));
+          callback(Array.isArray(result.value) ? result.value : []);
+        }
+      } catch (error) {
+        console.warn('fbListen restrito:', key, error.message);
+      } finally {
+        polling = false;
+      }
+    };
+    const timer = setInterval(poll, 15000);
+    return () => { stopped = true; clearInterval(timer); };
+  }
   try {
     return onSnapshot(
       doc(db, 'dados', key),
