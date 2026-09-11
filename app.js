@@ -76,8 +76,8 @@
       id: Date.now(),
       nome: c.nome + ' (cópia)',
       done: false,
-      status: 'copy',
-      etapasStatus: {},
+      status: primeiraEtapaConteudo(c)?.key || 'copy',
+      etapasStatus: prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa),
       etapas: Array.isArray(c.etapas) ? c.etapas.map(etapa => ({ ...etapa, feito: false })) : c.etapas,
     };
     conteudos.push(novo);
@@ -1436,16 +1436,6 @@ function save(key, val) {
       return oa !== ob ? oa - ob : (a.titulo||'').localeCompare(b.titulo||'');
     });
   }
-  /* _fds: move sábado→sexta, domingo→segunda */
-  function _fds(ds) {
-    if (!ds) return ds;
-    const d = new Date(ds + 'T00:00:00');
-    const dw = d.getDay();
-    if (dw === 6) { d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
-    if (dw === 0) { d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
-    return ds;
-  }
-  
   function buildTarefasCalSemana() {
     const wrap  = document.getElementById('cal-tarefas-semana-wrap');
     const wrapV = document.getElementById('cal-visao-semana-wrap');
@@ -2376,10 +2366,16 @@ function save(key, val) {
       };
       if (editingEventId) {
         const i = conteudos.findIndex(x => x.id === editingEventId);
-        if (i > -1) conteudos[i] = {...conteudos[i], ...c};
+        if (i > -1) {
+          const dataAnterior = conteudos[i].dataPost || '';
+          conteudos[i] = {...conteudos[i], ...c};
+          sincronizarPrazosConteudoComPostagem(conteudos[i], dataAnterior, c.dataPost);
+          inicializarEtapasConteudo(conteudos[i]);
+        }
         editingEventId = null;
       } else {
-        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.dataPost, c.empresa);
+        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa);
+        inicializarEtapasConteudo(c);
         conteudos.push(c);
       }
       save('gc-conteudos', conteudos); renderConteudos();
@@ -2559,16 +2555,10 @@ function save(key, val) {
     next.setDate(next.getDate() + Number(days || 0));
     return next;
   }
-  function moveToNextWeekday(date) {
-    const next = new Date(date);
-    if (next.getDay() === 6) next.setDate(next.getDate() + 2);
-    if (next.getDay() === 0) next.setDate(next.getDate() + 1);
-    return next;
-  }
   function nextAvailableEditorialDate(candidate, previousDate, occupied) {
-    let next = moveToNextWeekday(candidate);
-    if (previousDate && next <= previousDate) next = moveToNextWeekday(addCalendarDays(previousDate, 1));
-    while (occupied.has(dashboardDateString(next))) next = moveToNextWeekday(addCalendarDays(next, 1));
+    let next = new Date(candidate);
+    if (previousDate && next <= previousDate) next = addCalendarDays(previousDate, 1);
+    while (occupied.has(dashboardDateString(next))) next = addCalendarDays(next, 1);
     return next;
   }
   function criarCronogramaEditorial(lancamentoDate) {
@@ -3192,30 +3182,83 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'}};
+  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda',site:'Site'};
-  const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo'};
+  const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo',site:'Site'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
   
-  // Etapas padrão de um conteúdo (baseadas no fluxo de status)
-  const CONTEUDO_ETAPAS_PADRAO = ['Copy criada','Gravado','Para editar','Para aprovar','Para agendar','Para postar'];
-  const CONTEUDO_ETAPAS_KEYS   = ['copy','gravado','edicao','aprovado','agendado','postado'];
-  const EMANDA_ETAPAS_PADRAO = ['Definir o tema do e-mail','Criar o gancho principal','Planejar a estrutura do e-mail','Escrever o email','Providenciar os banners','Definir CTAs','Organizar links de destino','Criar o email mkt','Enviar um teste','Testar os botões e links','Disparar para a base'];
-  const EMANDA_ETAPAS_KEYS   = ['tema','gancho','estrutura','escrever','banners','ctas','links','criar','teste','testar','disparar'];
+  // O fluxo especial por formato vale somente para conteúdos da Editora Cassol.
+  // Os demais perfis continuam usando suas etapas atuais.
+  const CONTEUDO_ETAPAS_DEFS = [
+    {key:'copy',nome:'Copy criada'},
+    {key:'gravado',nome:'Gravado',requiresLink:true},
+    {key:'edicao',nome:'Para editar',requiresLink:true},
+    {key:'aprovado',nome:'Para aprovar'},
+    {key:'agendado',nome:'Para agendar'},
+    {key:'postado',nome:'Para postar'},
+  ];
+  const EMANDA_ETAPAS_DEFS = [
+    ['tema','Definir o tema do e-mail'],['gancho','Criar o gancho principal'],['estrutura','Planejar a estrutura do e-mail'],['escrever','Escrever o email'],['banners','Providenciar os banners'],['ctas','Definir CTAs'],['links','Organizar links de destino'],['criar','Criar o email mkt'],['teste','Enviar um teste'],['testar','Testar os botões e links'],['disparar','Disparar para a base'],
+  ].map(([key,nome]) => ({key,nome}));
+  const EDITORA_CONTEUDO_FLUXOS = {
+    reel: [
+      {key:'copy',nome:'Copy criada'},
+      {key:'gravado',nome:'Gravado',requiresLink:true},
+      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'edicao',nome:'Para editar',requiresLink:true,resp:'Luiggi'},
+      {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
+      {key:'agendado',nome:'Para agendar',resp:'Milena'},
+      {key:'postado',nome:'Para postar',resp:'Milena'},
+    ],
+    carrossel: [
+      {key:'copy',nome:'Copy criada',requiresLink:true},
+      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
+      {key:'agendado',nome:'Para agendar',resp:'Milena'},
+      {key:'postado',nome:'Para postar',resp:'Milena'},
+    ],
+    card: null,
+    story: null,
+    emailmkt: [
+      {key:'escrever',nome:'Para escrever',requiresLink:true},
+      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'subir_emanda',nome:'Para subir no Emanda'},
+      {key:'agendado',nome:'Para agendar',resp:'Milena'},
+      {key:'checar_envio',nome:'Para checar envio',resp:'Milena'},
+    ],
+  };
+  EDITORA_CONTEUDO_FLUXOS.card = EDITORA_CONTEUDO_FLUXOS.carrossel;
+  EDITORA_CONTEUDO_FLUXOS.story = EDITORA_CONTEUDO_FLUXOS.carrossel;
+  function conteudoEhDaEditora(c) {
+    return String(c?.empresa || '').split(',').includes('editora');
+  }
+
+  function getConteudoEtapaDefs(c) {
+    const fluxoEditora = conteudoEhDaEditora(c) ? EDITORA_CONTEUDO_FLUXOS[c?.tipo] : null;
+    if (fluxoEditora) return fluxoEditora;
+    if ((c?.rede || '') === 'emanda') return EMANDA_ETAPAS_DEFS;
+    return CONTEUDO_ETAPAS_DEFS;
+  }
+
+  function primeiraEtapaConteudo(c) {
+    return getConteudoEtapaDefs(c)[0] || null;
+  }
+
+  function etapaDePostagemConteudo(c) {
+    const etapas = getConteudoEtapaDefs(c);
+    if (etapas.some(etapa => etapa.key === 'postado')) return 'postado';
+    return conteudoEhDaEditora(c) && c?.tipo === 'emailmkt' ? 'checar_envio' : '';
+  }
   
   // Na criação de um conteúdo, os prazos do fluxo padrão acompanham a data de
-  // postagem. Tarefas atribuídas nunca ficam no fim de semana: sábado vai
-  // para sexta e domingo vai para a segunda-feira seguinte.
-  function prazoUtilAntesDaPostagem(dataPostagem, diasAntes) {
+  // postagem em dias corridos, preservando também sábado e domingo.
+  function prazoAntesDaPostagem(dataPostagem, diasAntes) {
     if (!dataPostagem || !/^\d{4}-\d{2}-\d{2}$/.test(dataPostagem)) return '';
   
     const [ano, mes, dia] = dataPostagem.split('-').map(Number);
     const data = new Date(ano, mes - 1, dia);
     data.setDate(data.getDate() - diasAntes);
-  
-    if (data.getDay() === 6) data.setDate(data.getDate() - 1); // sábado → sexta
-    if (data.getDay() === 0) data.setDate(data.getDate() + 1); // domingo → segunda
   
     const y = data.getFullYear();
     const m = String(data.getMonth() + 1).padStart(2, '0');
@@ -3223,7 +3266,15 @@ function save(key, val) {
     return `${y}-${m}-${d}`;
   }
   
-  function prazosIniciaisDoConteudo(rede, dataPostagem, empresa = '') {
+  function prazosIniciaisDoConteudo(rede, tipo, dataPostagem, empresa = '') {
+    const conteudoBase = {rede, tipo, empresa};
+    const fluxoEditora = conteudoEhDaEditora(conteudoBase) ? EDITORA_CONTEUDO_FLUXOS[tipo] : null;
+    if (fluxoEditora) {
+      return Object.fromEntries(fluxoEditora.map((etapa, index) => [etapa.key, {
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, fluxoEditora.length - 1 - index) : '',
+        resp: etapa.resp || '',
+      }]));
+    }
     // O fluxo de e-mail tem etapas próprias e não usa Edição/Aprovação/Agendamento.
     if (rede === 'emanda') return {};
 
@@ -3231,7 +3282,7 @@ function save(key, val) {
     // uma etapa por dia, terminando na data de postagem. A liberação para cada
     // pessoa continua sequencial em getConteudoEtapasLiberadas / Checklist.
     if (String(empresa).split(',').includes('gisella')) {
-      const prazoEm = diasAntes => dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, diasAntes) : '';
+      const prazoEm = diasAntes => dataPostagem ? prazoAntesDaPostagem(dataPostagem, diasAntes) : '';
       return {
         copy:     { prazo: prazoEm(5), resp: 'Gisella' },
         gravado:  { prazo: prazoEm(4), resp: 'Gisella' },
@@ -3244,19 +3295,19 @@ function save(key, val) {
   
     return {
       edicao: {
-        prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 2) : '',
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, 2) : '',
         resp: 'Luiggi',
       },
       aprovado: {
-        prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 1) : '',
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, 1) : '',
         resp: 'Milena',
       },
       agendado: {
-        prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 1) : '',
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, 1) : '',
         resp: 'Milena',
       },
       postado: {
-        prazo: dataPostagem ? prazoUtilAntesDaPostagem(dataPostagem, 0) : '',
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, 0) : '',
         resp: 'Milena',
       },
     };
@@ -3267,7 +3318,7 @@ function save(key, val) {
   // exceto "Para postar", que representa exatamente a data de postagem.
   function sincronizarPrazosConteudoComPostagem(c, dataAnterior, novaData) {
     if (!c || dataAnterior === novaData) return;
-    const novosPrazos = prazosIniciaisDoConteudo(c.rede, novaData, c.empresa);
+    const novosPrazos = prazosIniciaisDoConteudo(c.rede, c.tipo, novaData, c.empresa);
     if (!c.etapasStatus) c.etapasStatus = {};
     Object.entries(novosPrazos).forEach(([key, padrao]) => {
       if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
@@ -3276,21 +3327,43 @@ function save(key, val) {
     });
   }
 
+  function inicializarEtapasConteudo(c) {
+    if (!c) return false;
+    const estadoAnterior = JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || ''});
+    const conteudoJaFinalizado = c.done === true || c.status === 'encerrar';
+    if (!c.etapasStatus) c.etapasStatus = {};
+    const padroes = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa);
+    getConteudoEtapaDefs(c).forEach(etapa => {
+      if (!c.etapasStatus[etapa.key]) c.etapasStatus[etapa.key] = {};
+      const atual = c.etapasStatus[etapa.key];
+      const padrao = padroes[etapa.key] || {};
+      if (!atual.prazo && padrao.prazo) atual.prazo = padrao.prazo;
+      if (!atual.resp && padrao.resp) atual.resp = padrao.resp;
+      if (conteudoJaFinalizado) atual.feito = true;
+    });
+    if (c.status !== 'encerrar' && !getConteudoEtapaDefs(c).some(etapa => etapa.key === c.status)) {
+      c.status = primeiraEtapaConteudo(c)?.key || 'copy';
+    }
+    return estadoAnterior !== JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || ''});
+  }
+
   // Corrige conteúdos antigos que foram salvos com uma data no modal e outra
   // na etapa "Para postar". Quando ambas existem, o prazo da etapa é adotado,
   // pois ele foi a última data manipulada no fluxo de tarefas.
   function normalizarDataPostagemConteudo(c) {
-    if (!c || c.rede === 'emanda') return false;
+    if (!c) return false;
+    const etapaPostagem = etapaDePostagemConteudo(c);
+    if (!etapaPostagem) return false;
     if (!c.etapasStatus) c.etapasStatus = {};
-    if (!c.etapasStatus.postado) c.etapasStatus.postado = {};
-    const prazoPostar = c.etapasStatus.postado.prazo || '';
+    if (!c.etapasStatus[etapaPostagem]) c.etapasStatus[etapaPostagem] = {};
+    const prazoPostar = c.etapasStatus[etapaPostagem].prazo || '';
     const dataPostagem = c.dataPost || '';
     if (prazoPostar && prazoPostar !== dataPostagem) {
       c.dataPost = prazoPostar;
       return true;
     }
     if (!prazoPostar && dataPostagem) {
-      c.etapasStatus.postado.prazo = dataPostagem;
+      c.etapasStatus[etapaPostagem].prazo = dataPostagem;
       return true;
     }
     return false;
@@ -3306,30 +3379,13 @@ function save(key, val) {
     buildPrioridades();
   }
   
-  function getConteudoEtapasByRede(c) {
-    if ((c.rede||'') === 'emanda') {
-      if (!c.etapasStatus) c.etapasStatus = {};
-      return EMANDA_ETAPAS_PADRAO.map((nome, i) => ({
-        key: EMANDA_ETAPAS_KEYS[i], nome,
-        feito: !!c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.feito,
-        resp:  c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.resp  || '',
-        prazo: c.etapasStatus[EMANDA_ETAPAS_KEYS[i]]?.prazo || '',
-      }));
-    }
-    return null; // use default
-  }
-  
   function getConteudoEtapas(c) {
-    const etapasDaRede = getConteudoEtapasByRede(c);
-    if (etapasDaRede) return etapasDaRede;
-    // Fluxo padrão com o estado salvo em c.etapasStatus.
     if (!c.etapasStatus) c.etapasStatus = {};
-    return CONTEUDO_ETAPAS_PADRAO.map((nome, i) => ({
-      key: CONTEUDO_ETAPAS_KEYS[i],
-      nome,
-      feito: !!c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.feito,
-      resp:  c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.resp  || '',
-      prazo: c.etapasStatus[CONTEUDO_ETAPAS_KEYS[i]]?.prazo || '',
+    return getConteudoEtapaDefs(c).map(etapa => ({
+      ...etapa,
+      feito: !!c.etapasStatus[etapa.key]?.feito,
+      resp:  c.etapasStatus[etapa.key]?.resp  || '',
+      prazo: c.etapasStatus[etapa.key]?.prazo || '',
     }));
   }
 
@@ -3358,7 +3414,7 @@ function save(key, val) {
       c.status = 'encerrar';
     } else if (c.status === 'encerrar') {
       const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
-      c.status = ultimaEtapaConcluida?.key || 'copy';
+      c.status = ultimaEtapaConcluida?.key || primeiraEtapaConteudo(c)?.key || 'copy';
     }
     return finalizado;
   }
@@ -3396,6 +3452,8 @@ function save(key, val) {
   }
   
   function contentStageLink(c, key) {
+    const stageLink = String(c.etapasStatus?.[key]?.link || '').trim();
+    if (stageLink) return stageLink;
     if (key === 'edicao') return String(c.link || '').trim();
     if (key === 'gravado') return String(c.observacao || '').trim();
     return '';
@@ -3417,9 +3475,10 @@ function save(key, val) {
   }
 
   function requestContentStageLink(c, key) {
-    if (key !== 'edicao' && key !== 'gravado') return true;
+    const etapa = getConteudoEtapaDefs(c).find(item => item.key === key);
+    if (!etapa?.requiresLink) return true;
     const current = contentStageLink(c, key);
-    const label = key === 'edicao' ? 'Link da edição' : 'Link do gravado';
+    const label = `Link — ${etapa.nome}`;
     const value = window.prompt(`${label}:`, current);
     if (value === null) return false;
     const link = validContentStageLink(value);
@@ -3427,8 +3486,12 @@ function save(key, val) {
       alert('Informe um link válido, começando com http:// ou https://.');
       return false;
     }
+    if (!c.etapasStatus) c.etapasStatus = {};
+    if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+    c.etapasStatus[key].link = link;
+    // Mantém compatibilidade com os campos já existentes no modal de edição.
     if (key === 'edicao') c.link = link;
-    else c.observacao = link;
+    if (key === 'gravado') c.observacao = link;
     return true;
   }
 
@@ -3485,23 +3548,23 @@ function save(key, val) {
     c.etapasStatus[key].feito = !c.etapasStatus[key].feito;
     const etapas = getConteudoEtapas(c);
     // A próxima pessoa nunca recebe uma etapa vencida. Quando a etapa anterior
-    // for concluída depois do prazo, a nova tarefa passa para hoje (ou para a
-    // segunda-feira quando hoje for domingo).
+    // for concluída depois do prazo, a nova tarefa passa para hoje, inclusive
+    // quando a liberação acontecer no sábado ou no domingo.
     if (c.etapasStatus[key].feito) {
       const proxima = etapas.find(etapa => !etapa.feito);
-      const dataDeLiberacao = prazoUtilAntesDaPostagem(dashboardDate(), 0);
+      const dataDeLiberacao = prazoAntesDaPostagem(dashboardDate(), 0);
       if (proxima && (!proxima.prazo || proxima.prazo < dataDeLiberacao)) {
         c.etapasStatus[proxima.key].prazo = dataDeLiberacao;
       }
     }
     const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
-    c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || 'copy');
+    c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || primeiraEtapaConteudo(c)?.key || 'copy');
     atualizarConclusaoConteudo(c);
     save('gc-conteudos', conteudos);
     refreshConteudoViews();
     // Notify if completed
     if (!wasFeito && c.etapasStatus[key].feito) {
-      const etapaNome = CONTEUDO_ETAPAS_PADRAO[CONTEUDO_ETAPAS_KEYS.indexOf(key)] || key;
+      const etapaNome = getConteudoEtapaDefs(c).find(etapa => etapa.key === key)?.nome || key;
       const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
       notifyTaskCompleted(`[${c.nome}] ${etapaNome}`, userName);
     }
@@ -3523,7 +3586,7 @@ function save(key, val) {
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     const dataAnterior = c.dataPost || '';
-    if (key === 'postado') {
+    if (key === etapaDePostagemConteudo(c)) {
       c.dataPost = prazo;
       sincronizarPrazosConteudoComPostagem(c, dataAnterior, prazo);
     }
@@ -3630,7 +3693,10 @@ function save(key, val) {
   
   function renderConteudos() {
     let datasCorrigidas = false;
-    conteudos.forEach(c => { if (normalizarDataPostagemConteudo(c)) datasCorrigidas = true; });
+    conteudos.forEach(c => {
+      if (normalizarDataPostagemConteudo(c)) datasCorrigidas = true;
+      if (inicializarEtapasConteudo(c)) datasCorrigidas = true;
+    });
     if (datasCorrigidas) save('gc-conteudos', conteudos);
     const ativos = conteudos.filter(c => !isConteudoFinalizado(c));
     const arquivados = conteudos.filter(c => isConteudoFinalizado(c));
@@ -3739,14 +3805,19 @@ function save(key, val) {
         const dataAnterior = conteudos[i].dataPost || '';
         conteudos[i]={...conteudos[i],...data};
         sincronizarPrazosConteudoComPostagem(conteudos[i], dataAnterior, data.dataPost);
+        inicializarEtapasConteudo(conteudos[i]);
       }
     }
-    else conteudos.push({
-      id:Date.now(),
-      done:false,
-      etapasStatus: prazosIniciaisDoConteudo(data.rede, data.dataPost, data.empresa),
-      ...data
-    });
+    else {
+      const novoConteudo = {
+        id:Date.now(),
+        done:false,
+        etapasStatus: prazosIniciaisDoConteudo(data.rede, data.tipo, data.dataPost, data.empresa),
+        ...data
+      };
+      inicializarEtapasConteudo(novoConteudo);
+      conteudos.push(novoConteudo);
+    }
     save('gc-conteudos',conteudos);
     refreshConteudoViews();
     closeModal('modal-conteudo');
