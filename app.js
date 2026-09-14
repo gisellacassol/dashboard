@@ -3438,7 +3438,7 @@ function save(key, val) {
   
     return `<div class="conteudo-card${finalizado?' style="opacity:0.55;"':''}">
       <div class="conteudo-header" onclick="toggleConteudo(${c.id})">
-        <span class="conteudo-titulo" title="${c.nome}">${c.nome}</span>
+        <span class="conteudo-titulo" onclick="event.stopPropagation();openConteudo(${c.id})" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir conteúdo">${c.nome}</span>
         ${showEmpresa ? empBadges : ''}
         <span class="rede-badge rede-${c.rede}" style="flex-shrink:0;font-size:10px;">${REDE_L[c.rede]||c.rede||''}</span>
         <span style="font-size:11px;color:var(--text-soft);flex-shrink:0;">${TIPO_L[c.tipo]||c.tipo||''}</span>
