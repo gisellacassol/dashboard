@@ -3350,7 +3350,9 @@ function save(key, val) {
       const padrao = padroes[etapa.key] || {};
       if (!atual.prazo && padrao.prazo) atual.prazo = padrao.prazo;
       if (atual.responsavelDefinido !== true && !atual.resp && padrao.resp) atual.resp = padrao.resp;
-      if (conteudoJaFinalizado) atual.feito = true;
+      if (conteudoJaFinalizado && !(etapa.key === 'arte' && !String(atual.resp || '').trim())) {
+        atual.feito = true;
+      }
     });
     if (c.status !== 'encerrar' && !getConteudoEtapaDefs(c).some(etapa => etapa.key === c.status)) {
       c.status = primeiraEtapaConteudo(c)?.key || 'copy';
@@ -3408,17 +3410,21 @@ function save(key, val) {
     if (nextPendingIndex < 0) return etapas;
     return etapas.filter((etapa, index) => etapa.feito || index === nextPendingIndex);
   }
+
+  function etapaConteudoConcluidaOuDispensada(etapa) {
+    return etapa.feito === true || (etapa.key === 'arte' && !String(etapa.resp || '').trim());
+  }
   
   // Conteúdo não possui check próprio: ele é concluído automaticamente quando
   // todas as tarefas/etapas do seu fluxo estiverem concluídas.
   function isConteudoFinalizado(c) {
     const etapas = getConteudoEtapas(c);
-    return etapas.length > 0 && etapas.every(etapa => etapa.feito === true);
+    return etapas.length > 0 && etapas.every(etapaConteudoConcluidaOuDispensada);
   }
   
   function atualizarConclusaoConteudo(c) {
     const etapas = getConteudoEtapas(c);
-    const finalizado = etapas.length > 0 && etapas.every(etapa => etapa.feito === true);
+    const finalizado = etapas.length > 0 && etapas.every(etapaConteudoConcluidaOuDispensada);
     c.done = finalizado;
   
     if (finalizado) {
@@ -3432,7 +3438,7 @@ function save(key, val) {
   
   function conteudoCardHtml(c, showEmpresa) {
     const etapas = getConteudoEtapas(c);
-    const done = etapas.filter(e => e.feito).length;
+    const done = etapas.filter(etapaConteudoConcluidaOuDispensada).length;
     const pct = etapas.length > 0 ? Math.round(done / etapas.length * 100) : 0;
     const proxima = etapas.find(e => !e.feito);
     const finalizado = isConteudoFinalizado(c);
@@ -3598,6 +3604,7 @@ function save(key, val) {
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     c.etapasStatus[key].resp = resp;
     c.etapasStatus[key].responsavelDefinido = true;
+    atualizarConclusaoConteudo(c);
     save('gc-conteudos', conteudos);
     refreshConteudoViews();
   }
