@@ -1308,7 +1308,7 @@ function save(key, val) {
       <div class="cal-month">${label}</div>
       <button class="cal-nav" onclick="_conteudoWeekOffset++;buildConteudoCalSemana()">›</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;">`;
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:8px;align-items:stretch;">`;
   
     dias.forEach((dia, idx) => {
       const ds = dia.toISOString().slice(0,10);
@@ -1318,14 +1318,14 @@ function save(key, val) {
         (filter === 'all' || (c.empresa||'').split(',').includes(filter))
       );
   
-      html += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'}">
+      html += `<div style="background:var(--surface);border-radius:10px;padding:8px;min-width:0;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'}">
         <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
         <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
   
       dayConts.forEach(c => {
         const cor = c.empresa==='editora'?'var(--editora)':c.empresa==='leia'?'var(--leia)':'var(--gisella)';
         const finalizado = isConteudoFinalizado(c);
-        html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;background:${cor}15;color:${cor};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:2px solid ${cor};${finalizado?'opacity:0.55;text-decoration:line-through;':''}" title="${finalizado?'Conteúdo concluído':'Postagem'}: ${c.nome}">${finalizado?'✓':'📤'} ${c.nome}</div>`;
+        html += `<div onclick="openConteudo(${c.id})" style="font-size:10px;line-height:1.3;padding:3px 5px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:pointer;white-space:normal;overflow-wrap:anywhere;word-break:break-word;min-width:0;border-left:2px solid ${cor};${finalizado?'opacity:0.55;text-decoration:line-through;':''}" title="${finalizado?'Conteúdo concluído':'Postagem'}: ${c.nome}">${finalizado?'✓':'📤'} ${c.nome}</div>`;
       });
   
       html += '</div>';
