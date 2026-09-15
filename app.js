@@ -3214,7 +3214,7 @@ function save(key, val) {
     reel: [
       {key:'copy',nome:'Copy criada'},
       {key:'gravado',nome:'Gravado',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true},
       {key:'edicao',nome:'Para editar',requiresLink:true,resp:'Luiggi'},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
@@ -3222,7 +3222,7 @@ function save(key, val) {
     ],
     carrossel: [
       {key:'copy',nome:'Copy criada',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'postado',nome:'Para postar',resp:'Milena'},
@@ -3231,7 +3231,7 @@ function save(key, val) {
     story: null,
     emailmkt: [
       {key:'escrever',nome:'Para escrever',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true},
       {key:'subir_emanda',nome:'Para subir no Emanda'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'checar_envio',nome:'Para checar envio',resp:'Milena'},
