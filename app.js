@@ -1497,6 +1497,7 @@ function save(key, val) {
           id:`cont-${c.id}-${e.key}`,
           titulo:`[${c.nome}] ${e.nome}`, empresa:c.empresa,
           data:e.prazo, responsavel:e.resp||'', arquivada:!!e.feito, urgente:false, tipoTarefa:'',
+          checkBloqueado:e.key==='arte' && !String(e.resp||'').trim(),
         });
       });
     });
@@ -1515,7 +1516,7 @@ function save(key, val) {
       const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `openConteudoEtapasPrazos(${t._conteudoId})` : `openEditEvent(${t.id})`);
       const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `toggleConteudoEtapa(${t._conteudoId},'${t._conteudoKey}')` : `toggleTarefaArquivada(${t.id})`);
       return `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
-        <input type="checkbox" ${t.arquivada?'checked':''} onchange="${_chk}" onclick="event.stopPropagation();" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">
+        <input type="checkbox" ${t.arquivada?'checked':''} ${t.checkBloqueado?'disabled':''} onchange="${_chk}" onclick="event.stopPropagation();" title="${t.checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:${t.checkBloqueado?'not-allowed':'pointer'};">
         <div draggable="true" ondragstart="${dragStart}" onclick="${clickAction}" style="flex:1;min-width:0;cursor:pointer;">
           <span style="display:block;word-break:break-word;line-height:1.3;${t.arquivada?'text-decoration:line-through;':''}">${t.urgente?'❗ ':''}${_TIPO_EMOJI[t.tipoTarefa]?_TIPO_EMOJI[t.tipoTarefa]+' ':''}${t.titulo}</span>
           ${t.responsavel?`<span style="display:block;font-size:9px;opacity:0.8;">${t.responsavel}</span>`:''}
@@ -3213,7 +3214,7 @@ function save(key, val) {
     reel: [
       {key:'copy',nome:'Copy criada'},
       {key:'gravado',nome:'Gravado',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
       {key:'edicao',nome:'Para editar',requiresLink:true,resp:'Luiggi'},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
@@ -3221,7 +3222,7 @@ function save(key, val) {
     ],
     carrossel: [
       {key:'copy',nome:'Copy criada',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'postado',nome:'Para postar',resp:'Milena'},
@@ -3230,7 +3231,7 @@ function save(key, val) {
     story: null,
     emailmkt: [
       {key:'escrever',nome:'Para escrever',requiresLink:true},
-      {key:'arte',nome:'Para criar arte',requiresLink:true,resp:'Bruna'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true,resp:'Bruna'},
       {key:'subir_emanda',nome:'Para subir no Emanda'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'checar_envio',nome:'Para checar envio',resp:'Milena'},
@@ -3462,6 +3463,7 @@ function save(key, val) {
   function contentStageLink(c, key) {
     const stageLink = String(c.etapasStatus?.[key]?.link || '').trim();
     if (stageLink) return stageLink;
+    if (key === 'arte') return String(c.cardLink || '').trim();
     if (key === 'edicao') return String(c.link || '').trim();
     if (key === 'gravado') return String(c.observacao || '').trim();
     return '';
@@ -3484,7 +3486,8 @@ function save(key, val) {
 
   function requestContentStageLink(c, key) {
     const etapa = getConteudoEtapaDefs(c).find(item => item.key === key);
-    if (!etapa?.requiresLink) return true;
+    if (!etapa?.requiresLink && !etapa?.optionalLink) return true;
+    if (etapa.optionalLink && !window.confirm('Esta etapa terá um link do card?')) return true;
     const current = contentStageLink(c, key);
     const label = `Link — ${etapa.nome}`;
     const value = window.prompt(`${label}:`, current);
@@ -3498,6 +3501,7 @@ function save(key, val) {
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     c.etapasStatus[key].link = link;
     // Mantém compatibilidade com os campos já existentes no modal de edição.
+    if (key === 'arte') c.cardLink = link;
     if (key === 'edicao') c.link = link;
     if (key === 'gravado') c.observacao = link;
     return true;
@@ -3511,13 +3515,15 @@ function save(key, val) {
       return 0;
     });
     return sorted.map(e => {
+      const checkBloqueado = e.key === 'arte' && !String(e.resp || '').trim();
       const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
         const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
         return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
       })() : 'var(--text)');
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
-        <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapa(${c.id},'${e.key}')"
-          style="accent-color:var(--gisella);width:15px;height:15px;flex-shrink:0;cursor:pointer;">
+        <input type="checkbox" ${e.feito?'checked':''} ${checkBloqueado?'disabled':''} onchange="toggleConteudoEtapa(${c.id},'${e.key}')"
+          title="${checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}"
+          style="accent-color:var(--gisella);width:15px;height:15px;flex-shrink:0;cursor:${checkBloqueado?'not-allowed':'pointer'};">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${c.id},'${e.key}',this.value)"
           style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);">
@@ -3546,6 +3552,11 @@ function save(key, val) {
     if (!c) return;
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
+    if (key === 'arte' && !String(c.etapasStatus[key].resp || '').trim()) {
+      alert('Atribua a etapa "Para criar arte" a alguém antes de marcá-la como concluída.');
+      refreshConteudoViews();
+      return;
+    }
     const wasFeito = c.etapasStatus[key].feito;
     if (!wasFeito && !requestContentStageLink(c, key)) {
       renderConteudos();
@@ -3626,13 +3637,15 @@ function save(key, val) {
       return 0;
     });
     el.innerHTML = sorted.map(e => {
+      const checkBloqueado = e.key === 'arte' && !String(e.resp || '').trim();
       const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
         const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
         return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
       })() : 'var(--text)');
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
-        <input type="checkbox" ${e.feito?'checked':''} onchange="toggleConteudoEtapaCep('${e.key}')"
-          style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
+        <input type="checkbox" ${e.feito?'checked':''} ${checkBloqueado?'disabled':''} onchange="toggleConteudoEtapaCep('${e.key}')"
+          title="${checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}"
+          style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:${checkBloqueado?'not-allowed':'pointer'};">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${_epConteudoId},'${e.key}',this.value)"
           style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
@@ -3769,7 +3782,7 @@ function save(key, val) {
   function openNewConteudo() {
     currentConteudoId = null;
     document.getElementById('mc-title').textContent = 'Novo conteúdo';
-    ['mc-nome','mc-responsavel','mc-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
+    ['mc-nome','mc-responsavel','mc-link','mc-card-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
     setEmpresasChecked('mc-emp-', 'gisella');
     document.getElementById('mc-rede').value='instagram';
     updateMcRede();
@@ -3804,6 +3817,7 @@ function save(key, val) {
     document.getElementById('mc-hora').value=c.hora||'';
     document.getElementById('mc-observacao').value=c.observacao||'';
     document.getElementById('mc-link').value=c.link||'';
+    document.getElementById('mc-card-link').value=contentStageLink(c, 'arte');
     document.getElementById('mc-copy').value=c.copy||'';
     document.getElementById('mc-legenda').value=c.legenda||'';
     openModal('modal-conteudo');
@@ -3812,7 +3826,8 @@ function save(key, val) {
   function saveConteudo() {
     const nome = document.getElementById('mc-nome').value.trim();
     if (!nome) { document.getElementById('mc-nome').focus(); return; }
-    const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
+    const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
+    let conteudoSalvo = null;
     if (currentConteudoId) {
       const i=conteudos.findIndex(x=>x.id===currentConteudoId);
       if(i>-1) {
@@ -3820,6 +3835,7 @@ function save(key, val) {
         conteudos[i]={...conteudos[i],...data};
         sincronizarPrazosConteudoComPostagem(conteudos[i], dataAnterior, data.dataPost);
         inicializarEtapasConteudo(conteudos[i]);
+        conteudoSalvo = conteudos[i];
       }
     }
     else {
@@ -3831,6 +3847,11 @@ function save(key, val) {
       };
       inicializarEtapasConteudo(novoConteudo);
       conteudos.push(novoConteudo);
+      conteudoSalvo = novoConteudo;
+    }
+    if (conteudoSalvo?.etapasStatus?.arte) {
+      if (data.cardLink) conteudoSalvo.etapasStatus.arte.link = data.cardLink;
+      else delete conteudoSalvo.etapasStatus.arte.link;
     }
     save('gc-conteudos',conteudos);
     refreshConteudoViews();
@@ -4160,6 +4181,7 @@ function save(key, val) {
           data: e.prazo||'',
           responsavel: e.resp||'',
           arquivada: e.feito,
+          checkBloqueado: e.key === 'arte' && !String(e.resp || '').trim(),
           tipo: 'tarefa',
         });
       });
@@ -4204,11 +4226,11 @@ function save(key, val) {
       const isEtapa = e._livroId !== undefined || e._conteudoId !== undefined;
       return `<tr style="${isArquivada?'opacity:0.5;':''}">
         <td onclick="event.stopPropagation();" style="width:44px;text-align:center;">
-          <input type="checkbox" ${isArquivada?'checked':''}
+          <input type="checkbox" ${isArquivada?'checked':''} ${e.checkBloqueado?'disabled':''}
               onclick="event.stopPropagation();"
               onchange="${e._conteudoId!==undefined?`toggleConteudoEtapa(${e._conteudoId},'${e._conteudoKey}')`:e._livroId!==undefined?`toggleEtapa(${e._livroId},${e._etapaIdx})`:`toggleTarefaArquivada(${e.id})`}"
-              style="accent-color:var(--gisella);width:18px;height:18px;cursor:pointer;display:block;margin:0 auto;"
-              title="${isArquivada?'Desmarcar':'Marcar como concluída'}">
+              style="accent-color:var(--gisella);width:18px;height:18px;cursor:${e.checkBloqueado?'not-allowed':'pointer'};display:block;margin:0 auto;"
+              title="${e.checkBloqueado?'Atribua esta etapa a alguém para liberar o check':isArquivada?'Desmarcar':'Marcar como concluída'}">
         </td>
         <td style="font-weight:500;${!isArquivada && e._livroId !== undefined ? `color:${((e.empresa||'').split(',')[0]==='editora'?'var(--editora)':(e.empresa||'').split(',')[0]==='leia'?'var(--leia)':'var(--gisella)')};` : ''}${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
           <span>${e.titulo}</span>
