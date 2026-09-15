@@ -3332,7 +3332,9 @@ function save(key, val) {
     Object.entries(novosPrazos).forEach(([key, padrao]) => {
       if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
       if (key === 'postado' || !c.etapasStatus[key].feito) c.etapasStatus[key].prazo = padrao.prazo || '';
-      if (!c.etapasStatus[key].resp && padrao.resp) c.etapasStatus[key].resp = padrao.resp;
+      if (c.etapasStatus[key].responsavelDefinido !== true && !c.etapasStatus[key].resp && padrao.resp) {
+        c.etapasStatus[key].resp = padrao.resp;
+      }
     });
   }
 
@@ -3347,7 +3349,7 @@ function save(key, val) {
       const atual = c.etapasStatus[etapa.key];
       const padrao = padroes[etapa.key] || {};
       if (!atual.prazo && padrao.prazo) atual.prazo = padrao.prazo;
-      if (!atual.resp && padrao.resp) atual.resp = padrao.resp;
+      if (atual.responsavelDefinido !== true && !atual.resp && padrao.resp) atual.resp = padrao.resp;
       if (conteudoJaFinalizado) atual.feito = true;
     });
     if (c.status !== 'encerrar' && !getConteudoEtapaDefs(c).some(etapa => etapa.key === c.status)) {
@@ -3595,6 +3597,7 @@ function save(key, val) {
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
     c.etapasStatus[key].resp = resp;
+    c.etapasStatus[key].responsavelDefinido = true;
     save('gc-conteudos', conteudos);
     refreshConteudoViews();
   }
