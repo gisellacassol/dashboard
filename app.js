@@ -82,7 +82,7 @@
       nome: c.nome + ' (cópia)',
       done: false,
       status: primeiraEtapaConteudo(c)?.key || 'copy',
-      etapasStatus: prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa),
+      etapasStatus: prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa, c.projetoConteudo),
       etapas: Array.isArray(c.etapas) ? c.etapas.map(etapa => ({ ...etapa, feito: false })) : c.etapas,
     };
     conteudos.push(novo);
@@ -2051,6 +2051,8 @@ function save(key, val) {
      'qa-proj-inicio','qa-proj-fim','qa-c-dataprod','qa-c-datapost','qa-c-hora','qa-c-link'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = '';
     });
+    const qaConteudoProjeto = document.getElementById('qa-c-projeto');
+    if (qaConteudoProjeto) qaConteudoProjeto.value = '';
     ['qa-observacao','qa-observacao-evento','qa-observacao-projeto','qa-observacao-conteudo',
      'qa-c-copy','qa-c-legenda'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = '';
@@ -2395,8 +2397,15 @@ function save(key, val) {
     }
   
     if (tipo === 'conteudo') {
+      const projetoConteudo = getQaVal('qa-c-projeto');
+      if (!projetoConteudo) {
+        alert('Selecione o projeto do conteúdo ou a opção “Nenhum projeto”.');
+        document.getElementById('qa-c-projeto')?.focus();
+        return;
+      }
       const c = {
         id: Date.now(), done: false, nome: titulo, empresa,
+        projetoConteudo,
         rede: getQaVal('qa-c-rede'), tipo: getQaVal('qa-c-tipo'),
         status: getQaVal('qa-c-status'), responsavel: getQaVal('qa-responsavel-conteudo'),
         dataProd: getQaVal('qa-c-dataprod'), dataPost: getQaVal('qa-c-datapost'),
@@ -2413,7 +2422,7 @@ function save(key, val) {
         }
         editingEventId = null;
       } else {
-        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa);
+        c.etapasStatus = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa, c.projetoConteudo);
         inicializarEtapasConteudo(c);
         conteudos.push(c);
       }
@@ -3222,11 +3231,12 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'}};
+  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},editar_video:{l:'Para editar vídeo',c:'s-edicao'},editar_arte:{l:'Para editar arte',c:'s-edicao'},editar_video_arte:{l:'Para editar vídeo com arte',c:'s-edicao'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda',site:'Site'};
   const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo',site:'Site'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
+  const PRE_LANCAMENTO_OUTUBRO_2026 = 'pre-lancamento-outubro-2026';
   
   // O fluxo especial por formato vale somente para conteúdos da Editora Cassol.
   // Os demais perfis continuam usando suas etapas atuais.
@@ -3252,7 +3262,7 @@ function save(key, val) {
       {key:'arte',nome:'Para criar arte',optionalLink:true},
     ],
     carrossel: [
-      {key:'copy',nome:'Copy criada',requiresLink:true},
+      {key:'copy',nome:'Copy criada'},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'postado',nome:'Para postar',resp:'Milena'},
@@ -3261,7 +3271,7 @@ function save(key, val) {
     card: null,
     story: null,
     emailmkt: [
-      {key:'escrever',nome:'Para escrever',requiresLink:true},
+      {key:'escrever',nome:'Para escrever'},
       {key:'subir_emanda',nome:'Para subir no Emanda'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'checar_envio',nome:'Para checar envio',resp:'Milena'},
@@ -3270,11 +3280,28 @@ function save(key, val) {
   };
   EDITORA_CONTEUDO_FLUXOS.card = EDITORA_CONTEUDO_FLUXOS.carrossel;
   EDITORA_CONTEUDO_FLUXOS.story = EDITORA_CONTEUDO_FLUXOS.carrossel;
+  const PRE_LANCAMENTO_REEL_FLUXO = [
+    {key:'copy',nome:'Copy criada'},
+    {key:'gravado',nome:'Gravado',resp:'Milena'},
+    {key:'editar_video',nome:'Para editar vídeo',resp:'Luiggi'},
+    {key:'editar_arte',nome:'Para editar arte',resp:'Bruna'},
+    {key:'editar_video_arte',nome:'Para editar vídeo com arte',resp:'Luiggi'},
+    {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
+    {key:'agendado',nome:'Para agendar',resp:'Milena'},
+    {key:'postado',nome:'Para postar',resp:'Milena'},
+    {key:'arte',nome:'Para criar arte',optionalLink:true},
+  ];
+
+  function conteudoEhPreLancamentoReel(c) {
+    return c?.projetoConteudo === PRE_LANCAMENTO_OUTUBRO_2026 && c?.tipo === 'reel';
+  }
+
   function conteudoEhDaEditora(c) {
     return String(c?.empresa || '').split(',').includes('editora');
   }
 
   function getConteudoEtapaDefs(c) {
+    if (conteudoEhPreLancamentoReel(c)) return PRE_LANCAMENTO_REEL_FLUXO;
     const fluxoEditora = conteudoEhDaEditora(c) ? EDITORA_CONTEUDO_FLUXOS[c?.tipo] : null;
     if (fluxoEditora) return fluxoEditora;
     if ((c?.rede || '') === 'emanda') return EMANDA_ETAPAS_DEFS;
@@ -3306,8 +3333,25 @@ function save(key, val) {
     return `${y}-${m}-${d}`;
   }
   
-  function prazosIniciaisDoConteudo(rede, tipo, dataPostagem, empresa = '') {
-    const conteudoBase = {rede, tipo, empresa};
+  function prazosIniciaisDoConteudo(rede, tipo, dataPostagem, empresa = '', projetoConteudo = '') {
+    const conteudoBase = {rede, tipo, empresa, projetoConteudo};
+    if (conteudoEhPreLancamentoReel(conteudoBase)) {
+      const diasAntes = {
+        copy: 6,
+        gravado: 5,
+        editar_video: 4,
+        editar_arte: 4,
+        editar_video_arte: 3,
+        aprovado: 2,
+        agendado: 1,
+        postado: 0,
+        arte: 0,
+      };
+      return Object.fromEntries(PRE_LANCAMENTO_REEL_FLUXO.map(etapa => [etapa.key, {
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, diasAntes[etapa.key] ?? 0) : '',
+        resp: etapa.resp || '',
+      }]));
+    }
     const fluxoEditora = conteudoEhDaEditora(conteudoBase) ? EDITORA_CONTEUDO_FLUXOS[tipo] : null;
     if (fluxoEditora) {
       return Object.fromEntries(fluxoEditora.map((etapa, index) => [etapa.key, {
@@ -3358,7 +3402,7 @@ function save(key, val) {
   // exceto "Para postar", que representa exatamente a data de postagem.
   function sincronizarPrazosConteudoComPostagem(c, dataAnterior, novaData) {
     if (!c || dataAnterior === novaData) return;
-    const novosPrazos = prazosIniciaisDoConteudo(c.rede, c.tipo, novaData, c.empresa);
+    const novosPrazos = prazosIniciaisDoConteudo(c.rede, c.tipo, novaData, c.empresa, c.projetoConteudo);
     if (!c.etapasStatus) c.etapasStatus = {};
     Object.entries(novosPrazos).forEach(([key, padrao]) => {
       if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
@@ -3374,7 +3418,7 @@ function save(key, val) {
     const estadoAnterior = JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || '',done:!!c.done});
     const conteudoJaFinalizado = c.done === true || c.status === 'encerrar';
     if (!c.etapasStatus) c.etapasStatus = {};
-    const padroes = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa);
+    const padroes = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa, c.projetoConteudo);
     getConteudoEtapaDefs(c).forEach(etapa => {
       if (!c.etapasStatus[etapa.key]) c.etapasStatus[etapa.key] = {};
       const atual = c.etapasStatus[etapa.key];
@@ -3448,9 +3492,30 @@ function save(key, val) {
   // ativa. As etapas já concluídas permanecem disponíveis como histórico.
   function getConteudoEtapasLiberadas(c) {
     const etapas = getConteudoEtapas(c);
+    if (conteudoEhPreLancamentoReel(c)) {
+      const estado = Object.fromEntries(etapas.map(etapa => [etapa.key, etapa]));
+      const liberadas = new Set(['copy']);
+      if (estado.copy?.feito) liberadas.add('gravado');
+      if (estado.gravado?.feito) {
+        liberadas.add('editar_video');
+        liberadas.add('editar_arte');
+      }
+      if (estado.editar_video?.feito && estado.editar_arte?.feito) liberadas.add('editar_video_arte');
+      if (estado.editar_video_arte?.feito) liberadas.add('aprovado');
+      if (estado.aprovado?.feito) liberadas.add('agendado');
+      if (estado.agendado?.feito) liberadas.add('postado');
+      if (estado.postado?.feito) liberadas.add('arte');
+      return etapas.filter(etapa => etapa.feito || liberadas.has(etapa.key));
+    }
     const nextPendingIndex = etapas.findIndex(etapa => !etapa.feito);
     if (nextPendingIndex < 0) return etapas;
     return etapas.filter((etapa, index) => etapa.feito || index === nextPendingIndex);
+  }
+
+  function etapaConteudoBloqueada(c, etapa) {
+    if (etapa.key === 'arte' && !String(etapa.resp || '').trim()) return true;
+    if (!conteudoEhPreLancamentoReel(c) || etapa.feito) return false;
+    return !getConteudoEtapasLiberadas(c).some(liberada => liberada.key === etapa.key);
   }
 
   function etapaConteudoConcluidaOuDispensada(etapa) {
@@ -3516,6 +3581,9 @@ function save(key, val) {
     const stageLink = String(c.etapasStatus?.[key]?.link || '').trim();
     if (stageLink) return stageLink;
     if (key === 'arte') return String(c.cardLink || '').trim();
+    if ((key === 'copy' || key === 'escrever') && ['carrossel','card','story','emailmkt'].includes(String(c.tipo || ''))) {
+      return String(c.link || '').trim();
+    }
     if (key === 'edicao') return String(c.link || '').trim();
     if (key === 'gravado') return String(c.observacao || '').trim();
     return '';
@@ -3567,14 +3635,14 @@ function save(key, val) {
       return 0;
     });
     return sorted.map(e => {
-      const checkBloqueado = e.key === 'arte' && !String(e.resp || '').trim();
+      const checkBloqueado = etapaConteudoBloqueada(c, e);
       const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
         const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
         return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
       })() : 'var(--text)');
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
         <input type="checkbox" ${e.feito?'checked':''} ${checkBloqueado?'disabled':''} onchange="toggleConteudoEtapa(${c.id},'${e.key}')"
-          title="${checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}"
+          title="${checkBloqueado?(e.key === 'arte'?'Atribua esta etapa a alguém para liberar o check':'Finalize as etapas anteriores para liberar o check'):'Marcar como concluída'}"
           style="accent-color:var(--gisella);width:15px;height:15px;flex-shrink:0;cursor:${checkBloqueado?'not-allowed':'pointer'};">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${c.id},'${e.key}',this.value)"
@@ -3603,12 +3671,16 @@ function save(key, val) {
     if (!c) return;
     if (!c.etapasStatus) c.etapasStatus = {};
     if (!c.etapasStatus[key]) c.etapasStatus[key] = {};
-    if (key === 'arte' && !String(c.etapasStatus[key].resp || '').trim()) {
-      alert('Atribua a etapa "Para criar arte" a alguém antes de marcá-la como concluída.');
+    const etapaAtual = getConteudoEtapas(c).find(etapa => etapa.key === key);
+    if (etapaAtual && etapaConteudoBloqueada(c, etapaAtual)) {
+      alert(key === 'arte'
+        ? 'Atribua a etapa "Para criar arte" a alguém antes de marcá-la como concluída.'
+        : 'Finalize as etapas anteriores antes de concluir esta etapa.');
       refreshConteudoViews();
       return;
     }
     const wasFeito = c.etapasStatus[key].feito;
+    const liberadasAntes = new Set(getConteudoEtapasLiberadas(c).filter(etapa => !etapa.feito).map(etapa => etapa.key));
     if (!wasFeito && !requestContentStageLink(c, key)) {
       renderConteudos();
       buildTarefas();
@@ -3621,11 +3693,12 @@ function save(key, val) {
     // for concluída depois do prazo, a nova tarefa passa para hoje, inclusive
     // quando a liberação acontecer no sábado ou no domingo.
     if (c.etapasStatus[key].feito) {
-      const proxima = etapas.find(etapa => !etapa.feito);
       const dataDeLiberacao = prazoAntesDaPostagem(dashboardDate(), 0);
-      if (proxima && (!proxima.prazo || proxima.prazo < dataDeLiberacao)) {
-        c.etapasStatus[proxima.key].prazo = dataDeLiberacao;
-      }
+      getConteudoEtapasLiberadas(c)
+        .filter(etapa => !etapa.feito && !liberadasAntes.has(etapa.key))
+        .forEach(etapa => {
+          if (!etapa.prazo || etapa.prazo < dataDeLiberacao) c.etapasStatus[etapa.key].prazo = dataDeLiberacao;
+        });
     }
     const ultimaEtapaConcluida = [...etapas].reverse().find(etapa => etapa.feito);
     c.status = c.etapasStatus[key].feito ? key : (ultimaEtapaConcluida?.key || primeiraEtapaConteudo(c)?.key || 'copy');
@@ -3690,14 +3763,14 @@ function save(key, val) {
       return 0;
     });
     el.innerHTML = sorted.map(e => {
-      const checkBloqueado = e.key === 'arte' && !String(e.resp || '').trim();
+      const checkBloqueado = etapaConteudoBloqueada(c, e);
       const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
         const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
         return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
       })() : 'var(--text)');
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}">
         <input type="checkbox" ${e.feito?'checked':''} ${checkBloqueado?'disabled':''} onchange="toggleConteudoEtapaCep('${e.key}')"
-          title="${checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}"
+          title="${checkBloqueado?(e.key === 'arte'?'Atribua esta etapa a alguém para liberar o check':'Finalize as etapas anteriores para liberar o check'):'Marcar como concluída'}"
           style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:${checkBloqueado?'not-allowed':'pointer'};">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}">${e.nome} ${contentStageLinkButton(c, e.key)}</span>
         <select onchange="setConteudoEtapaResp(${_epConteudoId},'${e.key}',this.value)"
@@ -3836,6 +3909,7 @@ function save(key, val) {
     currentConteudoId = null;
     document.getElementById('mc-title').textContent = 'Novo conteúdo';
     ['mc-nome','mc-responsavel','mc-link','mc-card-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('mc-projeto').value='';
     setEmpresasChecked('mc-emp-', 'gisella');
     document.getElementById('mc-rede').value='instagram';
     updateMcRede();
@@ -3859,6 +3933,7 @@ function save(key, val) {
     currentConteudoId = id;
     document.getElementById('mc-title').textContent = c.nome;
     document.getElementById('mc-nome').value=c.nome;
+    document.getElementById('mc-projeto').value=c.projetoConteudo||'';
     setEmpresasChecked('mc-emp-', c.empresa || 'editora');
     document.getElementById('mc-responsavel').value=c.responsavel||'';
     document.getElementById('mc-rede').value=c.rede||'instagram';
@@ -3879,7 +3954,13 @@ function save(key, val) {
   function saveConteudo() {
     const nome = document.getElementById('mc-nome').value.trim();
     if (!nome) { document.getElementById('mc-nome').focus(); return; }
-    const data = {nome, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
+    const projetoConteudo = document.getElementById('mc-projeto').value;
+    if (!projetoConteudo) {
+      alert('Selecione o projeto do conteúdo ou a opção “Nenhum projeto”.');
+      document.getElementById('mc-projeto').focus();
+      return;
+    }
+    const data = {nome, projetoConteudo, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
     let conteudoSalvo = null;
     if (currentConteudoId) {
       const i=conteudos.findIndex(x=>x.id===currentConteudoId);
@@ -3895,7 +3976,7 @@ function save(key, val) {
       const novoConteudo = {
         id:Date.now(),
         done:false,
-        etapasStatus: prazosIniciaisDoConteudo(data.rede, data.tipo, data.dataPost, data.empresa),
+        etapasStatus: prazosIniciaisDoConteudo(data.rede, data.tipo, data.dataPost, data.empresa, data.projetoConteudo),
         ...data
       };
       inicializarEtapasConteudo(novoConteudo);
