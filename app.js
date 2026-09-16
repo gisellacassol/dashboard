@@ -1476,7 +1476,7 @@ function save(key, val) {
       (l.etapas||[]).forEach((e,i) => {
         const empMatch = _tf==='all'||(l.empresa||'').split(',').includes(_tf);
         if (!empMatch) return;
-        if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+        if (!matchesTaskAssignee(e.resp, _tfc)) return;
         etapaEvents.push({
           _isEtapa:true, livroId:l.id, etapaIdx:i,
           titulo:`[${l.titulo}] ${e.nome}`, empresa:l.empresa,
@@ -1491,7 +1491,7 @@ function save(key, val) {
       const etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(e => {
         if (!e.prazo) return; // só aparece no cal se tiver prazo
-        if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+        if (!matchesTaskAssignee(e.resp, _tfc)) return;
         etapaEvents.push({
           _isEtapa:false, _conteudoId:c.id, _conteudoKey:e.key,
           id:`cont-${c.id}-${e.key}`,
@@ -1502,7 +1502,7 @@ function save(key, val) {
       });
     });
     const todas = [
-      ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc))
+      ...events.filter(e => e.tipo==='tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && matchesTaskAssignee(e.responsavel, _tfc))
         .map(e => ({ _isEtapa:false, id:e.id, titulo:e.titulo, empresa:e.empresa, data:e.data||'', responsavel:e.responsavel||'', arquivada:!!e.arquivada, urgente:!!e.urgente, tipoTarefa:e.tipoTarefa||'' })),
       ...etapaEvents,
     ];
@@ -4184,7 +4184,7 @@ function save(key, val) {
       (l.etapas||[]).forEach((e,i) => {
         const empMatch = _tf==='all'||(l.empresa||'').split(',').includes(_tf);
         if (!empMatch) return;
-        if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+        if (!matchesTaskAssignee(e.resp, _tfc)) return;
         etapaEvents.push({
           id: `livro-${l.id}-${i}`,
           _livroId: l.id, _etapaIdx: i,
@@ -4205,7 +4205,7 @@ function save(key, val) {
       if (!empMatch) return;
       const etapas = getConteudoEtapasLiberadas(c);
       etapas.forEach(e => {
-        if (_tfc!=='all' && (e.resp||'')!==_tfc) return;
+        if (!matchesTaskAssignee(e.resp, _tfc)) return;
         etapaEvents.push({
           id: `cont-${c.id}-${e.key}`,
           _conteudoId: c.id, _conteudoKey: e.key,
@@ -4219,11 +4219,11 @@ function save(key, val) {
       });
     });
     const ativas = [
-      ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
+      ...events.filter(e=>!e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && matchesTaskAssignee(e.responsavel, _tfc)),
       ...etapaEvents.filter(e=>!e.arquivada)
     ];
     const arquivadas = [
-      ...events.filter(e=>e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && (_tfc==='all'||(e.responsavel||'')===_tfc)),
+      ...events.filter(e=>e.arquivada && e.tipo === 'tarefa' && (_tf==='all'||(e.empresa||'').split(',').includes(_tf)) && matchesTaskAssignee(e.responsavel, _tfc)),
       ...etapaEvents.filter(e=>e.arquivada)
     ];
   
@@ -4475,6 +4475,10 @@ function save(key, val) {
   }
   
   const pageFiltersColab = {};
+
+  function matchesTaskAssignee(value, filter) {
+    return filter === 'all' || collaboratorKey(value) === collaboratorKey(filter);
+  }
   
   function setFilterColab(pageId, colab, btn) {
     const restrictedAssignee = getTaskAssigneeRestriction();
