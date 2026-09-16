@@ -7497,7 +7497,7 @@ function save(key, val) {
     milena:  'all',
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília' },
-    bruna:   { pages: ['tarefas', 'conteudo-menu'], company: 'editora' },
+    bruna:   { pages: ['tarefas', 'conteudo-menu'], company: 'editora', taskAssignee: 'Bruna' },
   };
 
   function currentDashboardUser() {
