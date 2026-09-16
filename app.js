@@ -1066,6 +1066,36 @@ function save(key, val) {
     .catch(e => console.warn('fbSave err:', key, e));
     autoSave();
   }
+
+  // Estados de interface pertencem a cada conta e nunca devem circular pelo
+  // Firebase junto com os dados colaborativos.
+  const dashboardExpandedStateCache = new Map();
+  function dashboardExpandedState(scope) {
+    const user = String(currentDashboardUser() || 'anonimo').toLowerCase();
+    const storageKey = `gc-ui-${user}-${scope}-expanded`;
+    if (!dashboardExpandedStateCache.has(storageKey)) {
+      let state = {};
+      try { state = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch (_) {}
+      dashboardExpandedStateCache.set(storageKey, {storageKey, state});
+    }
+    return dashboardExpandedStateCache.get(storageKey);
+  }
+  function isDashboardItemExpanded(scope, id, legacyDefault = false) {
+    const entry = dashboardExpandedState(scope);
+    const key = String(id);
+    if (!Object.prototype.hasOwnProperty.call(entry.state, key)) {
+      entry.state[key] = Boolean(legacyDefault);
+      localStorage.setItem(entry.storageKey, JSON.stringify(entry.state));
+    }
+    return entry.state[key] === true;
+  }
+  function toggleDashboardItemExpanded(scope, id, legacyDefault = false) {
+    const entry = dashboardExpandedState(scope);
+    const key = String(id);
+    entry.state[key] = !isDashboardItemExpanded(scope, id, legacyDefault);
+    localStorage.setItem(entry.storageKey, JSON.stringify(entry.state));
+    return entry.state[key];
+  }
   
   /* ── DATA ── */
   let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
@@ -2743,6 +2773,7 @@ function save(key, val) {
     const emps = (l.empresa||'editora').split(',');
     const empBadges = emps.map(e => `<span class="badge ${EMP_BADGE_L[e]||'b-gray'}" style="font-size:10px;">${EMP_SHORT_L[e]||e}</span>`).join(' ');
     const dragAttrs = draggable ? `draggable="true" ondragstart="livrosDragStart(event,${l.id})" ondragover="livrosDragOver(event,${l.id})" ondrop="livrosDrop(event,${l.id})"` : '';
+    const isOpen = isDashboardItemExpanded('livros', l.id, !!l.expandido);
     return `<div class="livro-card" ${dragAttrs} onclick="toggleLivro(${l.id})" style="cursor:pointer;">
       <div class="livro-header">
         ${draggable ? '<span onclick="event.stopPropagation()" style="cursor:grab;color:var(--text-soft);font-size:14px;padding-right:4px;" title="Arrastar para reordenar">⠿</span>' : ''}
@@ -2757,9 +2788,9 @@ function save(key, val) {
         <button onclick="event.stopPropagation();openLivroFicha(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Editar ficha">✎</button>
         <button onclick="event.stopPropagation();duplicarLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Duplicar">⧉</button>
         <button onclick="event.stopPropagation();deleteLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:2px 6px;" title="Excluir">×</button>
-        <span class="livro-toggle" onclick="event.stopPropagation();toggleLivro(${l.id})">${l.expandido ? '▾' : '▸'}</span>
+        <span class="livro-toggle" onclick="event.stopPropagation();toggleLivro(${l.id})">${isOpen ? '▾' : '▸'}</span>
       </div>
-      <div class="livro-body${l.expandido?' open':''}">
+      <div class="livro-body${isOpen?' open':''}">
         ${l.info ? `<div style="padding:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px;">${l.info.autor?`<span class="badge b-gray">Autor: ${l.info.autor}</span>`:''}${l.info.valor?`<span class="badge b-ok">Valor: ${l.info.valor}</span>`:''}${l.info.lancamento?`<span class="badge b-info">Lançamento: ${fmtDate(l.info.lancamento)}</span>`:''}${l.tipopub?`<span class="badge ${l.tipopub==='reimpressao'?'b-warn':'b-editora'}">${l.tipopub==='reimpressao'?'Reimpressão':'Lançamento'}</span>`:''}${l.info.os?`<span class="badge b-gray">OS: ${l.info.os}</span>`:''}${l.info.ano?`<span class="badge b-gray">Ano: ${l.info.ano}</span>`:''}</div>` : ''}
         ${renderLivroEtapas(l)}
         <button class="add-btn" style="margin-top:8px;font-size:12px;" onclick="adicionarEtapa(${l.id})">+ etapa</button>
@@ -2841,7 +2872,7 @@ function save(key, val) {
     if (arrow) arrow.textContent = open ? '▾' : '▸';
   }
   
-  function toggleLivro(id) { const l = livros.find(x => x.id===id); if(l) { l.expandido=!l.expandido; save('gc-livros',livros); renderLivros(); } }
+  function toggleLivro(id) { const l = livros.find(x => x.id===id); if(l) { toggleDashboardItemExpanded('livros', id, !!l.expandido); renderLivros(); } }
   
   function openLivroFicha(id) {
     const l = livros.find(x=>x.id===id);
@@ -3454,7 +3485,7 @@ function save(key, val) {
     const proxima = etapas.find(e => !e.feito);
     const finalizado = isConteudoFinalizado(c);
     const empBadges = empBadgesHtml(c.empresa);
-    const isOpen = c.expandido;
+    const isOpen = isDashboardItemExpanded('conteudos', c.id, !!c.expandido);
   
     return `<div class="conteudo-card${finalizado?' style="opacity:0.55;"':''}">
       <div class="conteudo-header" onclick="toggleConteudo(${c.id})">
@@ -3563,8 +3594,7 @@ function save(key, val) {
   function toggleConteudo(id) {
     const c = conteudos.find(x => x.id === id);
     if (!c) return;
-    c.expandido = !c.expandido;
-    save('gc-conteudos', conteudos);
+    toggleDashboardItemExpanded('conteudos', id, !!c.expandido);
     renderConteudos();
   }
   
@@ -4794,7 +4824,7 @@ function save(key, val) {
     });
   }
   
-  function toggleProjeto(id) { const p=projetos.find(x=>x.id===id); if(p){p.expandido=!p.expandido; save('gc-projetos',projetos); renderProjetos();} }
+  function toggleProjeto(id) { const p=projetos.find(x=>x.id===id); if(p){toggleDashboardItemExpanded('projetos', id, !!p.expandido); renderProjetos();} }
   function deleteCurrentProjeto() {
     if (!editingProjetoId) return;
   
