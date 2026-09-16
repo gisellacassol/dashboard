@@ -3340,7 +3340,7 @@ function save(key, val) {
 
   function inicializarEtapasConteudo(c) {
     if (!c) return false;
-    const estadoAnterior = JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || ''});
+    const estadoAnterior = JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || '',done:!!c.done});
     const conteudoJaFinalizado = c.done === true || c.status === 'encerrar';
     if (!c.etapasStatus) c.etapasStatus = {};
     const padroes = prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa);
@@ -3350,14 +3350,25 @@ function save(key, val) {
       const padrao = padroes[etapa.key] || {};
       if (!atual.prazo && padrao.prazo) atual.prazo = padrao.prazo;
       if (atual.responsavelDefinido !== true && !atual.resp && padrao.resp) atual.resp = padrao.resp;
-      if (conteudoJaFinalizado && !(etapa.key === 'arte' && !String(atual.resp || '').trim())) {
+      // "Para criar arte" nunca recebe check por herança do status antigo do
+      // conteúdo. Se for atribuída depois, deve voltar como tarefa pendente.
+      if (conteudoJaFinalizado && etapa.key !== 'arte') {
         atual.feito = true;
       }
     });
+    const etapasAtuais = getConteudoEtapas(c);
+    const realmenteFinalizado = etapasAtuais.length > 0 && etapasAtuais.every(etapaConteudoConcluidaOuDispensada);
+    c.done = realmenteFinalizado;
+    if (realmenteFinalizado) {
+      c.status = 'encerrar';
+    } else if (c.status === 'encerrar') {
+      const ultimaEtapaConcluida = [...etapasAtuais].reverse().find(etapa => etapa.feito);
+      c.status = ultimaEtapaConcluida?.key || primeiraEtapaConteudo(c)?.key || 'copy';
+    }
     if (c.status !== 'encerrar' && !getConteudoEtapaDefs(c).some(etapa => etapa.key === c.status)) {
       c.status = primeiraEtapaConteudo(c)?.key || 'copy';
     }
-    return estadoAnterior !== JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || ''});
+    return estadoAnterior !== JSON.stringify({etapasStatus:c.etapasStatus || {},status:c.status || '',done:!!c.done});
   }
 
   // Corrige conteúdos antigos que foram salvos com uma data no modal e outra
@@ -5031,7 +5042,7 @@ function save(key, val) {
   let colabOrdem = load('gc-colab-ordem', {});
 
   function collaboratorKey(value) {
-    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
   
   var _colabCalOff = {};
