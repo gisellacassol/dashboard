@@ -2640,8 +2640,8 @@ function save(key, val) {
       if (!Array.isArray(livro.etapas)) livro.etapas = [];
       const etapaExistente = livro.etapas.find(etapa => normalizarNomeEtapa(etapa?.nome) === 'criar arte para o site');
       if (etapaExistente) {
-        if (!String(etapaExistente.resp || '').trim()) {
-          etapaExistente.resp = 'Bruna';
+        if (String(etapaExistente.resp || '').trim() !== 'Gisella') {
+          etapaExistente.resp = 'Gisella';
           alterou = true;
         }
         return;
@@ -2654,7 +2654,7 @@ function save(key, val) {
         nome: 'Criar arte para o site',
         feito: false,
         prazo: cadastro.prazo || '',
-        resp: 'Bruna',
+        resp: 'Gisella',
         offsetDays: -4,
       });
       alterou = true;
