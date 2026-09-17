@@ -2659,9 +2659,8 @@ function save(key, val) {
       });
       alterou = true;
     });
-    if (alterou) save('gc-livros', livros);
+    return alterou;
   }
-  garantirEtapaArteSiteNosLivros();
   function openAddLivroTodos() {
     // O botão flutuante do celular pode ter aberto o modal genérico antes de
     // chegar aqui. O cadastro de livro usa somente sua ficha técnica própria.
@@ -7440,6 +7439,11 @@ function save(key, val) {
       }
     }
   
+    // Migra somente depois que os livros mais recentes (nuvem ou cache já
+    // sincronizado) foram carregados. Assim não gravamos uma lista vazia ou
+    // antiga durante a inicialização.
+    if (garantirEtapaArteSiteNosLivros()) save('gc-livros', livros);
+
     initCalendars();
     renderLivros();
     offerLivrosRecovery();
@@ -7487,7 +7491,11 @@ function save(key, val) {
           });
           buildTarefas(); buildColabTarefas(); buildPrioridades(); buildEventosList(); refreshCalendars();
         }],
-        ['gc-livros',    v => { livros = v; renderLivros(); buildTarefas(); buildColabTarefas(); }],
+        ['gc-livros',    v => {
+          livros = v;
+          if (garantirEtapaArteSiteNosLivros()) save('gc-livros', livros);
+          renderLivros(); buildTarefas(); buildColabTarefas();
+        }],
         ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
         ['gc-conteudos', v => { conteudos = v; refreshConteudoViews(); }],
         ['gc-recurring-tasks', v => { recurringTasks = v || []; ensureCustomRecurringTasks(window.gcalEventsCache || []); }],
@@ -7622,6 +7630,7 @@ function save(key, val) {
             recurringTasks = load('gc-recurring-tasks', []);
             mentees       = load('gc-mentees', MENTEES_DEFAULT);
             menteesMarco0 = load('gc-mentees-marco0', []);
+            if (garantirEtapaArteSiteNosLivros()) save('gc-livros', livros);
             renderLivros(); renderMenteeList(); renderConteudos();
             buildTarefas(); buildColabTarefas(); renderProjetos(); buildPrioridades();
             ['gisella','milena','luiggi'].forEach(c => renderFixedTasks(c));
