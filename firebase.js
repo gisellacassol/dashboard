@@ -18,7 +18,7 @@ window._fbReady = false;
 
 const DASHBOARD_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const BRUNA_DIRECT_FIREBASE_KEYS = new Set(['gc-notas-bruna']);
-const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-recurring-tasks']);
+const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-livros', 'gc-recurring-tasks']);
 function currentFirebaseUser() {
   return String(localStorage.getItem('gc-session-user') || '').toLowerCase();
 }

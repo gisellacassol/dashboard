@@ -2640,8 +2640,15 @@ function save(key, val) {
       if (!Array.isArray(livro.etapas)) livro.etapas = [];
       const etapaExistente = livro.etapas.find(etapa => normalizarNomeEtapa(etapa?.nome) === 'criar arte para o site');
       if (etapaExistente) {
-        if (String(etapaExistente.resp || '').trim() !== 'Gisella') {
-          etapaExistente.resp = 'Gisella';
+        // A Bruna recebe esta tarefa, mas continua sem acesso à aba Livros.
+        // O marcador evita sobrescrever uma atribuição alterada manualmente
+        // depois que esta migração já tiver sido aplicada.
+        if (etapaExistente._autoResponsavelArteSiteV1 !== true) {
+          const responsavelAtual = String(etapaExistente.resp || '').trim();
+          if (!responsavelAtual || responsavelAtual === 'Gisella') {
+            etapaExistente.resp = 'Bruna';
+          }
+          etapaExistente._autoResponsavelArteSiteV1 = true;
           alterou = true;
         }
         return;
@@ -2654,8 +2661,9 @@ function save(key, val) {
         nome: 'Criar arte para o site',
         feito: false,
         prazo: cadastro.prazo || '',
-        resp: 'Gisella',
+        resp: 'Bruna',
         offsetDays: -4,
+        _autoResponsavelArteSiteV1: true,
       });
       alterou = true;
     });
