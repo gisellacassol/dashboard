@@ -1276,6 +1276,7 @@ function save(key, val) {
     'Aprovação para impressão',
     'Recebimento do estoque',
     'Cadastro no sistema',
+    'Criar arte para o site',
     'Liberação no site',
   ];
   
@@ -2371,7 +2372,13 @@ function save(key, val) {
           lancamento: lancamentoDate, sinopse: getQaVal('qa-l-sinopse'),
           os: getQaVal('qa-l-os'), ano: getQaVal('qa-l-ano'),
         },
-        etapas: etapasUsar.map(nome => ({nome, feito: false, prazo: ''}))
+        etapas: etapasUsar.map(item => {
+          const nome = Array.isArray(item) ? item[0] : item;
+          const resp = nome === 'Criar arte para o site'
+            ? 'Bruna'
+            : (Array.isArray(item) ? item[2] || '' : '');
+          return {nome, feito: false, prazo: '', resp};
+        })
       };
       livros.push(livro);
       // Auto-criar evento de lançamento
@@ -2586,6 +2593,7 @@ function save(key, val) {
     ['Receber o estoque', -5, 'Milena'],
     ['Receber o marca-página', -5, 'Milena'],
     ['Cadastrar no sistema', -5, 'Milena'],
+    ['Criar arte para o site', -4, 'Bruna'],
     ['Lançamento', 0, ''],
     ['Liberar no site', 1, 'Milena'],
     ['Post avisando sobre o novo livro', 1, 'Milena'],
@@ -2622,6 +2630,35 @@ function save(key, val) {
       return { nome, feito: false, prazo, resp, offsetDays };
     });
   }
+
+  function garantirEtapaArteSiteNosLivros() {
+    let alterou = false;
+    livros.forEach(livro => {
+      if (!Array.isArray(livro.etapas)) livro.etapas = [];
+      const etapaExistente = livro.etapas.find(etapa => normalize(etapa?.nome) === 'criar arte para o site');
+      if (etapaExistente) {
+        if (!String(etapaExistente.resp || '').trim()) {
+          etapaExistente.resp = 'Bruna';
+          alterou = true;
+        }
+        return;
+      }
+      const cadastroIndex = livro.etapas.findIndex(etapa => ['cadastro no sistema','cadastrar no sistema'].includes(normalize(etapa?.nome)));
+      const liberacaoIndex = livro.etapas.findIndex(etapa => ['liberacao no site','liberar no site'].includes(normalize(etapa?.nome)));
+      if (cadastroIndex < 0 || liberacaoIndex < 0 || cadastroIndex >= liberacaoIndex) return;
+      const cadastro = livro.etapas[cadastroIndex] || {};
+      livro.etapas.splice(cadastroIndex + 1, 0, {
+        nome: 'Criar arte para o site',
+        feito: false,
+        prazo: cadastro.prazo || '',
+        resp: 'Bruna',
+        offsetDays: -4,
+      });
+      alterou = true;
+    });
+    if (alterou) save('gc-livros', livros);
+  }
+  garantirEtapaArteSiteNosLivros();
   function openAddLivroTodos() {
     // O botão flutuante do celular pode ter aberto o modal genérico antes de
     // chegar aqui. O cadastro de livro usa somente sua ficha técnica própria.
@@ -3263,10 +3300,10 @@ function save(key, val) {
     ],
     carrossel: [
       {key:'copy',nome:'Copy criada'},
+      {key:'arte',nome:'Para criar arte',optionalLink:true},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'postado',nome:'Para postar',resp:'Milena'},
-      {key:'arte',nome:'Para criar arte',optionalLink:true},
     ],
     card: null,
     story: null,
@@ -3279,7 +3316,13 @@ function save(key, val) {
     ],
   };
   EDITORA_CONTEUDO_FLUXOS.card = EDITORA_CONTEUDO_FLUXOS.carrossel;
-  EDITORA_CONTEUDO_FLUXOS.story = EDITORA_CONTEUDO_FLUXOS.carrossel;
+  EDITORA_CONTEUDO_FLUXOS.story = [
+    {key:'copy',nome:'Copy criada'},
+    {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
+    {key:'agendado',nome:'Para agendar',resp:'Milena'},
+    {key:'postado',nome:'Para postar',resp:'Milena'},
+    {key:'arte',nome:'Para criar arte',optionalLink:true},
+  ];
   const PRE_LANCAMENTO_REEL_FLUXO = [
     {key:'copy',nome:'Copy criada'},
     {key:'gravado',nome:'Gravado',resp:'Milena'},
@@ -3507,7 +3550,7 @@ function save(key, val) {
       if (estado.postado?.feito) liberadas.add('arte');
       return etapas.filter(etapa => etapa.feito || liberadas.has(etapa.key));
     }
-    const nextPendingIndex = etapas.findIndex(etapa => !etapa.feito);
+    const nextPendingIndex = etapas.findIndex(etapa => !etapaConteudoConcluidaOuDispensada(etapa));
     if (nextPendingIndex < 0) return etapas;
     return etapas.filter((etapa, index) => etapa.feito || index === nextPendingIndex);
   }
@@ -3547,7 +3590,7 @@ function save(key, val) {
     const etapas = getConteudoEtapas(c);
     const done = etapas.filter(etapaConteudoConcluidaOuDispensada).length;
     const pct = etapas.length > 0 ? Math.round(done / etapas.length * 100) : 0;
-    const proxima = etapas.find(e => !e.feito);
+    const proxima = etapas.find(etapa => !etapaConteudoConcluidaOuDispensada(etapa));
     const finalizado = isConteudoFinalizado(c);
     const empBadges = empBadgesHtml(c.empresa);
     const isOpen = isDashboardItemExpanded('conteudos', c.id, !!c.expandido);
