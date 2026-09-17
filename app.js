@@ -2632,10 +2632,13 @@ function save(key, val) {
   }
 
   function garantirEtapaArteSiteNosLivros() {
+    const normalizarNomeEtapa = value => String(value || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim().toLowerCase();
     let alterou = false;
     livros.forEach(livro => {
       if (!Array.isArray(livro.etapas)) livro.etapas = [];
-      const etapaExistente = livro.etapas.find(etapa => normalize(etapa?.nome) === 'criar arte para o site');
+      const etapaExistente = livro.etapas.find(etapa => normalizarNomeEtapa(etapa?.nome) === 'criar arte para o site');
       if (etapaExistente) {
         if (!String(etapaExistente.resp || '').trim()) {
           etapaExistente.resp = 'Bruna';
@@ -2643,8 +2646,8 @@ function save(key, val) {
         }
         return;
       }
-      const cadastroIndex = livro.etapas.findIndex(etapa => ['cadastro no sistema','cadastrar no sistema'].includes(normalize(etapa?.nome)));
-      const liberacaoIndex = livro.etapas.findIndex(etapa => ['liberacao no site','liberar no site'].includes(normalize(etapa?.nome)));
+      const cadastroIndex = livro.etapas.findIndex(etapa => ['cadastro no sistema','cadastrar no sistema'].includes(normalizarNomeEtapa(etapa?.nome)));
+      const liberacaoIndex = livro.etapas.findIndex(etapa => ['liberacao no site','liberar no site'].includes(normalizarNomeEtapa(etapa?.nome)));
       if (cadastroIndex < 0 || liberacaoIndex < 0 || cadastroIndex >= liberacaoIndex) return;
       const cadastro = livro.etapas[cadastroIndex] || {};
       livro.etapas.splice(cadastroIndex + 1, 0, {
