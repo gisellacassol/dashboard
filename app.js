@@ -2765,7 +2765,7 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-lancamento','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -2809,6 +2809,12 @@ function save(key, val) {
     const livro = {
       id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
       tipopub, menteeId: menteeIdSel, tipoAutoriaMenteeId: tipoAutoriaMenteeId,
+      links: {
+        textoFinalizado: document.getElementById('nl-link-texto-finalizado').value.trim(),
+        arquivosAbertos: document.getElementById('nl-link-arquivos-abertos').value.trim(),
+        arquivosFechados: document.getElementById('nl-link-arquivos-fechados').value.trim(),
+        paginaSite: document.getElementById('nl-link-pagina-site').value.trim(),
+      },
       info: {
         autor,
         ilustrador: document.getElementById('nl-ilustrador').value.trim(),
@@ -2846,6 +2852,7 @@ function save(key, val) {
         livroExistente.titulo = livro.titulo;
         livroExistente.empresa = livro.empresa;
         livroExistente.info = livro.info;
+        livroExistente.links = livro.links;
         livroExistente.tipopub = tipopub;
         livroExistente.tipoAutoriaMenteeId = tipoAutoriaMenteeId;
       }
@@ -2864,7 +2871,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -3058,6 +3065,7 @@ function save(key, val) {
       if (cb) cb.checked = emps.includes(e);
     });
     const info = l.info||{};
+    const links = l.links||{};
     document.getElementById('nl-titulo').value = l.titulo||'';
     const tipopubEdit = l.tipopub || 'lancamento';
     const lancRad = document.getElementById('nl-tipopub-lanc');
@@ -3080,6 +3088,10 @@ function save(key, val) {
     document.getElementById('nl-lancamento').value = info.lancamento||'';
     document.getElementById('nl-assuntos').value = info.assuntos||'';
     document.getElementById('nl-sinopse').value = info.sinopse||'';
+    document.getElementById('nl-link-texto-finalizado').value = links.textoFinalizado||'';
+    document.getElementById('nl-link-arquivos-abertos').value = links.arquivosAbertos||'';
+    document.getElementById('nl-link-arquivos-fechados').value = links.arquivosFechados||'';
+    document.getElementById('nl-link-pagina-site').value = links.paginaSite||'';
     document.querySelector('#modal-livro .modal-title').textContent = 'Ficha Técnica · ' + l.titulo;
     document.querySelector('#modal-livro .btn-primary').textContent = 'Salvar alterações';
     // Populate and set tipo de autoria
