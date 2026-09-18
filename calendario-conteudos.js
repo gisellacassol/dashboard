@@ -1,24 +1,16 @@
 const PUBLIC_CALENDAR_ENDPOINT = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const WEEKDAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const COMPANY_LABELS = {editora:'Editora Cassol',leia:'Léia Cassol',gisella:'GC Estratégias'};
-const NETWORK_LABELS = {instagram:'Instagram',facebook:'Facebook',linkedin:'LinkedIn',youtube:'YouTube',tiktok:'TikTok',email:'E-mail',site:'Site'};
-const FORMAT_LABELS = {reel:'Reel',carrossel:'Carrossel',card:'Card',story:'Story',emailmkt:'E-mail marketing',site:'Site'};
 
 function text(tag, className, value) { const el=document.createElement(tag); if(className) el.className=className; el.textContent=String(value||''); return el; }
 function formatDate(value) { if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))) return ''; const [y,m,d]=value.split('-'); return `${d}/${m}/${y}`; }
-function safeUrl(value) { try { const url=new URL(String(value||'')); return ['http:','https:'].includes(url.protocol) ? url.href : ''; } catch(_) { return ''; } }
-function addField(container,label,value,wide=false,link=false) { if(!value) return; const field=text('div',`field${wide?' wide':''}`,''); field.append(text('div','label',label)); const val=text('div','value',''); if(link){const a=text('a','', 'Abrir link');a.href=value;a.target='_blank';a.rel='noopener noreferrer';val.append(a);}else val.textContent=value; field.append(val); container.append(field); }
+function addField(container,label,value) { const field=text('div','field',''); field.append(text('div','label',label),text('div','value',value||'Não informado')); container.append(field); }
 
 function openDetail(content) {
   document.getElementById('detail-title').textContent=content.nome||'Conteúdo';
-  document.getElementById('detail-subtitle').textContent=[COMPANY_LABELS[content.empresa]||content.empresa,NETWORK_LABELS[content.rede]||content.rede,FORMAT_LABELS[content.tipo]||content.tipo].filter(Boolean).join(' · ');
+  document.getElementById('detail-subtitle').textContent='Informações da postagem';
   const fields=document.getElementById('detail-fields'); fields.replaceChildren();
   addField(fields,'Data de postagem',formatDate(content.dataPost)); addField(fields,'Horário',content.hora);
-  addField(fields,'Data de produção',formatDate(content.dataProd)); addField(fields,'Responsável',content.responsavel);
-  addField(fields,'Projeto',content.projeto); addField(fields,'Status',content.statusLabel);
-  addField(fields,'Copy',content.copy,true); addField(fields,'Legenda',content.legenda,true); addField(fields,'Observação',content.observacao,true);
-  (content.links||[]).forEach((link,index)=>addField(fields,index?'Link da arte':'Link',safeUrl(link),true,true));
   document.getElementById('detail-overlay').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');document.body.style.overflow='';}
