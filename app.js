@@ -1317,19 +1317,52 @@ function save(key, val) {
     }
   }
 
-  async function compartilharCalendarioConteudoMes() {
+  let _publicCalendarShareMonth = '';
+
+  function conteudoProjectLabel(value) {
+    const option = [...(document.getElementById('mc-projeto')?.options || [])].find(item => item.value === value);
+    return option?.textContent?.trim() || value;
+  }
+
+  function compartilharCalendarioConteudoMes() {
     const state = CAL_STATE['cal-conteudo'];
     const sessionToken = sessionStorage.getItem('gc-dashboard-session-token');
     if (!state || !sessionToken) {
       alert('Abra novamente o Dashboard e tente gerar o link do mês.');
       return;
     }
-    const month = `${state.y}-${String(state.m + 1).padStart(2, '0')}`;
+    _publicCalendarShareMonth = `${state.y}-${String(state.m + 1).padStart(2, '0')}`;
+    const projects = [...new Set(conteudos
+      .filter(item => String(item.dataPost || '').startsWith(`${_publicCalendarShareMonth}-`))
+      .map(item => String(item.projetoConteudo || '').trim())
+      .filter(Boolean))];
+    if (!projects.length) {
+      alert('Não há conteúdos com projeto definido neste mês.');
+      return;
+    }
+    const select = document.getElementById('share-calendar-project');
+    select.replaceChildren(...projects.map(project => {
+      const option = document.createElement('option');
+      option.value = project;
+      option.textContent = conteudoProjectLabel(project);
+      return option;
+    }));
+    document.getElementById('share-calendar-month-label').textContent = `${MESES[state.m]} de ${state.y}`;
+    openModal('modal-compartilhar-calendario');
+  }
+
+  async function confirmarCompartilhamentoCalendarioConteudo() {
+    const sessionToken = sessionStorage.getItem('gc-dashboard-session-token');
+    const project = document.getElementById('share-calendar-project')?.value || '';
+    if (!_publicCalendarShareMonth || !project || !sessionToken) return;
+    const button = document.getElementById('share-calendar-confirm');
+    button.disabled = true;
+    button.textContent = 'Gerando…';
     try {
       const response = await fetch(CHECKLIST_SYNC_URL, {
         method: 'POST',
         headers: {'Content-Type':'application/json', 'x-cassol-dashboard-session':sessionToken},
-        body: JSON.stringify({ operation:'create_public_content_calendar_link', month }),
+        body: JSON.stringify({ operation:'create_public_content_calendar_link', month:_publicCalendarShareMonth, project }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.token) throw new Error(result.error || 'Não foi possível gerar o link.');
@@ -1337,12 +1370,17 @@ function save(key, val) {
       url.searchParams.set('token', result.token);
       try {
         await navigator.clipboard.writeText(url.href);
-        alert(`Link somente leitura de ${MESES[state.m]} de ${state.y} copiado.`);
+        closeModal('modal-compartilhar-calendario');
+        alert(`Link somente leitura de “${conteudoProjectLabel(project)}” copiado.`);
       } catch (_) {
+        closeModal('modal-compartilhar-calendario');
         window.prompt('Copie o link público do mês:', url.href);
       }
     } catch (error) {
       alert(error.message || 'Não foi possível gerar o link do calendário agora.');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Copiar link';
     }
   }
   
