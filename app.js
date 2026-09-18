@@ -2921,10 +2921,11 @@ function save(key, val) {
     const empBadges = emps.map(e => `<span class="badge ${EMP_BADGE_L[e]||'b-gray'}" style="font-size:10px;">${EMP_SHORT_L[e]||e}</span>`).join(' ');
     const dragAttrs = draggable ? `draggable="true" ondragstart="livrosDragStart(event,${l.id})" ondragover="livrosDragOver(event,${l.id})" ondrop="livrosDrop(event,${l.id})"` : '';
     const isOpen = isDashboardItemExpanded('livros', l.id, !!l.expandido);
-    return `<div class="livro-card" ${dragAttrs} onclick="toggleLivro(${l.id})" style="cursor:pointer;">
+    return `<div class="livro-card" ${dragAttrs}>
       <div class="livro-header">
         ${draggable ? '<span onclick="event.stopPropagation()" style="cursor:grab;color:var(--text-soft);font-size:14px;padding-right:4px;" title="Arrastar para reordenar">⠿</span>' : ''}
-        <div class="livro-titulo" onclick="event.stopPropagation();openLivroFicha(${l.id})" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir ficha técnica">${l.titulo}</div>
+        <div class="livro-titulo" onclick="openLivroFicha(${l.id})" style="flex:0 1 auto;min-width:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir ficha técnica">${l.titulo}</div>
+        <span onclick="toggleLivro(${l.id})" style="flex:1;align-self:stretch;min-width:16px;cursor:pointer;" title="Abrir ou fechar etapas" aria-label="Abrir ou fechar etapas"></span>
         ${empBadges}
         <div class="livro-progress-wrap">
           <div class="livro-progress"><div class="livro-progress-fill" style="width:${pct}%;"></div></div>
