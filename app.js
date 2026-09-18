@@ -1058,13 +1058,16 @@ function save(key, val) {
   // O Checklist recebe a alteração imediatamente. A persistência no Firebase
   // continua em paralelo como cópia compartilhada do Dashboard.
   scheduleChecklistCentralSync(key, changedItems, previousChangedItems);
-  if (window.fbSave) window.fbSave(key, val)
+  let persistence = Promise.resolve(true);
+  if (window.fbSave) persistence = window.fbSave(key, val)
     .then(savedAt => {
       if (!savedAt) console.warn('Firebase não confirmou a gravação:', key);
       else if (removedItems.length) syncChecklistAfterDashboardDeletion(key, removedItems);
+      return Boolean(savedAt);
     })
-    .catch(e => console.warn('fbSave err:', key, e));
+    .catch(e => { console.warn('fbSave err:', key, e); return false; });
     autoSave();
+    return persistence;
   }
 
   // Estados de interface pertencem a cada conta e nunca devem circular pelo
@@ -2864,13 +2867,18 @@ function save(key, val) {
   async function compartilharLivro(id) {
     const livro = livros.find(item => String(item.id) === String(id));
     if (!livro) return;
+    let precisaSalvar = false;
     if (!livro.publicShareToken) {
       livro.publicShareToken = novoTokenPublicoLivro();
       livro.publicShareEnabled = true;
-      save('gc-livros', livros);
+      precisaSalvar = true;
     } else if (livro.publicShareEnabled !== true) {
       livro.publicShareEnabled = true;
-      save('gc-livros', livros);
+      precisaSalvar = true;
+    }
+    if (precisaSalvar && !await save('gc-livros', livros)) {
+      window.alert('Não foi possível criar o link agora. Atualize a página e tente novamente.');
+      return;
     }
     const url = new URL('livro.html', window.location.href);
     url.searchParams.set('token', livro.publicShareToken);
