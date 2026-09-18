@@ -1258,29 +1258,41 @@ function save(key, val) {
   
   const ETAPAS_DEFAULT = [
     'Briefing',
-    'Texto em andamento',
-    'Texto preparado',
-    'Texto finalizado',
     'Escolha do ilustrador',
+    'Contato com ilustrador',
+    'Texto em andamento',
     'Reunião de alinhamento de conceito',
     'Pré-diagramação',
+    'Texto preparado',
+    'Texto finalizado',
     'Esboços',
-    'Estado da arte — coloração',
+    'Estado da arte / coloração',
     'Finalização das ilustrações',
+    'Aprovação das ilustrações',
+    'Criação da capa',
     'ISBN + Código de barras + Ficha catalográfica',
     'Diagramação final',
-    'Revisão',
-    'Revisão final',
+    'Arte finalização',
     'UV',
-    'Envio para gráfica',
-    'Boneco',
+    'Aprovação do autor',
+    'Envio para gráfica (boneco)',
+    'Plano de divulgação e lançamento',
+    'Receber boneco',
+    'Revisar boneco',
+    'Aplicar revisão final',
     'Ajuste fino',
-    'Contrato',
-    'Aprovação para impressão',
-    'Recebimento do estoque',
-    'Cadastro no sistema',
+    'Reenviar para gráfica',
+    'Enviar contrato para assinatura',
+    'Aprovar para impressão',
+    'Fazer marca-página',
+    'Enviar marca-página para gráfica',
+    'Receber o estoque',
+    'Receber o marca-página',
+    'Cadastrar no sistema',
     'Criar arte para o site',
-    'Liberação no site',
+    'Lançamento',
+    'Liberar no site',
+    'Post avisando sobre o novo livro',
   ];
   
   const ETAPAS_REIMP = [
@@ -2649,37 +2661,42 @@ function save(key, val) {
   let addLivroEmpresa = 'editora';
   let editingLivroId = null;
   const CRONOGRAMA_EDITORIAL = [
-    ['Briefing', -110, 'Gisella'],
-    ['Escolha do ilustrador', -103, 'Gisella'],
-    ['Texto em andamento', -98, 'Gisella'],
-    ['Reunião de alinhamento de conceito', -94, 'Gisella'],
-    ['Pré-diagramação', -92, 'Gisella'],
-    ['Texto preparado', -88, 'Gisella'],
-    ['Esboços', -74, 'Gisella'],
-    ['Texto finalizado', -68, 'Gisella'],
-    ['Estado da arte — coloração', -63, 'Gisella'],
-    ['Finalização das ilustrações', -38, 'Gisella'],
-    ['ISBN + Código de barras + Ficha catalográfica', -36, 'Gisella'],
-    ['Diagramação final', -34, 'Gisella'],
-    ['UV', -33, 'Gisella'],
-    ['Envio para gráfica (boneco)', -32, 'Gisella'],
-    ['Plano de divulgação e lançamento', -30, 'Milena'],
-    ['Receber boneco', -29, 'Gisella'],
-    ['Revisar boneco', -27, 'Gisella'],
-    ['Aplicar revisão final', -25, 'Gisella'],
-    ['Ajuste fino', -24, 'Gisella'],
-    ['Reenviar para gráfica', -23, 'Gisella'],
-    ['Enviar contrato para assinatura', -22, 'Gisella'],
-    ['Aprovar para impressão', -20, 'Gisella'],
-    ['Fazer marca-página', -18, 'Milena'],
-    ['Enviar marca-página para gráfica', -16, 'Milena'],
-    ['Receber o estoque', -5, 'Milena'],
-    ['Receber o marca-página', -5, 'Milena'],
-    ['Cadastrar no sistema', -5, 'Milena'],
-    ['Criar arte para o site', -4, 'Bruna'],
-    ['Lançamento', 0, ''],
-    ['Liberar no site', 1, 'Milena'],
-    ['Post avisando sobre o novo livro', 1, 'Milena'],
+    ['Briefing', 'Gisella', 'Gisella', -110],
+    ['Escolha do ilustrador', 'Gisella', 'Gisella', -103],
+    ['Contato com ilustrador', 'Marília', 'Gisella', null],
+    ['Texto em andamento', 'Autor', 'Gisella', -98],
+    ['Reunião de alinhamento de conceito', 'Todos', 'Gisella', -94],
+    ['Pré-diagramação', 'Marília', 'Marília', -92],
+    ['Texto preparado', 'Maiara', 'Marília', -88],
+    ['Texto finalizado', 'Autor', 'Gisella', -68],
+    ['Esboços', 'Ilustrador', 'Marília', -74],
+    ['Estado da arte / coloração', 'Ilustrador', 'Marília', -63],
+    ['Finalização das ilustrações', 'Ilustrador', 'Marília', -38],
+    ['Aprovação das ilustrações', 'Gisella', 'Marília', null],
+    ['Criação da capa', 'Marília', 'Marília', null],
+    ['ISBN + Código de barras + Ficha catalográfica', 'Marília', 'Marília', -36],
+    ['Diagramação final', 'Marília', 'Marília', -34],
+    ['Arte finalização', 'Gisella', 'Gisella', null],
+    ['UV', 'Gisella', 'Gisella', -33],
+    ['Aprovação do autor', 'Autor', 'Marília', null],
+    ['Envio para gráfica (boneco)', 'Marília', 'Marília', -32],
+    ['Plano de divulgação e lançamento', 'Milena', 'Milena', -30],
+    ['Receber boneco', 'Todos', 'Marília', -29],
+    ['Revisar boneco', 'Todos', 'Marília', -27],
+    ['Aplicar revisão final', 'Marília', 'Marília', -25],
+    ['Ajuste fino', 'Marília', 'Marília', -24],
+    ['Reenviar para gráfica', 'Marília', 'Marília', -23],
+    ['Enviar contrato para assinatura', 'Gisella', 'Gisella', -22],
+    ['Aprovar para impressão', 'Gisella', 'Gisella', -20],
+    ['Fazer marca-página', 'Milena', 'Milena', -18],
+    ['Enviar marca-página para gráfica', 'Milena', 'Milena', -16],
+    ['Receber o estoque', 'Vera', 'Marília', -5],
+    ['Receber o marca-página', 'Vera', 'Milena', -5],
+    ['Cadastrar no sistema', 'Vera', 'Vera', -5],
+    ['Criar arte para o site', 'Bruna', 'Milena', -4],
+    ['Lançamento', 'Todos', 'Milena', 0],
+    ['Liberar no site', 'Milena', 'Milena', 1],
+    ['Post avisando sobre o novo livro', 'Bruna', 'Milena', 1],
   ];
 
   function parseDashboardDate(value) {
@@ -2703,51 +2720,65 @@ function save(key, val) {
   function criarCronogramaEditorial(lancamentoDate) {
     const lancamento = parseDashboardDate(lancamentoDate);
     if (!lancamento) return [];
-    const occupied = new Set();
-    let previousDate = null;
-    return CRONOGRAMA_EDITORIAL.map(([nome, offsetDays, resp]) => {
-      const prazoDate = nextAvailableEditorialDate(addCalendarDays(lancamento, offsetDays), previousDate, occupied);
-      const prazo = dashboardDateString(prazoDate);
-      occupied.add(prazo);
-      previousDate = prazoDate;
-      return { nome, feito: false, prazo, resp, offsetDays };
+    return CRONOGRAMA_EDITORIAL.map(([nome, executar, resp, offsetDays]) => {
+      const prazo = typeof offsetDays === 'number' ? dashboardDateString(addCalendarDays(lancamento, offsetDays)) : '';
+      return { nome, feito: false, prazo, executar, resp, offsetDays };
     });
   }
 
+  const LIVRO_ETAPAS_WORKFLOW_VERSION = 3;
+  function normalizarNomeEtapaLivro(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+  }
+  const LIVRO_ETAPA_ALIASES = {
+    'envio para grafica boneco': ['envio para grafica'],
+    'receber boneco': ['boneco'],
+    'revisar boneco': ['revisao'],
+    'aplicar revisao final': ['revisao final'],
+    'enviar contrato para assinatura': ['contrato'],
+    'aprovar para impressao': ['aprovacao para impressao'],
+    'receber o estoque': ['recebimento do estoque'],
+    'cadastrar no sistema': ['cadastro no sistema'],
+    'liberar no site': ['liberacao no site'],
+  };
+  function mesclarCronogramaEditorial(etapasAtuais, lancamentoDate) {
+    const atuais = Array.isArray(etapasAtuais) ? etapasAtuais : [];
+    const usados = new Set();
+    const lancamento = parseDashboardDate(lancamentoDate);
+    const novas = CRONOGRAMA_EDITORIAL.map(([nome, executar, resp, offsetDays]) => {
+      const nomeNormalizado = normalizarNomeEtapaLivro(nome);
+      const equivalentes = new Set([nomeNormalizado, ...(LIVRO_ETAPA_ALIASES[nomeNormalizado] || [])]);
+      const indice = atuais.findIndex((etapa, index) => !usados.has(index) && equivalentes.has(normalizarNomeEtapaLivro(etapa?.nome)));
+      const anterior = indice >= 0 ? atuais[indice] : {};
+      if (indice >= 0) usados.add(indice);
+      const prazoCalculado = lancamento && typeof offsetDays === 'number'
+        ? dashboardDateString(addCalendarDays(lancamento, offsetDays))
+        : String(anterior.prazo || '');
+      return {
+        ...anterior,
+        nome,
+        executar,
+        resp,
+        offsetDays,
+        feito: Boolean(anterior.feito),
+        prazo: anterior.feito && anterior.prazo ? anterior.prazo : prazoCalculado,
+      };
+    });
+    // Uma etapa antiga concluída nunca é descartada: se não houver equivalente
+    // no fluxo novo, ela permanece no final como registro histórico.
+    atuais.forEach((etapa, index) => {
+      if (!usados.has(index) && etapa?.feito) novas.push({...etapa, _etapaHistorica: true});
+    });
+    return novas;
+  }
   function garantirEtapaArteSiteNosLivros() {
-    const normalizarNomeEtapa = value => String(value || '')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .trim().toLowerCase();
+    if (getCompanyRestriction()) return false;
     let alterou = false;
     livros.forEach(livro => {
-      if (!Array.isArray(livro.etapas)) livro.etapas = [];
-      const etapaExistente = livro.etapas.find(etapa => normalizarNomeEtapa(etapa?.nome) === 'criar arte para o site');
-      if (etapaExistente) {
-        // A Bruna recebe esta tarefa, mas continua sem acesso à aba Livros.
-        // O marcador evita sobrescrever uma atribuição alterada manualmente
-        // depois que esta migração já tiver sido aplicada.
-        if (etapaExistente._autoResponsavelArteSiteV1 !== true) {
-          const responsavelAtual = String(etapaExistente.resp || '').trim();
-          if (!responsavelAtual || responsavelAtual === 'Gisella') {
-            etapaExistente.resp = 'Bruna';
-          }
-          etapaExistente._autoResponsavelArteSiteV1 = true;
-          alterou = true;
-        }
-        return;
-      }
-      const cadastroIndex = livro.etapas.findIndex(etapa => ['cadastro no sistema','cadastrar no sistema'].includes(normalizarNomeEtapa(etapa?.nome)));
-      const liberacaoIndex = livro.etapas.findIndex(etapa => ['liberacao no site','liberar no site'].includes(normalizarNomeEtapa(etapa?.nome)));
-      if (cadastroIndex < 0 || liberacaoIndex < 0 || cadastroIndex >= liberacaoIndex) return;
-      const cadastro = livro.etapas[cadastroIndex] || {};
-      livro.etapas.splice(cadastroIndex + 1, 0, {
-        nome: 'Criar arte para o site',
-        feito: false,
-        prazo: cadastro.prazo || '',
-        resp: 'Bruna',
-        offsetDays: -4,
-        _autoResponsavelArteSiteV1: true,
-      });
+      if (livro.tipopub === 'reimpressao' || livro.etapasWorkflowVersion === LIVRO_ETAPAS_WORKFLOW_VERSION) return;
+      livro.etapas = mesclarCronogramaEditorial(livro.etapas, livro.info?.lancamento || '');
+      livro.etapasWorkflowVersion = LIVRO_ETAPAS_WORKFLOW_VERSION;
       alterou = true;
     });
     return alterou;
@@ -2809,6 +2840,7 @@ function save(key, val) {
     const livro = {
       id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
       tipopub, menteeId: menteeIdSel, tipoAutoriaMenteeId: tipoAutoriaMenteeId,
+      etapasWorkflowVersion: tipopub === 'reimpressao' ? undefined : LIVRO_ETAPAS_WORKFLOW_VERSION,
       links: {
         textoFinalizado: document.getElementById('nl-link-texto-finalizado').value.trim(),
         arquivosAbertos: document.getElementById('nl-link-arquivos-abertos').value.trim(),
@@ -2843,17 +2875,14 @@ function save(key, val) {
         const livroExistente = livros[i];
         const lancamentoAnterior = livroExistente.info?.lancamento || '';
         if (lancamentoAnterior !== lancamentoDate) {
-          const conclusaoPorNome = new Map((livroExistente.etapas || []).map(etapa => [etapa.nome, !!etapa.feito]));
-          livroExistente.etapas = criarCronogramaEditorial(lancamentoDate).map(etapa => ({
-            ...etapa,
-            feito: conclusaoPorNome.get(etapa.nome) || false,
-          }));
+          livroExistente.etapas = mesclarCronogramaEditorial(livroExistente.etapas, lancamentoDate);
         }
         livroExistente.titulo = livro.titulo;
         livroExistente.empresa = livro.empresa;
         livroExistente.info = livro.info;
         livroExistente.links = livro.links;
         livroExistente.tipopub = tipopub;
+        if (tipopub !== 'reimpressao') livroExistente.etapasWorkflowVersion = LIVRO_ETAPAS_WORKFLOW_VERSION;
         livroExistente.tipoAutoriaMenteeId = tipoAutoriaMenteeId;
       }
       editingLivroId = null;
@@ -2888,6 +2917,20 @@ function save(key, val) {
   
   const EMP_BADGE_L = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_SHORT_L = {editora:'Editora',leia:'Léia',gisella:'GC'};
+  const LIVRO_ETAPA_PESSOAS = ['Gisella','Marília','Milena','Bruna','Vera','Maiara','Autor','Ilustrador','Todos','Luiggi'];
+  function livroEtapaPessoaOptions(selected) {
+    return '<option value="" '+(!selected?'selected':'')+'>—</option>' + LIVRO_ETAPA_PESSOAS.map(pessoa =>
+      '<option value="'+pessoa+'" '+(selected===pessoa?'selected':'')+'>'+pessoa+'</option>'
+    ).join('');
+  }
+  function livroEtapaOffsetLabel(offsetDays) {
+    if (typeof offsetDays !== 'number') return 'Sem prazo automático';
+    if (offsetDays === 0) return 'No dia do lançamento';
+    const quantidade = Math.abs(offsetDays);
+    return offsetDays < 0
+      ? `${quantidade} ${quantidade === 1 ? 'dia' : 'dias'} antes`
+      : `${quantidade} ${quantidade === 1 ? 'dia' : 'dias'} depois`;
+  }
   
   function renderLivroEtapas(l) {
     const sorted = l.etapas.map((e,i)=>({e,i})).sort((a,b)=> a.e.feito===b.e.feito?0:a.e.feito?-1:1);
@@ -2900,14 +2943,12 @@ function save(key, val) {
       return '<div class="livro-etapa-row" style="'+(e.feito?'opacity:0.6;':'')+'">' +
         '<input type="checkbox" '+(e.feito?'checked':'')+' onchange="toggleEtapa('+l.id+','+i+')" onclick="event.stopPropagation()">' +
         '<span class="livro-etapa-nome'+(e.feito?' done':'')+'" style="flex:1;">['+l.titulo+'] '+e.nome+'</span>' +
+        '<span style="font-size:10px;color:var(--text-soft);white-space:nowrap;" title="Executar etapa">Executar: '+(e.executar||'—')+'</span>' +
+        '<span style="font-size:10px;color:var(--text-soft);white-space:nowrap;">'+livroEtapaOffsetLabel(e.offsetDays)+'</span>' +
         '<span style="font-size:11px;color:'+(prazoColor||'var(--text-soft)')+';font-weight:'+(e.prazo?'500':'400')+';">'+(e.prazo?fmtDate(e.prazo):'—')+'</span>' +
         '<select onchange="setEtapaResp('+l.id+','+i+',this.value)" onclick="event.stopPropagation()" '+
-          'style="font-size:10px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:'+(e.resp?'#000':'var(--text-soft)')+';cursor:pointer;max-width:80px;">' +
-          '<option value="" '+((!e.resp)?'selected':'')+'>—</option>' +
-          '<option value="Gisella" '+(e.resp==='Gisella'?'selected':'')+'>Gisella</option>' +
-          '<option value="Milena" '+(e.resp==='Milena'?'selected':'')+'>Milena</option>' +
-          '<option value="Luiggi" '+(e.resp==='Luiggi'?'selected':'')+'>Luiggi</option>' +
-          '<option value="Marília" '+(e.resp==='Marília'?'selected':'')+'>Marília</option>' +
+          'title="Responsável pela etapa" style="font-size:10px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:'+(e.resp?'#000':'var(--text-soft)')+';cursor:pointer;max-width:88px;">' +
+          livroEtapaPessoaOptions(e.resp) +
         '</select>' +
       '</div>';
     }).join('');
@@ -3126,7 +3167,8 @@ function save(key, val) {
   }
   function setPrazoEtapa(id,i,val) { updateEtapaPrazoInline(id, i, val); }
   function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
-  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l) { l.etapas[i].resp=resp; save('gc-livros',livros); buildTarefas(); buildColabTarefas(); } }
+  function setEtapaExecutar(id,i,executar) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].executar=executar; save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); } }
+  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].resp=resp; save('gc-livros',livros); buildTarefas(); buildColabTarefas(); } }
   
   /* ── MENTEES ── */
   let currentMenteeId = null;
@@ -6503,7 +6545,10 @@ function save(key, val) {
       return 0; // mantém ordem original dentro de cada grupo
     });
   
-    el.innerHTML = comIdx.map(({e, i}) => {
+    const header = `<div style="display:grid;grid-template-columns:20px 18px minmax(180px,1fr) 112px 112px 130px 20px;gap:8px;padding:0 0 7px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;">
+      <span></span><span></span><span>Etapa</span><span>Executar etapa</span><span>Responsável</span><span>Lançamento / prazo</span><span></span>
+    </div>`;
+    el.innerHTML = header + comIdx.map(({e, i}) => {
       const cor = e.feito ? 'var(--text-soft)' : (e.prazo ? (() => {
         const diff = Math.round((new Date(e.prazo+'T00:00:00') - new Date().setHours(0,0,0,0)) / 86400000);
         return diff < 0 ? 'var(--danger)' : diff <= 7 ? 'var(--warn)' : 'var(--text)';
@@ -6512,21 +6557,24 @@ function save(key, val) {
         ondragstart="epDragStart(event,${i})"
         ondragover="event.preventDefault()"
         ondrop="epDrop(event,${i})"
-        style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}cursor:default;">
+        style="display:grid;grid-template-columns:20px 18px minmax(180px,1fr) 112px 112px 130px 20px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}cursor:default;">
         <span style="cursor:grab;color:var(--text-soft);font-size:12px;flex-shrink:0;">⠿</span>
         <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapaModal(${_epLivroId},${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}" ondblclick="renameEtapaModal(${_epLivroId},${i},this)">${e.nome}</span>
-        <select onchange="setEtapaResp(${_epLivroId},${i},this.value)"
-          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
-          <option value="" ${!e.resp?'selected':''}>—</option>
-          <option value="Gisella" ${e.resp==='Gisella'?'selected':''}>Gisella</option>
-          <option value="Milena" ${e.resp==='Milena'?'selected':''}>Milena</option>
-          <option value="Luiggi" ${e.resp==='Luiggi'?'selected':''}>Luiggi</option>
-          <option value="Marília" ${e.resp==='Marília'?'selected':''}>Marília</option>
+        <select onchange="setEtapaExecutar(${_epLivroId},${i},this.value)" title="Executar etapa"
+          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;min-width:0;">
+          ${livroEtapaPessoaOptions(e.executar)}
         </select>
-        <input type="date" value="${e.prazo||''}"
-          onchange="updateEtapaPrazoInline(${_epLivroId},${i},this.value)"
-          style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;">
+        <select onchange="setEtapaResp(${_epLivroId},${i},this.value)" title="Responsável pela etapa"
+          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
+          ${livroEtapaPessoaOptions(e.resp)}
+        </select>
+        <div style="min-width:0;">
+          <div style="font-size:9px;color:var(--text-soft);margin-bottom:3px;">${livroEtapaOffsetLabel(e.offsetDays)}</div>
+          <input type="date" value="${e.prazo||''}"
+            onchange="updateEtapaPrazoInline(${_epLivroId},${i},this.value)"
+            style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 5px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;width:130px;max-width:100%;">
+        </div>
         <button onclick="deleteEtapaModal(${_epLivroId},${i})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:0 2px;" title="Excluir">×</button>
       </div>`;
     }).join('');
@@ -6537,7 +6585,7 @@ function save(key, val) {
     const input = document.getElementById('ep-nova-etapa');
     const nome = (input?.value||'').trim();
     if (!l || !nome) { input?.focus(); return; }
-    l.etapas.push({nome, feito: false, prazo: ''});
+    l.etapas.push({nome, feito: false, prazo: '', executar: '', resp: '', offsetDays: null});
     save('gc-livros', livros);
     renderLivros();
     if (input) input.value = '';
@@ -6627,24 +6675,19 @@ function save(key, val) {
     const referenceDate = parseDashboardDate(newDateValue);
     if (!referenceDate) return;
     const editedStage = livro.etapas[editedIndex];
-    const templateByName = new Map(CRONOGRAMA_EDITORIAL.map(item => [item[0], item[1]]));
-    const referenceOffset = Number.isFinite(Number(editedStage.offsetDays))
-      ? Number(editedStage.offsetDays)
-      : Number(templateByName.get(editedStage.nome) || 0);
-    const occupied = new Set(livro.etapas.slice(0, editedIndex + 1).map(stage => stage.prazo).filter(Boolean));
-    let previousDate = referenceDate;
+    const templateByName = new Map(CRONOGRAMA_EDITORIAL.map(item => [item[0], item[3]]));
+    const referenceOffset = typeof editedStage.offsetDays === 'number'
+      ? editedStage.offsetDays
+      : templateByName.get(editedStage.nome);
+    if (typeof referenceOffset !== 'number') return;
     for (let index = editedIndex + 1; index < livro.etapas.length; index += 1) {
       const stage = livro.etapas[index];
-      const stageOffset = Number.isFinite(Number(stage.offsetDays))
-        ? Number(stage.offsetDays)
+      const stageOffset = typeof stage.offsetDays === 'number'
+        ? stage.offsetDays
         : templateByName.get(stage.nome);
-      const candidate = Number.isFinite(Number(stageOffset))
-        ? addCalendarDays(referenceDate, Math.max(0, Number(stageOffset) - referenceOffset))
-        : addCalendarDays(previousDate, 1);
-      const nextDate = nextAvailableEditorialDate(candidate, previousDate, occupied);
-      stage.prazo = dashboardDateString(nextDate);
-      occupied.add(stage.prazo);
-      previousDate = nextDate;
+      if (typeof stageOffset === 'number') {
+        stage.prazo = dashboardDateString(addCalendarDays(referenceDate, stageOffset - referenceOffset));
+      }
     }
   }
 

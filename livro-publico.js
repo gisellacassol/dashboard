@@ -6,6 +6,13 @@ function formatDate(value) {
     .format(new Date(`${value}T12:00:00Z`));
 }
 
+function formatOffset(value) {
+  if (typeof value !== 'number') return '';
+  if (value === 0) return 'No dia do lançamento';
+  const amount = Math.abs(value);
+  return value < 0 ? `${amount} ${amount === 1 ? 'dia' : 'dias'} antes` : `${amount} ${amount === 1 ? 'dia' : 'dias'} depois`;
+}
+
 function textElement(tag, className, text) {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -80,7 +87,7 @@ function renderBook(book) {
     row.append(textElement('div', 'mark', stage.feito ? '✓' : ''));
     const content = document.createElement('div');
     content.append(textElement('div', 'name', stage.nome || 'Etapa'));
-    const details = [stage.resp ? `Responsável: ${stage.resp}` : '', stage.prazo ? `Prazo: ${formatDate(stage.prazo)}` : ''].filter(Boolean).join(' · ');
+    const details = [stage.executar ? `Executar: ${stage.executar}` : '', stage.resp ? `Responsável: ${stage.resp}` : '', formatOffset(stage.offsetDays), stage.prazo ? `Prazo: ${formatDate(stage.prazo)}` : ''].filter(Boolean).join(' · ');
     if (details) content.append(textElement('div', 'details', details));
     row.append(content, textElement('div', 'status', stage.feito ? 'Concluída' : 'Em andamento'));
     list.append(row);
