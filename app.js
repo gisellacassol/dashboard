@@ -2840,6 +2840,7 @@ function save(key, val) {
           <span style="font-size:11px;color:var(--text-soft);">${pct}%</span>
         </div>
         ${proxima ? `<span style="font-size:11px;color:var(--text-soft);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proxima.nome}</span>` : '<span class="badge b-ok" style="font-size:10px;">concluído</span>'}
+        <button onclick="event.stopPropagation();compartilharLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Copiar link público somente leitura">🔗</button>
         <button onclick="event.stopPropagation();openEtapasPrazos(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:2px 6px;" title="Definir prazos das etapas">📅</button>
         <button onclick="event.stopPropagation();openLivroFicha(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Editar ficha">✎</button>
         <button onclick="event.stopPropagation();duplicarLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Duplicar">⧉</button>
@@ -2852,6 +2853,33 @@ function save(key, val) {
         <button class="add-btn" style="margin-top:8px;font-size:12px;" onclick="adicionarEtapa(${l.id})">+ etapa</button>
       </div>
     </div>`;
+  }
+
+  function novoTokenPublicoLivro() {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function compartilharLivro(id) {
+    const livro = livros.find(item => String(item.id) === String(id));
+    if (!livro) return;
+    if (!livro.publicShareToken) {
+      livro.publicShareToken = novoTokenPublicoLivro();
+      livro.publicShareEnabled = true;
+      save('gc-livros', livros);
+    } else if (livro.publicShareEnabled !== true) {
+      livro.publicShareEnabled = true;
+      save('gc-livros', livros);
+    }
+    const url = new URL('livro.html', window.location.href);
+    url.searchParams.set('token', livro.publicShareToken);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      window.alert('Link público do livro copiado.');
+    } catch (_) {
+      window.prompt('Copie o link público do livro:', url.toString());
+    }
   }
   
   function renderLivros() {

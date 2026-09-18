@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Acompanhamento do livro · Grupo Cassol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; --bg:#f6f2ed; --surface:#fffdfb; --text:#251a15; --soft:#806f66; --line:#e8ded7; --accent:#9d241f; --done:#52735d; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; }
+    main { width:min(820px,calc(100% - 32px)); margin:0 auto; padding:48px 0 72px; }
+    .brand { color:var(--soft); font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; margin-bottom:30px; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:clamp(22px,5vw,42px); box-shadow:0 18px 55px rgba(62,39,28,.07); }
+    h1 { font-family:'Playfair Display',serif; font-size:clamp(30px,6vw,48px); line-height:1.08; margin:0 0 12px; }
+    .subtitle { color:var(--soft); margin-bottom:28px; }
+    .progress-meta { display:flex; justify-content:space-between; gap:16px; font-size:13px; font-weight:600; margin-bottom:8px; }
+    .progress { height:10px; background:#eee6e0; border-radius:999px; overflow:hidden; margin-bottom:32px; }
+    .progress > div { height:100%; background:var(--accent); border-radius:inherit; transition:width .25s ease; }
+    .stages { display:grid; gap:10px; }
+    .stage { display:grid; grid-template-columns:28px minmax(0,1fr) auto; gap:12px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:13px 14px; }
+    .mark { width:23px; height:23px; border-radius:50%; border:2px solid #c9bbb2; display:grid; place-items:center; color:white; font-size:13px; font-weight:700; }
+    .stage.done .mark { background:var(--done); border-color:var(--done); }
+    .stage.done .name { color:var(--soft); text-decoration:line-through; }
+    .name { font-size:14px; font-weight:600; }
+    .details { color:var(--soft); font-size:11px; margin-top:3px; }
+    .status { color:var(--soft); font-size:11px; white-space:nowrap; }
+    .stage.done .status { color:var(--done); }
+    .message { text-align:center; color:var(--soft); padding:45px 10px; line-height:1.6; }
+    footer { text-align:center; color:var(--soft); font-size:11px; margin-top:22px; }
+    @media (max-width:560px) { main{padding-top:24px}.card{border-radius:16px}.stage{grid-template-columns:26px 1fr}.status{grid-column:2}.brand{margin-bottom:20px} }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">Grupo Cassol · acompanhamento editorial</div>
+    <section class="card" id="book-card">
+      <div class="message">Carregando as etapas do livro…</div>
+    </section>
+    <footer>Página somente para visualização</footer>
+  </main>
+  <script src="livro-publico.js?v=1.0.0"></script>
+</body>
+</html>
