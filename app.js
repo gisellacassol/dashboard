@@ -1306,12 +1306,43 @@ function save(key, val) {
     if (wrap) wrap.dataset.view = view;
     document.getElementById('btn-cal-semana').classList.toggle('active', view === 'semana');
     document.getElementById('btn-cal-mes').classList.toggle('active', view === 'mes');
+    const shareButton = document.getElementById('btn-compartilhar-cal-mes');
+    if (shareButton) shareButton.style.display = view === 'mes' ? '' : 'none';
     if (view === 'semana') {
       buildConteudoCalSemana();
     } else {
       const wrap2 = document.getElementById('cal-conteudo-wrap');
       if (wrap2) wrap2.innerHTML = '<div class="cal-wrap" id="cal-conteudo"></div>';
       buildCalendar('cal-conteudo', getFilter('conteudo-menu'));
+    }
+  }
+
+  async function compartilharCalendarioConteudoMes() {
+    const state = CAL_STATE['cal-conteudo'];
+    const sessionToken = sessionStorage.getItem('gc-dashboard-session-token');
+    if (!state || !sessionToken) {
+      alert('Abra novamente o Dashboard e tente gerar o link do mês.');
+      return;
+    }
+    const month = `${state.y}-${String(state.m + 1).padStart(2, '0')}`;
+    try {
+      const response = await fetch(CHECKLIST_SYNC_URL, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json', 'x-cassol-dashboard-session':sessionToken},
+        body: JSON.stringify({ operation:'create_public_content_calendar_link', month }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.token) throw new Error(result.error || 'Não foi possível gerar o link.');
+      const url = new URL('calendario-conteudos.html', window.location.href);
+      url.searchParams.set('token', result.token);
+      try {
+        await navigator.clipboard.writeText(url.href);
+        alert(`Link somente leitura de ${MESES[state.m]} de ${state.y} copiado.`);
+      } catch (_) {
+        window.prompt('Copie o link público do mês:', url.href);
+      }
+    } catch (error) {
+      alert(error.message || 'Não foi possível gerar o link do calendário agora.');
     }
   }
   
