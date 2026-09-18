@@ -1781,6 +1781,10 @@ function save(key, val) {
   
   function updateQaFields() {
     const tipo = document.getElementById('qa-tipo').value;
+    if (tipo === 'conteudo' && window._qaLastTipo !== 'conteudo' && !editingEventId && !getCompanyRestriction()) {
+      setEmpresasChecked('qa-emp-', '');
+    }
+    window._qaLastTipo = tipo;
     if (tipo === 'livro' && !window._editingEtapa) {
       const empresa = ['editora','leia','gisella'].find(key => document.getElementById('qa-emp-'+key)?.checked) || 'editora';
       document.getElementById('qa-tipo').value = 'tarefa';
@@ -2095,7 +2099,6 @@ function save(key, val) {
     window._addingToMenteeId = null;
     document.getElementById('qa-titulo').value = '';
     document.getElementById('qa-titulo').placeholder = 'Descreva...';
-    setEmpresasChecked('qa-emp-', 'editora');
     // Auto-detect tipo from current active page
     const activePage = document.querySelector('.page.active');
     const pageId = activePage ? activePage.id : '';
@@ -2106,6 +2109,8 @@ function save(key, val) {
     else if (pageId === 'page-livros') defaultTipo = 'livro';
     else if (pageId === 'page-projetos') defaultTipo = 'projeto';
     document.getElementById('qa-tipo').value = defaultTipo;
+    setEmpresasChecked('qa-emp-', defaultTipo === 'conteudo' ? '' : 'editora');
+    window._qaLastTipo = defaultTipo;
     const urgenteEl = document.getElementById('qa-urgente');
     if (urgenteEl) urgenteEl.checked = false;
     const recurrenceEl = document.getElementById('qa-recorrencia');
@@ -2380,10 +2385,16 @@ function save(key, val) {
   function getQaVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
   
   async function submitQuickAdd() {
-    const empresa = getEmpresaStr('qa-emp-', 'editora');
     const tipo = getQaVal('qa-tipo');
     const titulo = getQaVal('qa-titulo').trim();
     if (!titulo) { document.getElementById('qa-titulo').focus(); return; }
+    const empresasConteudo = tipo === 'conteudo' ? getEmpresasChecked('qa-emp-') : null;
+    if (tipo === 'conteudo' && !empresasConteudo) {
+      alert('Selecione ao menos uma empresa para o conteúdo.');
+      document.getElementById('qa-emp-editora')?.focus();
+      return;
+    }
+    const empresa = empresasConteudo ? empresasConteudo.join(',') : getEmpresaStr('qa-emp-', 'editora');
   
     // Se estamos editando uma etapa de livro
     if (window._editingEtapa) {
@@ -4068,7 +4079,7 @@ function save(key, val) {
     document.getElementById('mc-title').textContent = 'Novo conteúdo';
     ['mc-nome','mc-responsavel','mc-link','mc-card-link','mc-copy','mc-legenda'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('mc-projeto').value='';
-    setEmpresasChecked('mc-emp-', 'gisella');
+    setEmpresasChecked('mc-emp-', '');
     document.getElementById('mc-rede').value='instagram';
     updateMcRede();
     document.getElementById('mc-tipo').value='reel';
@@ -4081,7 +4092,7 @@ function save(key, val) {
     setTimeout(()=>document.getElementById('mc-nome').focus(),50);
   }
   
-  function openNewConteudoEmpresa(emp) { openNewConteudo(); setEmpresasChecked('mc-emp-', emp); }
+  function openNewConteudoEmpresa() { openNewConteudo(); }
   
   function openConteudo(id) {
     const c = conteudos.find(x=>x.id===id);
@@ -4112,13 +4123,19 @@ function save(key, val) {
   function saveConteudo() {
     const nome = document.getElementById('mc-nome').value.trim();
     if (!nome) { document.getElementById('mc-nome').focus(); return; }
+    const empresasSelecionadas = getEmpresasChecked('mc-emp-');
+    if (!empresasSelecionadas) {
+      alert('Selecione ao menos uma empresa para o conteúdo.');
+      document.getElementById('mc-emp-editora')?.focus();
+      return;
+    }
     const projetoConteudo = document.getElementById('mc-projeto').value;
     if (!projetoConteudo) {
       alert('Selecione o projeto do conteúdo ou a opção “Nenhum projeto”.');
       document.getElementById('mc-projeto').focus();
       return;
     }
-    const data = {nome, projetoConteudo, empresa:getEmpresaStr('mc-emp-','editora'), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
+    const data = {nome, projetoConteudo, empresa:empresasSelecionadas.join(','), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
     let conteudoSalvo = null;
     if (currentConteudoId) {
       const i=conteudos.findIndex(x=>x.id===currentConteudoId);
