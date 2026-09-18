@@ -2765,7 +2765,7 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-lancamento'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -2822,6 +2822,7 @@ function save(key, val) {
         colecao: document.getElementById('nl-colecao').value.trim(),
         editora: document.getElementById('nl-editora').value.trim(),
         lancamento: lancamentoDate,
+        assuntos: document.getElementById('nl-assuntos').value.trim(),
         sinopse: document.getElementById('nl-sinopse').value.trim(),
         os: document.getElementById('nl-os')?.value.trim()||'',
         ano,
@@ -2863,7 +2864,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -3077,6 +3078,7 @@ function save(key, val) {
     document.getElementById('nl-colecao').value = info.colecao||'';
     document.getElementById('nl-editora').value = info.editora||'';
     document.getElementById('nl-lancamento').value = info.lancamento||'';
+    document.getElementById('nl-assuntos').value = info.assuntos||'';
     document.getElementById('nl-sinopse').value = info.sinopse||'';
     document.querySelector('#modal-livro .modal-title').textContent = 'Ficha Técnica · ' + l.titulo;
     document.querySelector('#modal-livro .btn-primary').textContent = 'Salvar alterações';
