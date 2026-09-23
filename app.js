@@ -1628,7 +1628,7 @@ function save(key, val) {
         : t._conteudoId
           ? `tarefaCalDragStart(event,'conteudo',${t._conteudoId},'${t._conteudoKey}')`
           : `tarefaCalDragStart(event,'evento',${t.id},null)`;
-      const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `openConteudoEtapasPrazos(${t._conteudoId})` : `openEditEvent(${t.id})`);
+      const clickAction = t._isEtapa ? `openEditEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `openConteudo(${t._conteudoId})` : `openEditEvent(${t.id})`);
       const _chk = t._isEtapa ? `toggleEtapa(${t.livroId},${t.etapaIdx})` : (t._conteudoId ? `toggleConteudoEtapa(${t._conteudoId},'${t._conteudoKey}')` : `toggleTarefaArquivada(${t.id})`);
       return `<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};border-left:2px solid ${cor};${t.arquivada?'opacity:0.45;':''}display:flex;align-items:flex-start;gap:4px;">
         <input type="checkbox" ${t.arquivada?'checked':''} ${t.checkBloqueado?'disabled':''} onchange="${_chk}" onclick="event.stopPropagation();" title="${t.checkBloqueado?'Atribua esta etapa a alguém para liberar o check':'Marcar como concluída'}" style="accent-color:${cor};flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:${t.checkBloqueado?'not-allowed':'pointer'};">
@@ -4599,7 +4599,9 @@ function save(key, val) {
               title="${e.checkBloqueado?'Atribua esta etapa a alguém para liberar o check':isArquivada?'Desmarcar':'Marcar como concluída'}">
         </td>
         <td style="font-weight:500;${!isArquivada && e._livroId !== undefined ? `color:${((e.empresa||'').split(',')[0]==='editora'?'var(--editora)':(e.empresa||'').split(',')[0]==='leia'?'var(--leia)':'var(--gisella)')};` : ''}${isArquivada?'text-decoration:line-through;color:var(--text-soft);':''}">
-          <span>${e.titulo}</span>
+          ${e._conteudoId!==undefined
+            ? `<span onclick="event.stopPropagation();openConteudo(${e._conteudoId})" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border-mid);" title="Abrir conteúdo">${e.titulo}</span>`
+            : `<span>${e.titulo}</span>`}
           ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
           ${e._conteudoId!==undefined?`<button onclick="openConteudoEtapasPrazos(${e._conteudoId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Ver prazos">📅</button>`:!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
           ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
@@ -5445,7 +5447,7 @@ function save(key, val) {
           : t._conteudoId
             ? 'tarefaCalDragStart(event,\'conteudo\','+t._conteudoId+',\''+t._conteudoKey+'\')'
             : 'tarefaCalDragStart(event,\'evento\','+t.id+',null)';
-        var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'openConteudoEtapasPrazos('+t._conteudoId+')':'openEditEvent('+t.id+')';
+        var clickAct=t._isEtapa?'openEditEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'openConteudo('+t._conteudoId+')':'openEditEvent('+t.id+')';
         var chk=t._isEtapa?'toggleEtapa('+t.livroId+','+t.etapaIdx+')':t._conteudoId?'toggleConteudoEtapa('+t._conteudoId+',\''+t._conteudoKey+'\')':'toggleTarefaArquivada('+t.id+')';
         html+='<div style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:'+c+'15;color:'+c+';border-left:2px solid '+c+';'+(t.arquivada?'opacity:0.45;':'')+'display:flex;align-items:flex-start;gap:4px;">';
         html+='<input type="checkbox" '+(t.arquivada?'checked':'')+' onchange="'+chk+'" onclick="event.stopPropagation();" style="accent-color:'+c+';flex-shrink:0;margin-top:2px;width:11px;height:11px;cursor:pointer;">';
