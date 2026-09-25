@@ -979,7 +979,7 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Nome do conteúdo</label><input class="form-input" id="mc-nome" type="text" placeholder="Ex: Reels sobre estratégia literária"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Projeto *</label>
-          <select class="form-select" id="mc-projeto" required>
+          <select class="form-select" id="mc-projeto" required onchange="updateMcConteudoStageLinks()">
             <option value="">Selecione um projeto...</option>
             <option value="nenhum">Nenhum projeto</option>
             <option value="pre-lancamento-outubro-2026">Pré-lançamento outubro 2026</option>
@@ -1002,7 +1002,7 @@
             <option value="anuncio">Anúncio</option>
           </select></div>
         <div class="form-group" id="mc-tipo-wrap"><label class="form-label">Formato</label>
-          <select class="form-select" id="mc-tipo">
+          <select class="form-select" id="mc-tipo" onchange="updateMcConteudoStageLinks()">
             <option value="reel">Reel</option><option value="card">Card</option><option value="carrossel">Carrossel</option><option value="story">Story</option><option value="emailmkt">Email mkt</option><option value="site">Site</option>
           </select></div>
         <div class="form-group"><label class="form-label">Status</label>
@@ -1014,6 +1014,15 @@
         <div class="form-group"><label class="form-label">Horário</label><input class="form-input" id="mc-hora" type="time"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link</label><input class="form-input" id="mc-link" type="url" placeholder="https://..."></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link do card</label><input class="form-input" id="mc-card-link" type="url" placeholder="https://..."></div>
+        <div id="mc-pre-lancamento-links" style="display:none;grid-column:1/-1;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin:2px 0 10px;">Links das etapas do pré-lançamento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group"><label class="form-label">Link — Gravado</label><input class="form-input" id="mc-link-gravado" type="url" placeholder="https://..."></div>
+            <div class="form-group"><label class="form-label">Link — Para editar vídeo</label><input class="form-input" id="mc-link-editar-video" type="url" placeholder="https://..."></div>
+            <div class="form-group"><label class="form-label">Link — Para editar arte</label><input class="form-input" id="mc-link-editar-arte" type="url" placeholder="https://..."></div>
+            <div class="form-group"><label class="form-label">Link — Para editar vídeo com arte</label><input class="form-input" id="mc-link-editar-video-arte" type="url" placeholder="https://..."></div>
+          </div>
+        </div>
         <div class="form-group" id="mc-copy-wrap" style="grid-column:1/-1;"><label class="form-label">Copy</label><textarea class="notes-area" id="mc-copy" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Legenda</label><textarea class="notes-area" id="mc-legenda" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Observação</label><textarea class="notes-area" id="mc-observacao" style="min-height:50px;"></textarea></div>
@@ -1159,6 +1168,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.43"></script>
+  <script src="app.js?v=3.2.44"></script>
 </body>
 </html>

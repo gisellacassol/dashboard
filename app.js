@@ -1848,6 +1848,15 @@ function save(key, val) {
       const tipoSel = document.getElementById('mc-tipo');
       if (tipoSel) tipoSel.value = 'emailmkt';
     }
+    updateMcConteudoStageLinks();
+  }
+
+  function updateMcConteudoStageLinks() {
+    const wrap = document.getElementById('mc-pre-lancamento-links');
+    if (!wrap) return;
+    const projeto = document.getElementById('mc-projeto')?.value || '';
+    const tipo = document.getElementById('mc-tipo')?.value || '';
+    wrap.style.display = projeto === 'pre-lancamento-outubro-2026' && tipo === 'reel' ? '' : 'none';
   }
   
   function updateDocsLink() {
@@ -3508,10 +3517,10 @@ function save(key, val) {
   ];
   const PRE_LANCAMENTO_REEL_FLUXO = [
     {key:'copy',nome:'Copy criada'},
-    {key:'gravado',nome:'Gravado',resp:'Milena'},
-    {key:'editar_video',nome:'Para editar vídeo',resp:'Luiggi'},
-    {key:'editar_arte',nome:'Para editar arte',resp:'Bruna'},
-    {key:'editar_video_arte',nome:'Para editar vídeo com arte',resp:'Luiggi'},
+    {key:'gravado',nome:'Gravado',resp:'Milena',requiresLink:true},
+    {key:'editar_video',nome:'Para editar vídeo',resp:'Luiggi',requiresLink:true},
+    {key:'editar_arte',nome:'Para editar arte',resp:'Bruna',requiresLink:true},
+    {key:'editar_video_arte',nome:'Para editar vídeo com arte',resp:'Luiggi',requiresLink:true},
     {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
     {key:'agendado',nome:'Para agendar',resp:'Milena'},
     {key:'postado',nome:'Para postar',resp:'Milena'},
@@ -4145,6 +4154,10 @@ function save(key, val) {
     document.getElementById('mc-datapost').value='';
     document.getElementById('mc-hora').value='';
     document.getElementById('mc-observacao').value='';
+    ['gravado','editar-video','editar-arte','editar-video-arte'].forEach(key => {
+      document.getElementById(`mc-link-${key}`).value = '';
+    });
+    updateMcConteudoStageLinks();
     openModal('modal-conteudo');
     setTimeout(()=>document.getElementById('mc-nome').focus(),50);
   }
@@ -4174,6 +4187,11 @@ function save(key, val) {
     document.getElementById('mc-card-link').value=contentStageLink(c, 'arte');
     document.getElementById('mc-copy').value=c.copy||'';
     document.getElementById('mc-legenda').value=c.legenda||'';
+    document.getElementById('mc-link-gravado').value=contentStageLink(c, 'gravado');
+    document.getElementById('mc-link-editar-video').value=contentStageLink(c, 'editar_video');
+    document.getElementById('mc-link-editar-arte').value=contentStageLink(c, 'editar_arte');
+    document.getElementById('mc-link-editar-video-arte').value=contentStageLink(c, 'editar_video_arte');
+    updateMcConteudoStageLinks();
     openModal('modal-conteudo');
   }
   
@@ -4218,6 +4236,19 @@ function save(key, val) {
     if (conteudoSalvo?.etapasStatus?.arte) {
       if (data.cardLink) conteudoSalvo.etapasStatus.arte.link = data.cardLink;
       else delete conteudoSalvo.etapasStatus.arte.link;
+    }
+    if (conteudoSalvo && conteudoEhPreLancamentoReel(conteudoSalvo)) {
+      const linksDasEtapas = {
+        gravado: document.getElementById('mc-link-gravado').value.trim(),
+        editar_video: document.getElementById('mc-link-editar-video').value.trim(),
+        editar_arte: document.getElementById('mc-link-editar-arte').value.trim(),
+        editar_video_arte: document.getElementById('mc-link-editar-video-arte').value.trim(),
+      };
+      Object.entries(linksDasEtapas).forEach(([key, link]) => {
+        if (!conteudoSalvo.etapasStatus[key]) conteudoSalvo.etapasStatus[key] = {};
+        if (link) conteudoSalvo.etapasStatus[key].link = link;
+        else delete conteudoSalvo.etapasStatus[key].link;
+      });
     }
     save('gc-conteudos',conteudos);
     refreshConteudoViews();
