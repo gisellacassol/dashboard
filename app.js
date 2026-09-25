@@ -1856,7 +1856,17 @@ function save(key, val) {
     if (!wrap) return;
     const projeto = document.getElementById('mc-projeto')?.value || '';
     const tipo = document.getElementById('mc-tipo')?.value || '';
-    wrap.style.display = projeto === 'pre-lancamento-outubro-2026' && tipo === 'reel' ? '' : 'none';
+    const visible = projeto === 'pre-lancamento-outubro-2026' && tipo === 'reel';
+    wrap.style.display = visible ? '' : 'none';
+    const pasta = visible ? conteudoProjectDriveFolderByKey(projeto) : '';
+    ['gravado','editar-video','editar-arte','editar-video-arte'].forEach(key => {
+      const input = document.getElementById(`mc-link-${key}`);
+      if (input) input.placeholder = pasta ? `Herdado do projeto: ${pasta}` : 'https://...';
+    });
+    const note = document.getElementById('mc-pre-lancamento-folder-note');
+    if (note) note.textContent = pasta
+      ? `Pasta padrão do projeto: ${pasta}. Deixe um campo vazio para usar essa pasta.`
+      : 'Nenhuma pasta padrão foi configurada no projeto.';
   }
   
   function updateDocsLink() {
@@ -3466,6 +3476,21 @@ function save(key, val) {
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
   const PRE_LANCAMENTO_OUTUBRO_2026 = 'pre-lancamento-outubro-2026';
+
+  function normalizarNomeProjetoConteudo(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  }
+
+  function inferirChaveProjetoConteudo(nome) {
+    const normalizado = normalizarNomeProjetoConteudo(nome);
+    return normalizado.includes('pre lancamento') && normalizado.includes('outubro') && normalizado.includes('2026')
+      ? PRE_LANCAMENTO_OUTUBRO_2026
+      : '';
+  }
+
+  function chaveConteudoDoProjeto(projeto) {
+    return String(projeto?.conteudoProjetoKey || inferirChaveProjetoConteudo(projeto?.nome));
+  }
   
   // O fluxo especial por formato vale somente para conteúdos da Editora Cassol.
   // Os demais perfis continuam usando suas etapas atuais.
@@ -3812,7 +3837,7 @@ function save(key, val) {
     </div>`;
   }
   
-  function contentStageLink(c, key) {
+  function contentStageExplicitLink(c, key) {
     const stageLink = String(c.etapasStatus?.[key]?.link || '').trim();
     if (stageLink) return stageLink;
     if (key === 'arte') return String(c.cardLink || '').trim();
@@ -3822,6 +3847,25 @@ function save(key, val) {
     if (key === 'edicao') return String(c.link || '').trim();
     if (key === 'gravado') return String(c.observacao || '').trim();
     return '';
+  }
+
+  function conteudoProjectDriveFolderByKey(projectKey) {
+    const projeto = projetos.find(item => chaveConteudoDoProjeto(item) === String(projectKey || ''));
+    return validContentStageLink(projeto?.pastaDriveConteudos || '');
+  }
+
+  function conteudoProjectDriveFolder(c) {
+    if (!conteudoEhPreLancamentoReel(c)) return '';
+    return conteudoProjectDriveFolderByKey(c.projetoConteudo);
+  }
+
+  function contentStageLink(c, key) {
+    const explicitLink = contentStageExplicitLink(c, key);
+    if (validContentStageLink(explicitLink)) return explicitLink;
+    if (['gravado','editar_video','editar_arte','editar_video_arte'].includes(key)) {
+      return conteudoProjectDriveFolder(c);
+    }
+    return explicitLink;
   }
 
   function validContentStageLink(value) {
@@ -3842,6 +3886,7 @@ function save(key, val) {
   function requestContentStageLink(c, key) {
     const etapa = getConteudoEtapaDefs(c).find(item => item.key === key);
     if (!etapa?.requiresLink && !etapa?.optionalLink) return true;
+    if (etapa?.requiresLink && conteudoProjectDriveFolder(c)) return true;
     if (etapa.optionalLink && !window.confirm('Esta etapa terá um link do card?')) return true;
     const current = contentStageLink(c, key);
     const label = `Link — ${etapa.nome}`;
@@ -4187,10 +4232,10 @@ function save(key, val) {
     document.getElementById('mc-card-link').value=contentStageLink(c, 'arte');
     document.getElementById('mc-copy').value=c.copy||'';
     document.getElementById('mc-legenda').value=c.legenda||'';
-    document.getElementById('mc-link-gravado').value=contentStageLink(c, 'gravado');
-    document.getElementById('mc-link-editar-video').value=contentStageLink(c, 'editar_video');
-    document.getElementById('mc-link-editar-arte').value=contentStageLink(c, 'editar_arte');
-    document.getElementById('mc-link-editar-video-arte').value=contentStageLink(c, 'editar_video_arte');
+    document.getElementById('mc-link-gravado').value=contentStageExplicitLink(c, 'gravado');
+    document.getElementById('mc-link-editar-video').value=contentStageExplicitLink(c, 'editar_video');
+    document.getElementById('mc-link-editar-arte').value=contentStageExplicitLink(c, 'editar_arte');
+    document.getElementById('mc-link-editar-video-arte').value=contentStageExplicitLink(c, 'editar_video_arte');
     updateMcConteudoStageLinks();
     openModal('modal-conteudo');
   }
@@ -4972,8 +5017,10 @@ function save(key, val) {
     document.getElementById('mp-resp').value = '';
     document.getElementById('mp-inicio').value = '';
     document.getElementById('mp-fim').value = '';
+    document.getElementById('mp-drive-folder').value = '';
     document.getElementById('mp-observacao').value = '';
     document.getElementById('mp-delete-btn').style.display = 'none';
+    updateProjetoDriveFieldVisibility();
     openModal('modal-projeto');
     setTimeout(()=>document.getElementById('mp-nome').focus(), 50);
   }
@@ -4981,6 +5028,7 @@ function save(key, val) {
   function submitProjeto() {
     const nome = document.getElementById('mp-nome').value.trim();
     if (!nome) { document.getElementById('mp-nome').focus(); return; }
+    const projetoExistente = editingProjetoId ? projetos.find(x => x.id === editingProjetoId) : null;
     const data = {
       nome,
       empresa: getEmpresaStr('mp-emp-', 'editora'),
@@ -4988,6 +5036,8 @@ function save(key, val) {
       responsavel: document.getElementById('mp-resp').value,
       inicio: document.getElementById('mp-inicio').value,
       fim: document.getElementById('mp-fim').value,
+      conteudoProjetoKey: projetoExistente?.conteudoProjetoKey || inferirChaveProjetoConteudo(nome),
+      pastaDriveConteudos: document.getElementById('mp-drive-folder').value.trim(),
       observacao: document.getElementById('mp-observacao').value.trim(),
     };
     if (editingProjetoId) {
@@ -4998,7 +5048,16 @@ function save(key, val) {
     }
     save('gc-projetos', projetos);
     renderProjetos();
+    refreshConteudoViews();
     closeModal('modal-projeto');
+  }
+
+  function updateProjetoDriveFieldVisibility() {
+    const wrap = document.getElementById('mp-drive-folder-wrap');
+    if (!wrap) return;
+    const projetoAtual = editingProjetoId ? projetos.find(x => x.id === editingProjetoId) : null;
+    const chave = projetoAtual?.conteudoProjetoKey || inferirChaveProjetoConteudo(document.getElementById('mp-nome')?.value);
+    wrap.style.display = chave === PRE_LANCAMENTO_OUTUBRO_2026 ? '' : 'none';
   }
   
   const ST_PROJ = {pendente:{l:'Pendente',c:'s-pendente'}, execucao:{l:'Em execução',c:'s-execucao'}, finalizado:{l:'Finalizado',c:'s-finalizado'}};
@@ -5201,8 +5260,10 @@ function save(key, val) {
     document.getElementById('mp-resp').value = p.responsavel||'';
     document.getElementById('mp-inicio').value = p.inicio||'';
     document.getElementById('mp-fim').value = p.fim||'';
+    document.getElementById('mp-drive-folder').value = p.pastaDriveConteudos||'';
     document.getElementById('mp-observacao').value = p.observacao||'';
     document.getElementById('mp-delete-btn').style.display = 'inline-block';
+    updateProjetoDriveFieldVisibility();
     openModal('modal-projeto');
   }
   

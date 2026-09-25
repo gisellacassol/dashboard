@@ -749,7 +749,7 @@
     <div class="modal-title" id="mp-title">Novo projeto</div>
     <form onsubmit="event.preventDefault();submitProjeto();">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Nome do projeto *</label><input class="form-input" id="mp-nome" type="text" placeholder="Ex: Lançamento coleção 2027"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Nome do projeto *</label><input class="form-input" id="mp-nome" type="text" placeholder="Ex: Lançamento coleção 2027" oninput="updateProjetoDriveFieldVisibility()"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Empresa(s)</label>
           <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mp-emp-editora" style="accent-color:var(--editora);"> <span style="color:var(--editora);">Editora Cassol</span></label>
@@ -771,6 +771,7 @@
           </select></div>
         <div class="form-group"><label class="form-label">Data de início</label><input class="form-input" id="mp-inicio" type="date"></div>
         <div class="form-group"><label class="form-label">Data de fim</label><input class="form-input" id="mp-fim" type="date"></div>
+        <div class="form-group" id="mp-drive-folder-wrap" style="display:none;grid-column:1/-1;"><label class="form-label">Pasta do Drive dos conteúdos</label><input class="form-input" id="mp-drive-folder" type="url" placeholder="https://drive.google.com/..."><div style="font-size:11px;color:var(--text-soft);margin-top:5px;">Será usada como link padrão das etapas do projeto.</div></div>
       </div>
       <div class="form-group"><label class="form-label">Observação</label>
         <textarea class="notes-area" id="mp-observacao" placeholder="Notas sobre o projeto..." style="min-height:70px;"></textarea></div>
@@ -1016,6 +1017,7 @@
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link do card</label><input class="form-input" id="mc-card-link" type="url" placeholder="https://..."></div>
         <div id="mc-pre-lancamento-links" style="display:none;grid-column:1/-1;">
           <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin:2px 0 10px;">Links das etapas do pré-lançamento</div>
+          <div id="mc-pre-lancamento-folder-note" style="font-size:11px;color:var(--text-soft);margin:-4px 0 10px;word-break:break-all;"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="form-group"><label class="form-label">Link — Gravado</label><input class="form-input" id="mc-link-gravado" type="url" placeholder="https://..."></div>
             <div class="form-group"><label class="form-label">Link — Para editar vídeo</label><input class="form-input" id="mc-link-editar-video" type="url" placeholder="https://..."></div>
@@ -1168,6 +1170,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.44"></script>
+  <script src="app.js?v=3.2.45"></script>
 </body>
 </html>
