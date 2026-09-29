@@ -6740,7 +6740,7 @@ function save(key, val) {
       return 0; // mantém ordem original dentro de cada grupo
     });
   
-    const header = `<div style="display:grid;grid-template-columns:20px 18px minmax(180px,1fr) 112px 112px 130px 20px;gap:8px;padding:0 0 7px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;">
+    const header = `<div class="livro-etapas-grid livro-etapas-grid-header" style="padding:0 0 7px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;">
       <span></span><span></span><span>Etapa</span><span>Executar etapa</span><span>Responsável</span><span>Lançamento / prazo</span><span></span>
     </div>`;
     el.innerHTML = header + comIdx.map(({e, i}) => {
@@ -6752,16 +6752,17 @@ function save(key, val) {
         ondragstart="epDragStart(event,${i})"
         ondragover="event.preventDefault()"
         ondrop="epDrop(event,${i})"
-        style="display:grid;grid-template-columns:20px 18px minmax(180px,1fr) 112px 112px 130px 20px;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}cursor:default;">
+        class="livro-etapas-grid livro-etapas-grid-row"
+        style="padding:7px 0;border-bottom:1px solid var(--border);${e.feito?'opacity:0.55;':''}cursor:default;">
         <span style="cursor:grab;color:var(--text-soft);font-size:12px;flex-shrink:0;">⠿</span>
         <input type="checkbox" ${e.feito?'checked':''} onchange="toggleEtapaModal(${_epLivroId},${i})" style="accent-color:var(--gisella);width:16px;height:16px;flex-shrink:0;cursor:pointer;">
         <span style="flex:1;font-size:13px;color:${cor};${e.feito?'text-decoration:line-through;':''}" ondblclick="renameEtapaModal(${_epLivroId},${i},this)">${e.nome}</span>
         <select onchange="setEtapaExecutar(${_epLivroId},${i},this.value)" title="Executar etapa"
-          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;min-width:0;">
+          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;min-width:0;width:100%;">
           ${livroEtapaPessoaOptions(e.executar)}
         </select>
         <select onchange="setEtapaResp(${_epLivroId},${i},this.value)" title="Responsável pela etapa"
-          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;">
+          style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg);color:var(--text-soft);cursor:pointer;min-width:0;width:100%;">
           ${livroEtapaPessoaOptions(e.resp)}
         </select>
         <div style="min-width:0;">

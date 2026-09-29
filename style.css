@@ -256,6 +256,13 @@ tr:hover td { background: var(--bg); }
 .modal { background: var(--surface); border-radius: 16px; padding: 1.5rem; width: 520px; max-width: 95vw; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
 .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 1rem; }
 .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-soft); margin-top: -4px; }
+.livro-etapas-modal { position: relative; width: 820px; max-width: 96vw; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+.livro-etapas-modal > .modal-close { position: absolute; top: 14px; right: 18px; margin: 0; z-index: 1; }
+.livro-etapas-modal > .modal-title { padding-right: 32px; }
+.livro-etapas-lista { flex: 1; min-height: 0; min-width: 0; overflow: auto; display: flex; flex-direction: column; margin-bottom: 1rem; padding-right: 4px; }
+.livro-etapas-grid { display: grid; grid-template-columns: 20px 18px minmax(180px,1fr) minmax(105px,120px) minmax(105px,120px) 140px 20px; align-items: center; gap: 8px; width: 100%; }
+.livro-etapas-grid > * { min-width: 0; }
+.livro-etapas-grid-row > span:nth-child(3) { overflow-wrap: anywhere; line-height: 1.25; }
 .form-group { margin-bottom: 12px; }
 .form-label { font-size: 11px; font-weight: 500; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; display: block; }
 .form-input, .form-select { width: 100%; padding: 8px 10px; border: 1px solid var(--border-mid); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); }
@@ -286,6 +293,10 @@ tr:hover td { background: var(--bg); }
 .modal-tab-content { display: none; }
 .modal-tab-content.active { display: block; }
 @media (max-width: 768px) {
+
+  .livro-etapas-modal { width: 98vw !important; padding: 1rem; }
+  .livro-etapas-lista { -webkit-overflow-scrolling: touch; }
+  .livro-etapas-grid { min-width: 700px; grid-template-columns: 20px 18px minmax(170px,1fr) 108px 108px 132px 20px; }
   /* Esconder calendário semanal de tarefas no mobile */
   #cal-tarefas-semana-wrap,
   #cal-visao-semana-wrap,
