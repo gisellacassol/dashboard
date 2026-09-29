@@ -4590,6 +4590,104 @@ function save(key, val) {
   /* ── TAREFAS ── */
   // openGroups persiste entre rebuilds para manter estado dos grupos abertos
   const openGroups = {};
+  let _taskSpecificNoteTarget = null;
+
+  function taskSpecificNoteReference(task) {
+    if (task._conteudoId !== undefined) return {kind:'conteudo', id:task._conteudoId, key:task._conteudoKey};
+    if (task._livroId !== undefined) return {kind:'livro', id:task._livroId, key:task._etapaIdx};
+    return {kind:'evento', id:task.id, key:''};
+  }
+
+  function taskSpecificNoteValue(task) {
+    return String(task.notaTarefa ?? task.observacao ?? '').trim();
+  }
+
+  function taskSpecificNoteButton(task) {
+    const reference = encodeURIComponent(JSON.stringify(taskSpecificNoteReference(task)));
+    const hasNote = !!taskSpecificNoteValue(task);
+    return `<button onclick="event.stopPropagation();openTaskSpecificNote('${reference}')" style="background:none;border:none;color:${hasNote?'var(--gisella)':'var(--text-soft)'};cursor:pointer;font-size:13px;padding:1px 4px;opacity:${hasNote?'1':'0.55'};" title="${hasNote?'Ver ou editar nota':'Adicionar nota'}">📝</button>`;
+  }
+
+  function resolveTaskSpecificNoteTarget(reference) {
+    if (reference.kind === 'evento') {
+      const item = events.find(event => String(event.id) === String(reference.id));
+      return item ? {item, title:item.titulo || 'Tarefa', value:item.observacao || ''} : null;
+    }
+    if (reference.kind === 'livro') {
+      const livro = livros.find(item => String(item.id) === String(reference.id));
+      const etapa = livro?.etapas?.[Number(reference.key)];
+      return etapa ? {item:etapa, title:`[${livro.titulo}] ${etapa.nome}`, value:etapa.nota || ''} : null;
+    }
+    if (reference.kind === 'conteudo') {
+      const conteudo = conteudos.find(item => String(item.id) === String(reference.id));
+      const etapa = getConteudoEtapaDefs(conteudo || {}).find(item => item.key === reference.key);
+      if (!conteudo || !etapa) return null;
+      if (!conteudo.etapasStatus) conteudo.etapasStatus = {};
+      if (!conteudo.etapasStatus[reference.key]) conteudo.etapasStatus[reference.key] = {};
+      const item = conteudo.etapasStatus[reference.key];
+      return {item, title:`[${conteudo.nome}] ${etapa.nome}`, value:item.nota || ''};
+    }
+    return null;
+  }
+
+  function openTaskSpecificNote(encodedReference) {
+    let reference;
+    try { reference = JSON.parse(decodeURIComponent(encodedReference)); } catch (_) { return; }
+    const target = resolveTaskSpecificNoteTarget(reference);
+    if (!target) return;
+    _taskSpecificNoteTarget = reference;
+    let overlay = document.getElementById('modal-nota-tarefa');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'modal-nota-tarefa';
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = `<div class="modal" style="width:480px;">
+        <button class="modal-close" onclick="closeTaskSpecificNote()">×</button>
+        <div class="modal-title">Nota da tarefa</div>
+        <div id="modal-nota-tarefa-titulo" style="font-size:12px;color:var(--text-soft);margin:-8px 0 14px;"></div>
+        <textarea class="notes-area" id="modal-nota-tarefa-texto" placeholder="Escreva uma nota sobre esta tarefa..." style="min-height:130px;"></textarea>
+        <div class="btn-row">
+          <button type="button" class="btn" onclick="closeTaskSpecificNote()">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="saveTaskSpecificNote()">Salvar nota</button>
+        </div>
+      </div>`;
+      document.body.appendChild(overlay);
+    }
+    document.getElementById('modal-nota-tarefa-titulo').textContent = target.title;
+    document.getElementById('modal-nota-tarefa-texto').value = target.value;
+    overlay.classList.add('open');
+    setTimeout(() => document.getElementById('modal-nota-tarefa-texto')?.focus(), 50);
+  }
+
+  function closeTaskSpecificNote() {
+    document.getElementById('modal-nota-tarefa')?.classList.remove('open');
+    _taskSpecificNoteTarget = null;
+  }
+
+  function saveTaskSpecificNote() {
+    if (!_taskSpecificNoteTarget) return;
+    const reference = _taskSpecificNoteTarget;
+    const target = resolveTaskSpecificNoteTarget(reference);
+    if (!target) return;
+    const note = (document.getElementById('modal-nota-tarefa-texto')?.value || '').trim();
+    if (reference.kind === 'evento') {
+      target.item.observacao = note;
+      save('gc-events', events);
+      buildTarefas();
+      buildColabTarefas();
+    } else if (reference.kind === 'livro') {
+      target.item.nota = note;
+      save('gc-livros', livros);
+      renderLivros();
+      buildTarefas();
+      buildColabTarefas();
+    } else if (reference.kind === 'conteudo') {
+      target.item.nota = note;
+      save('gc-conteudos', conteudos);
+      refreshConteudoViews();
+    }
+    closeTaskSpecificNote();
+  }
   
   function buildTarefas() {
     const el = document.getElementById('tarefas-container');
@@ -4623,6 +4721,7 @@ function save(key, val) {
           data: e.prazo||'',
           responsavel: e.resp||'',
           arquivada: e.feito,
+          notaTarefa: e.nota || '',
           checkBloqueado: e.key === 'arte' && !String(e.resp || '').trim(),
           tipo: 'tarefa',
         });
@@ -4644,6 +4743,7 @@ function save(key, val) {
           data: e.prazo||'',
           responsavel: e.resp||'',
           arquivada: e.feito,
+          notaTarefa: c.etapasStatus?.[e.key]?.nota || '',
           tipo: 'tarefa',
         });
       });
@@ -4680,6 +4780,7 @@ function save(key, val) {
             : `<span>${e.titulo}</span>`}
           ${e.projetoId?`<span style="font-size:10px;color:var(--text-soft);display:block;">${(projetos.find(p=>p.id===e.projetoId)||{}).nome||''}</span>`:''}
           ${e._conteudoId!==undefined?`<button onclick="openConteudoEtapasPrazos(${e._conteudoId})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Ver prazos">📅</button>`:!e._livroId?`<button onclick="openEditEvent(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;margin-left:2px;" title="Editar">✎</button>`:`<button onclick="openEditEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Editar">✎</button>`}
+          ${taskSpecificNoteButton(e)}
           ${e.urgente ? '<span title="Urgente" style="font-size:14px;vertical-align:middle;">❗</span>' : ''}
           ${!isEtapa?`<button onclick="event.stopPropagation();duplicarEvento(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:1px 4px;" title="Duplicar">⧉</button>`:''}
           ${!isEtapa && e.id ? `<button onclick="event.stopPropagation();deleteEventDirect(${e.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : (e._livroId!==undefined ? `<button onclick="event.stopPropagation();deleteEtapa(${e._livroId},${e._etapaIdx})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:14px;padding:1px 4px;" title="Excluir">×</button>` : '')}
@@ -7959,7 +8060,7 @@ function save(key, val) {
     gisella: 'all',
     milena:  'all',
     luiggi:  'all',
-    marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília' },
+    marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
     bruna:   { pages: ['tarefas', 'conteudo-menu'], company: 'editora', taskAssignee: 'Bruna' },
   };
 
@@ -7985,6 +8086,18 @@ function save(key, val) {
   function applyDashboardPermissions(user) {
     const permission = LOGIN_PERMS[user] || 'all';
     const restricted = permission !== 'all';
+    if (restricted && Array.isArray(permission.assignableTaskAssignees)) {
+      const assigneeField = document.getElementById('qa-responsavel');
+      permission.assignableTaskAssignees.forEach(name => {
+        if (!assigneeField || [...assigneeField.options].some(option => option.value === name)) return;
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        option.dataset.permissionAssignee = 'true';
+        assigneeField.appendChild(option);
+      });
+      if (assigneeField) assigneeField.disabled = false;
+    }
     document.querySelectorAll('.nav-item').forEach(button => {
       const pageId = (button.getAttribute('onclick') || '').match(/showPage\('([^']+)'/)?.[1];
       button.style.display = !restricted || (pageId && permission.pages.includes(pageId)) ? '' : 'none';
