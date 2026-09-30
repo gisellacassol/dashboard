@@ -8191,7 +8191,7 @@ function save(key, val) {
     milena:  'all',
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
-    bruna:   { pages: ['tarefas', 'conteudo-menu'], company: 'editora', taskAssignee: 'Bruna' },
+    bruna:   { pages: ['tarefas', 'conteudo-menu', 'site'], company: 'editora', taskAssignee: 'Bruna' },
   };
 
   function currentDashboardUser() {
