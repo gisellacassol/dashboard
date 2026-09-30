@@ -4131,12 +4131,13 @@ function save(key, val) {
     return html;
   }
 
-  function textoContemSite(value) {
-    return String(value || '')
+  function etapaLivroVaiParaSite(value) {
+    const texto = String(value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
-      .includes('site');
+      .trim();
+    return texto.includes('site') || texto === 'cadastrar no sistema';
   }
 
   function livroSiteEtapaHtml(item) {
@@ -4239,7 +4240,7 @@ function save(key, val) {
       if (restrictedCompany && !(livro.empresa || '').split(',').includes(restrictedCompany)) return;
       if (siteFilter !== 'all' && !(livro.empresa || '').split(',').includes(siteFilter)) return;
       (livro.etapas || []).forEach((etapa, idx) => {
-        if (textoContemSite(etapa.nome)) etapasLivrosSite.push({livro, etapa, idx});
+        if (etapaLivroVaiParaSite(etapa.nome)) etapasLivrosSite.push({livro, etapa, idx});
       });
     });
     const etapasLivrosSiteAtivas = ordenarEtapasLivroSite(etapasLivrosSite.filter(item => !item.etapa.feito));
