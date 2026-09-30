@@ -3186,7 +3186,7 @@ function save(key, val) {
     if(l) { 
       const wasFeito = l.etapas[i].feito;
       l.etapas[i].feito=!l.etapas[i].feito; 
-      save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); buildPrioridades(); 
+      save('gc-livros',livros); renderLivros(); renderConteudos(); buildTarefas(); buildColabTarefas(); buildPrioridades();
       if (!wasFeito && l.etapas[i].feito) {
         const userName = window._currentUserName || localStorage.getItem('gc-session-name') || '';
         notifyTaskCompleted(`[${l.titulo}] ${l.etapas[i].nome}`, userName);
@@ -3194,9 +3194,9 @@ function save(key, val) {
     } 
   }
   function setPrazoEtapa(id,i,val) { updateEtapaPrazoInline(id, i, val); }
-  function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); } }
-  function setEtapaExecutar(id,i,executar) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].executar=executar; save('gc-livros',livros); renderLivros(); buildTarefas(); buildColabTarefas(); } }
-  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].resp=resp; save('gc-livros',livros); buildTarefas(); buildColabTarefas(); } }
+  function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); renderConteudos(); } }
+  function setEtapaExecutar(id,i,executar) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].executar=executar; save('gc-livros',livros); renderLivros(); renderConteudos(); buildTarefas(); buildColabTarefas(); } }
+  function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].resp=resp; save('gc-livros',livros); renderConteudos(); buildTarefas(); buildColabTarefas(); } }
   
   /* ── MENTEES ── */
   let currentMenteeId = null;
@@ -4130,6 +4130,48 @@ function save(key, val) {
     });
     return html;
   }
+
+  function textoContemSite(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .includes('site');
+  }
+
+  function livroSiteEtapaHtml(item) {
+    const l = item.livro;
+    const e = item.etapa;
+    const i = item.idx;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const prazoColor = e.prazo && !e.feito ? (() => {
+      const diff = Math.round((new Date(e.prazo + 'T00:00:00') - today) / 86400000);
+      return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
+    })() : 'var(--text-soft)';
+    return `<div class="conteudo-card" style="${e.feito ? 'opacity:.58;' : ''}">
+      <div style="display:flex;align-items:center;gap:9px;padding:11px 14px;flex-wrap:wrap;">
+        <input type="checkbox" ${e.feito ? 'checked' : ''} onchange="toggleEtapa(${l.id},${i})" onclick="event.stopPropagation()">
+        <div style="flex:1;min-width:210px;">
+          <div onclick="event.stopPropagation();openLivroFicha(${l.id})" style="font-size:13px;font-weight:500;cursor:pointer;${e.feito ? 'text-decoration:line-through;' : ''}">[${l.titulo}] ${e.nome}</div>
+          <div style="font-size:10px;color:var(--text-soft);margin-top:2px;">Etapa de livro${e.executar ? ` · Executar: ${e.executar}` : ''}</div>
+        </div>
+        <div style="display:flex;gap:4px;align-items:center;">${empBadgesHtml(l.empresa)}</div>
+        <select onchange="setEtapaResp(${l.id},${i},this.value)" onclick="event.stopPropagation()" title="Responsável pela etapa" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:5px 6px;background:var(--bg);color:${e.resp ? 'var(--text)' : 'var(--text-soft)'};cursor:pointer;max-width:105px;">
+          ${livroEtapaPessoaOptions(e.resp)}
+        </select>
+        <input type="date" value="${e.prazo || ''}" onchange="updateEtapaPrazoInline(${l.id},${i},this.value)" onclick="event.stopPropagation()" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;background:var(--bg);color:${prazoColor};">
+        <button onclick="event.stopPropagation();openEtapasPrazos(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:1px 4px;" title="Abrir etapas do livro">📅</button>
+        ${taskSpecificNoteButton({_livroId:l.id, _etapaIdx:i, notaTarefa:e.nota || ''})}
+      </div>
+    </div>`;
+  }
+
+  function ordenarEtapasLivroSite(items) {
+    return [...items].sort((a, b) =>
+      (a.etapa.prazo || '9999-99-99').localeCompare(b.etapa.prazo || '9999-99-99') ||
+      String(a.livro.titulo || '').localeCompare(String(b.livro.titulo || ''), 'pt-BR')
+    );
+  }
   
   function renderConteudos() {
     let datasCorrigidas = false;
@@ -4192,14 +4234,34 @@ function save(key, val) {
     const siteArquivadosFiltrados = siteFilter === 'all'
       ? siteArquivados
       : siteArquivados.filter(c => (c.empresa || '').split(',').includes(siteFilter));
+    const etapasLivrosSite = [];
+    livros.forEach(livro => {
+      if (restrictedCompany && !(livro.empresa || '').split(',').includes(restrictedCompany)) return;
+      if (siteFilter !== 'all' && !(livro.empresa || '').split(',').includes(siteFilter)) return;
+      (livro.etapas || []).forEach((etapa, idx) => {
+        if (textoContemSite(etapa.nome)) etapasLivrosSite.push({livro, etapa, idx});
+      });
+    });
+    const etapasLivrosSiteAtivas = ordenarEtapasLivroSite(etapasLivrosSite.filter(item => !item.etapa.feito));
+    const etapasLivrosSiteArquivadas = ordenarEtapasLivroSite(etapasLivrosSite.filter(item => item.etapa.feito));
     const siteDiv = document.getElementById('site-tbody');
-    if (siteDiv) siteDiv.innerHTML = siteAtivosFiltrados.length
-      ? cardsHtmlGrouped(siteAtivosFiltrados, true)
-      : '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa de site. Use o botão + para adicionar.</div>';
+    if (siteDiv) {
+      const blocos = [];
+      if (siteAtivosFiltrados.length) {
+        blocos.push(`<div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;padding:8px 0 4px;">Tarefas do site</div>${cardsHtmlGrouped(siteAtivosFiltrados, true)}`);
+      }
+      if (etapasLivrosSiteAtivas.length) {
+        blocos.push(`<div style="font-size:11px;font-weight:600;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;padding:12px 0 4px;">Etapas de livros</div>${etapasLivrosSiteAtivas.map(livroSiteEtapaHtml).join('')}`);
+      }
+      siteDiv.innerHTML = blocos.join('') || '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa de site. Use o botão + para adicionar.</div>';
+    }
     const siteArchCount = document.getElementById('archived-count-site');
-    if (siteArchCount) siteArchCount.textContent = siteArquivadosFiltrados.length;
+    if (siteArchCount) siteArchCount.textContent = siteArquivadosFiltrados.length + etapasLivrosSiteArquivadas.length;
     const siteArchDiv = document.getElementById('archived-tbody-site');
-    if (siteArchDiv) siteArchDiv.innerHTML = siteArquivadosFiltrados.map(c => conteudoCardHtml(c, true)).join('');
+    if (siteArchDiv) {
+      siteArchDiv.innerHTML = siteArquivadosFiltrados.map(c => conteudoCardHtml(c, true)).join('') +
+        etapasLivrosSiteArquivadas.map(livroSiteEtapaHtml).join('');
+    }
   }
   
   function toggleArchivedMenu() {
@@ -4731,6 +4793,7 @@ function save(key, val) {
       target.item.nota = note;
       save('gc-livros', livros);
       renderLivros();
+      renderConteudos();
       buildTarefas();
       buildColabTarefas();
     } else if (reference.kind === 'conteudo') {
@@ -6957,6 +7020,7 @@ function save(key, val) {
     if (choice === 'following' && val) recalcularEtapasSeguintes(l, idx, val);
     save('gc-livros', livros);
     renderLivros();
+    renderConteudos();
     buildTarefas();
     if (_epLivroId === livroId) renderEpLista();
   }
