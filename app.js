@@ -3479,7 +3479,7 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},editar_video:{l:'Para editar vídeo',c:'s-edicao'},editar_arte:{l:'Para editar arte',c:'s-edicao'},editar_video_arte:{l:'Para editar vídeo com arte',c:'s-edicao'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'}};
+  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},editar_video:{l:'Para editar vídeo',c:'s-edicao'},editar_arte:{l:'Para editar arte',c:'s-edicao'},editar_video_arte:{l:'Para editar vídeo com arte',c:'s-edicao'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'},fazer_arte:{l:'Para fazer arte',c:'s-edicao'},aprovado_site:{l:'Aprovado',c:'s-aprovado'},subir_loja_integrada:{l:'Subir na Loja Integrada',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda',site:'Site'};
   const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo',site:'Site'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
@@ -3514,6 +3514,11 @@ function save(key, val) {
     {key:'aprovado',nome:'Para aprovar'},
     {key:'agendado',nome:'Para agendar'},
     {key:'postado',nome:'Para postar'},
+  ];
+  const SITE_ETAPAS_DEFS = [
+    {key:'fazer_arte',nome:'Para fazer arte'},
+    {key:'aprovado_site',nome:'Aprovado'},
+    {key:'subir_loja_integrada',nome:'Subir na Loja Integrada'},
   ];
   const EMANDA_ETAPAS_DEFS = [
     ['tema','Definir o tema do e-mail'],['gancho','Criar o gancho principal'],['estrutura','Planejar a estrutura do e-mail'],['escrever','Escrever o email'],['banners','Providenciar os banners'],['ctas','Definir CTAs'],['links','Organizar links de destino'],['criar','Criar o email mkt'],['teste','Enviar um teste'],['testar','Testar os botões e links'],['disparar','Disparar para a base'],
@@ -3574,6 +3579,7 @@ function save(key, val) {
   }
 
   function getConteudoEtapaDefs(c) {
+    if (conteudoEhSite(c)) return SITE_ETAPAS_DEFS;
     if (conteudoEhPreLancamentoReel(c)) return PRE_LANCAMENTO_REEL_FLUXO;
     const fluxoEditora = conteudoEhDaEditora(c) ? EDITORA_CONTEUDO_FLUXOS[c?.tipo] : null;
     if (fluxoEditora) return fluxoEditora;
@@ -3608,6 +3614,9 @@ function save(key, val) {
   
   function prazosIniciaisDoConteudo(rede, tipo, dataPostagem, empresa = '', projetoConteudo = '') {
     const conteudoBase = {rede, tipo, empresa, projetoConteudo};
+    if (conteudoEhSite(conteudoBase)) {
+      return Object.fromEntries(SITE_ETAPAS_DEFS.map(etapa => [etapa.key, {prazo:'', resp:''}]));
+    }
     if (conteudoEhPreLancamentoReel(conteudoBase)) {
       const diasAntes = {
         copy: 6,
