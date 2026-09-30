@@ -107,6 +107,7 @@
     <div class="nav-label">Sessões</div>
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
     <button class="nav-item" onclick="showPage('conteudo-menu',this)"><span style="font-size:13px;">✍</span> Conteúdo</button>
+    <button class="nav-item" onclick="showPage('site',this)"><span style="font-size:13px;">🌐</span> Site</button>
     <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
     <button class="nav-item" onclick="showPage('projetos',this)"><span style="font-size:13px;">◆</span> Projetos</button>
     <button class="nav-item" onclick="showPage('livros',this)"><span style="font-size:13px;">📖</span> Livros</button>
@@ -248,6 +249,33 @@
       <button class="archived-toggle" onclick="toggleArchivedMenu()"><span id="archived-arrow-menu">▸</span> Arquivados (<span id="archived-count-menu">0</span>)</button>
       <div id="archived-section-menu" style="display:none;margin-top:8px;">
         <div id="archived-tbody-menu"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SITE -->
+<div class="page" id="page-site">
+  <div class="page-header">
+    <div class="page-title">Site</div>
+    <div class="page-subtitle">Tarefas e etapas relacionadas ao site</div>
+  </div>
+  <div class="filter-bar" id="filter-bar-site">
+    <button class="filter-btn active" onclick="setFilter('site','all',this)">Todas</button>
+    <button class="filter-btn f-editora" onclick="setFilter('site','editora',this)">Editora Cassol</button>
+    <button class="filter-btn f-leia" onclick="setFilter('site','leia',this)">Léia Cassol</button>
+    <button class="filter-btn f-gisella" onclick="setFilter('site','gisella',this)">GC Estratégias</button>
+  </div>
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">Tarefas do site</div>
+      <button class="add-btn" style="margin:0;" onclick="openNewSiteItem()">+ nova tarefa do site</button>
+    </div>
+    <div id="site-tbody"></div>
+    <div style="margin-top:1rem;">
+      <button class="archived-toggle" onclick="toggleArchivedSite()"><span id="archived-arrow-site">▸</span> Arquivadas (<span id="archived-count-site">0</span>)</button>
+      <div id="archived-section-site" style="display:none;margin-top:8px;">
+        <div id="archived-tbody-site"></div>
       </div>
     </div>
   </div>
@@ -1170,6 +1198,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.47"></script>
+  <script src="app.js?v=3.2.48"></script>
 </body>
 </html>

@@ -916,7 +916,7 @@
     const hoje = new Date().toISOString().slice(0,10);
     const fim = new Date(); fim.setDate(fim.getDate()+7);
     const fimStr = fim.toISOString().slice(0,10);
-    const lista = conteudos.filter(c => !isConteudoFinalizado(c) && c.dataPost >= hoje && c.dataPost <= fimStr);
+    const lista = conteudos.filter(c => !conteudoEhSite(c) && !isConteudoFinalizado(c) && c.dataPost >= hoje && c.dataPost <= fimStr);
     lista.sort((a,b)=>(a.dataPost||'').localeCompare(b.dataPost||''));
     if (lista.length === 0) {
       el.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum conteúdo programado para os próximos 7 dias.</div>';
@@ -1345,7 +1345,7 @@ function save(key, val) {
     }
     _publicCalendarShareMonth = `${state.y}-${String(state.m + 1).padStart(2, '0')}`;
     const projects = [...new Set(conteudos
-      .filter(item => String(item.dataPost || '').startsWith(`${_publicCalendarShareMonth}-`))
+      .filter(item => !conteudoEhSite(item) && String(item.dataPost || '').startsWith(`${_publicCalendarShareMonth}-`))
       .map(item => String(item.projetoConteudo || '').trim())
       .filter(Boolean))];
     if (!projects.length) {
@@ -1429,6 +1429,7 @@ function save(key, val) {
       const ds = dia.toISOString().slice(0,10);
       const isToday = ds === hoje.toISOString().slice(0,10);
       const dayConts = conteudos.filter(c =>
+        !conteudoEhSite(c) &&
         c.dataPost === ds &&
         (filter === 'all' || (c.empresa||'').split(',').includes(filter))
       );
@@ -1774,6 +1775,7 @@ function save(key, val) {
     if (id === 'colab-marilia') { renderNotas('marilia'); buildColabTarefas(); }
     if (id === 'colab-bruna') { renderNotas('bruna'); buildColabTarefas(); }
     if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
+    if (id === 'site') { renderConteudos(); }
     if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
     if (id === 'links') { renderLinks(); }
   }
@@ -1960,7 +1962,7 @@ function save(key, val) {
       const showEventos = (id !== 'cal-conteudo');
       const _calFilter = CAL_STATE[id] ? CAL_STATE[id].filter : filter;
       const dayConteudos = showConteudos
-        ? conteudos.filter(c => c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
+        ? conteudos.filter(c => !conteudoEhSite(c) && c.dataPost === ds && (_calFilter === 'all' || (c.empresa||'').split(',').includes(_calFilter)))
         : [];
       const allEventsRaw = showEventos ? [...events, ...gcalEventsNative] : [];
       // Deduplicar por id (gcal ids são strings como 'gcal-...')
@@ -2135,7 +2137,7 @@ function save(key, val) {
     const pageId = activePage ? activePage.id : '';
     let defaultTipo = 'tarefa';
     if (pageId === 'page-tarefas') defaultTipo = 'tarefa';
-    else if (pageId === 'page-conteudo-menu') defaultTipo = 'conteudo';
+    else if (pageId === 'page-conteudo-menu' || pageId === 'page-site') defaultTipo = 'conteudo';
     else if (pageId === 'page-eventos') defaultTipo = 'evento';
     else if (pageId === 'page-livros') defaultTipo = 'livro';
     else if (pageId === 'page-projetos') defaultTipo = 'projeto';
@@ -2178,6 +2180,13 @@ function save(key, val) {
       });
     }
     updateQaFields();
+    if (pageId === 'page-site') {
+      const redeSite = document.getElementById('qa-c-rede');
+      const tipoSite = document.getElementById('qa-c-tipo');
+      if (redeSite) redeSite.value = 'site';
+      if (tipoSite) tipoSite.value = 'site';
+      updateQaConteudoRede();
+    }
     // Esconder comentários ao criar nova tarefa
     const comWrapNew = document.getElementById('qa-comentarios-wrap');
     if (comWrapNew) comWrapNew.style.display = 'none';
@@ -3477,6 +3486,10 @@ function save(key, val) {
   const EMP_S = {editora:'Editora',leia:'Léia',gisella:'GC'};
   const PRE_LANCAMENTO_OUTUBRO_2026 = 'pre-lancamento-outubro-2026';
 
+  function conteudoEhSite(c) {
+    return c?.rede === 'site' || c?.tipo === 'site';
+  }
+
   function normalizarNomeProjetoConteudo(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   }
@@ -4129,8 +4142,12 @@ function save(key, val) {
       if (inicializarEtapasConteudo(c)) datasCorrigidas = true;
     });
     if (datasCorrigidas) save('gc-conteudos', conteudos);
-    const ativos = visibleContents.filter(c => !isConteudoFinalizado(c));
-    const arquivados = visibleContents.filter(c => isConteudoFinalizado(c));
+    const contentItems = visibleContents.filter(c => !conteudoEhSite(c));
+    const siteItems = visibleContents.filter(conteudoEhSite);
+    const ativos = contentItems.filter(c => !isConteudoFinalizado(c));
+    const arquivados = contentItems.filter(c => isConteudoFinalizado(c));
+    const siteAtivos = siteItems.filter(c => !isConteudoFinalizado(c));
+    const siteArquivados = siteItems.filter(c => isConteudoFinalizado(c));
   
     function cardsHtml(lista, showEmpresa) {
       return lista.length === 0
@@ -4166,6 +4183,23 @@ function save(key, val) {
     if (archCnt) archCnt.textContent = arquivados.length;
     const archDiv = document.getElementById('archived-tbody');
     if (archDiv) archDiv.innerHTML = arquivados.map(c=>conteudoCardHtml(c,true)).join('');
+
+    // Aba Site: usa o mesmo fluxo de etapas, responsáveis e prazos, sem calendário.
+    const siteFilter = getFilter('site');
+    const siteAtivosFiltrados = siteFilter === 'all'
+      ? siteAtivos
+      : siteAtivos.filter(c => (c.empresa || '').split(',').includes(siteFilter));
+    const siteArquivadosFiltrados = siteFilter === 'all'
+      ? siteArquivados
+      : siteArquivados.filter(c => (c.empresa || '').split(',').includes(siteFilter));
+    const siteDiv = document.getElementById('site-tbody');
+    if (siteDiv) siteDiv.innerHTML = siteAtivosFiltrados.length
+      ? cardsHtmlGrouped(siteAtivosFiltrados, true)
+      : '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhuma tarefa de site. Use o botão + para adicionar.</div>';
+    const siteArchCount = document.getElementById('archived-count-site');
+    if (siteArchCount) siteArchCount.textContent = siteArquivadosFiltrados.length;
+    const siteArchDiv = document.getElementById('archived-tbody-site');
+    if (siteArchDiv) siteArchDiv.innerHTML = siteArquivadosFiltrados.map(c => conteudoCardHtml(c, true)).join('');
   }
   
   function toggleArchivedMenu() {
@@ -4175,6 +4209,15 @@ function save(key, val) {
     const open = sec.style.display === 'none';
     sec.style.display = open ? 'block' : 'none';
     arr.textContent = open ? '▾' : '▸';
+  }
+
+  function toggleArchivedSite() {
+    const sec = document.getElementById('archived-section-site');
+    const arr = document.getElementById('archived-arrow-site');
+    if (!sec) return;
+    const open = sec.style.display === 'none';
+    sec.style.display = open ? 'block' : 'none';
+    if (arr) arr.textContent = open ? '▾' : '▸';
   }
   
   function toggleArchived() {
@@ -4208,6 +4251,15 @@ function save(key, val) {
   }
   
   function openNewConteudoEmpresa() { openNewConteudo(); }
+
+  function openNewSiteItem() {
+    openNewConteudo();
+    document.getElementById('mc-title').textContent = 'Nova tarefa do site';
+    document.getElementById('mc-rede').value = 'site';
+    document.getElementById('mc-tipo').value = 'site';
+    updateMcRede();
+    updateMcConteudoStageLinks();
+  }
   
   function openConteudo(id) {
     const c = conteudos.find(x=>x.id===id);
@@ -4978,7 +5030,7 @@ function save(key, val) {
   
   function setFilter(pageId, empresa, btn) {
     const restrictedCompany = getCompanyRestriction();
-    if (restrictedCompany && ['tarefas','conteudo-menu'].includes(pageId)) {
+    if (restrictedCompany && ['tarefas','conteudo-menu','site'].includes(pageId)) {
       empresa = restrictedCompany;
       btn = Array.from(document.querySelectorAll('#filter-bar-' + pageId + ' .filter-btn'))
         .find(button => (button.getAttribute('onclick') || '').includes(`'${restrictedCompany}'`)) || btn;
@@ -4997,13 +5049,14 @@ function save(key, val) {
       if (_wrap && _wrap.dataset.view === 'mes') buildCalendar('cal-conteudo', empresa);
       else buildConteudoCalSemana();
     }
+    if (pageId === 'site') renderConteudos();
     if (pageId === 'projetos') renderProjetos();
     if (pageId === 'livros') renderLivros();
   }
   
   function getFilter(pageId) {
     const restrictedCompany = getCompanyRestriction();
-    if (restrictedCompany && ['tarefas','conteudo-menu'].includes(pageId)) return restrictedCompany;
+    if (restrictedCompany && ['tarefas','conteudo-menu','site'].includes(pageId)) return restrictedCompany;
     return pageFilters[pageId] || 'all';
   }
   
@@ -6093,6 +6146,7 @@ function save(key, val) {
   
     // Conteúdos pela DATA DE PRODUÇÃO: hoje e amanhã (não feitos)
     const conteudosPrio = conteudos.filter(c => {
+      if (conteudoEhSite(c)) return false;
       if (isConteudoFinalizado(c)) return false;
       if (!c.dataProd) return false;
       return c.dataProd === todayStr || c.dataProd === tomorrowStr;
@@ -6108,6 +6162,7 @@ function save(key, val) {
     });
     // Conteúdos arquivados pela data de produção
     const conteudosArq = conteudos.filter(c => {
+      if (conteudoEhSite(c)) return false;
       if (!isConteudoFinalizado(c)) return false;
       if (!c.dataProd) return false;
       const d = new Date(c.dataProd + 'T00:00:00');
@@ -8110,7 +8165,7 @@ function save(key, val) {
     const collaborators = document.getElementById('filter-bar-tarefas-colab');
     if (collaborators) collaborators.style.display = restricted && permission.taskAssignee ? 'none' : '';
     const restrictedCompany = restricted ? permission.company || '' : '';
-    ['tarefas','conteudo-menu'].forEach(pageId => {
+    ['tarefas','conteudo-menu','site'].forEach(pageId => {
       const bar = document.getElementById('filter-bar-' + pageId);
       if (!bar || !restrictedCompany) return;
       pageFilters[pageId] = restrictedCompany;
