@@ -265,7 +265,7 @@
       return;
     }
   
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks','gc-ajustes'];
   
     // Verificar se há dados no localStorage
     const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -1103,6 +1103,7 @@ function save(key, val) {
   /* ── DATA ── */
   let events = load('gc-events', []).map(e => ({...e, tipo: e.tipo || 'tarefa'}));
   let recurringTasks = load('gc-recurring-tasks', []);
+  let ajustes = load('gc-ajustes', []);
 
   function dashboardDate(value = new Date()) {
     return new Date(value).toLocaleDateString('sv-SE');
@@ -1489,7 +1490,7 @@ function save(key, val) {
       <div class="cal-month">${label}</div>
       <button class="cal-nav" onclick="_livrosCalWeekOffset++;buildLivrosCalSemana()">›</button>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">`;
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:8px;align-items:stretch;">`;
   
     dias.forEach((dia, idx) => {
       const ds = dia.toISOString().slice(0,10);
@@ -1497,7 +1498,7 @@ function save(key, val) {
       const dayEtapas = todasEtapas.filter(e => e.prazo === ds);
   
       html += `<div class="livros-cal-day" ondragover="event.preventDefault();this.style.background='var(--gisella-bg)';" ondragleave="this.style.background='var(--surface)';" ondrop="livroCalDrop(event,'${ds}')"
-        style="background:var(--surface);border-radius:10px;padding:8px;min-height:110px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
+        style="background:var(--surface);border-radius:10px;padding:8px;min-width:0;min-height:90px;border:1px solid ${isToday?'var(--gisella)':'var(--border)'};transition:background 0.1s;">
         <div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">${dows[idx]}</div>
         <div style="font-size:${isToday?'16px':'14px'};font-weight:${isToday?'700':'500'};color:${isToday?'var(--gisella)':'var(--text)'};margin-bottom:6px;">${dia.getDate()}</div>`;
   
@@ -1511,9 +1512,9 @@ function save(key, val) {
           ondragstart="livroCalDragStart(event,${e.livroId},${e.idx})"
           onclick="openEditEtapa(${e.livroId},${e.idx})"
           title="${e.livroTitulo} — ${e.nome}"
-          style="font-size:10px;padding:4px 6px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:grab;border-left:2px solid ${cor};${e.feito?'opacity:0.45;':''}">
-          <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
-          <span style="display:block;font-size:9px;opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.livroTitulo}</span>
+          style="font-size:10px;line-height:1.3;padding:3px 5px;border-radius:4px;margin-bottom:3px;background:${cor}15;color:${cor};cursor:grab;white-space:normal;overflow-wrap:anywhere;word-break:break-word;min-width:0;border-left:2px solid ${cor};${e.feito?'opacity:0.45;':''}">
+          <span style="display:block;white-space:normal;overflow-wrap:anywhere;word-break:break-word;${e.feito?'text-decoration:line-through;':''}">${e.nome}</span>
+          <span style="display:block;font-size:9px;opacity:0.75;white-space:normal;overflow-wrap:anywhere;word-break:break-word;">${e.livroTitulo}</span>
         </div>`;
       });
   
@@ -1745,6 +1746,52 @@ function save(key, val) {
     if (sidebar) sidebar.classList.remove('mobile-open');
     if (overlay) overlay.style.display = 'none';
   }
+
+  function escapeAjusteHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  }
+
+  function renderAjustes() {
+    const el = document.getElementById('ajustes-lista');
+    if (!el) return;
+    if (!ajustes.length) {
+      el.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum ajuste cadastrado.</div>';
+      return;
+    }
+    const ordenados = [...ajustes].sort((a, b) => Number(Boolean(a.feito)) - Number(Boolean(b.feito)) || Number(a.id) - Number(b.id));
+    el.innerHTML = ordenados.map(ajuste => `<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--border);${ajuste.feito?'opacity:.55;':''}">
+      <input type="checkbox" ${ajuste.feito?'checked':''} onchange="toggleAjuste(${Number(ajuste.id)})" style="accent-color:var(--gisella);width:17px;height:17px;flex-shrink:0;cursor:pointer;">
+      <span style="flex:1;font-size:13px;${ajuste.feito?'text-decoration:line-through;color:var(--text-soft);':''}">${escapeAjusteHtml(ajuste.titulo)}</span>
+      <button onclick="deleteAjuste(${Number(ajuste.id)})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:16px;padding:2px 5px;" title="Excluir ajuste">×</button>
+    </div>`).join('');
+  }
+
+  function addAjuste() {
+    const input = document.getElementById('ajuste-novo');
+    const titulo = String(input?.value || '').trim();
+    if (!titulo) { input?.focus(); return; }
+    ajustes.push({id:Date.now(), titulo, feito:false});
+    save('gc-ajustes', ajustes);
+    if (input) input.value = '';
+    renderAjustes();
+    input?.focus();
+  }
+
+  function toggleAjuste(id) {
+    const ajuste = ajustes.find(item => Number(item.id) === Number(id));
+    if (!ajuste) return;
+    ajuste.feito = !ajuste.feito;
+    save('gc-ajustes', ajustes);
+    renderAjustes();
+  }
+
+  function deleteAjuste(id) {
+    const ajuste = ajustes.find(item => Number(item.id) === Number(id));
+    if (!ajuste || !confirm(`Excluir o ajuste “${ajuste.titulo}”?`)) return;
+    ajustes = ajustes.filter(item => Number(item.id) !== Number(id));
+    save('gc-ajustes', ajustes);
+    renderAjustes();
+  }
   
   function showPage(id, btn) {
     closeMobileNav();
@@ -1776,6 +1823,7 @@ function save(key, val) {
     if (id === 'colab-bruna') { renderNotas('bruna'); buildColabTarefas(); }
     if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
     if (id === 'site') { renderConteudos(); }
+    if (id === 'ajustes') { renderAjustes(); }
     if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
     if (id === 'links') { renderLinks(); }
   }
@@ -1858,8 +1906,11 @@ function save(key, val) {
     if (!wrap) return;
     const projeto = document.getElementById('mc-projeto')?.value || '';
     const tipo = document.getElementById('mc-tipo')?.value || '';
+    const rede = document.getElementById('mc-rede')?.value || '';
     const visible = projeto === 'pre-lancamento-outubro-2026' && tipo === 'reel';
     wrap.style.display = visible ? '' : 'none';
+    const siteArteWrap = document.getElementById('mc-site-arte-link-wrap');
+    if (siteArteWrap) siteArteWrap.style.display = rede === 'site' || tipo === 'site' ? '' : 'none';
     const pasta = visible ? conteudoProjectDriveFolderByKey(projeto) : '';
     ['gravado','editar-video','editar-arte','editar-video-arte'].forEach(key => {
       const input = document.getElementById(`mc-link-${key}`);
@@ -2824,7 +2875,7 @@ function save(key, val) {
     editingLivroId = null;
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-lancamento','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => {
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-preco-custo','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-descricao-site','nl-observacao','nl-os','nl-ano','nl-lancamento','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
     });
@@ -2882,6 +2933,8 @@ function save(key, val) {
         faixa: document.getElementById('nl-faixa').value.trim(),
         paginas: document.getElementById('nl-paginas').value.trim(),
         tiragem: document.getElementById('nl-tiragem').value.trim(),
+        precoCusto: document.getElementById('nl-preco-custo').value.trim(),
+        precoVenda: document.getElementById('nl-valor').value.trim(),
         valor: document.getElementById('nl-valor').value.trim(),
         isbn: document.getElementById('nl-isbn').value.trim(),
         formato: document.getElementById('nl-formato').value.trim(),
@@ -2890,6 +2943,8 @@ function save(key, val) {
         lancamento: lancamentoDate,
         assuntos: document.getElementById('nl-assuntos').value.trim(),
         sinopse: document.getElementById('nl-sinopse').value.trim(),
+        descricaoSite: document.getElementById('nl-descricao-site').value.trim(),
+        observacao: document.getElementById('nl-observacao').value.trim(),
         os: document.getElementById('nl-os')?.value.trim()||'',
         ano,
       },
@@ -2928,7 +2983,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
-    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-os','nl-ano','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-preco-custo','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-descricao-site','nl-observacao','nl-os','nl-ano','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
     const naoRad = document.querySelector('input[name="nl-mentee-opt"][value="nao"]'); if(naoRad) naoRad.checked=true;
@@ -3150,7 +3205,8 @@ function save(key, val) {
     document.getElementById('nl-faixa').value = info.faixa||'';
     document.getElementById('nl-paginas').value = info.paginas||'';
     document.getElementById('nl-tiragem').value = info.tiragem||'';
-    document.getElementById('nl-valor').value = info.valor||'';
+    document.getElementById('nl-preco-custo').value = info.precoCusto||'';
+    document.getElementById('nl-valor').value = info.precoVenda||info.valor||'';
     document.getElementById('nl-isbn').value = info.isbn||'';
     document.getElementById('nl-formato').value = info.formato||'';
     document.getElementById('nl-colecao').value = info.colecao||'';
@@ -3158,6 +3214,8 @@ function save(key, val) {
     document.getElementById('nl-lancamento').value = info.lancamento||'';
     document.getElementById('nl-assuntos').value = info.assuntos||'';
     document.getElementById('nl-sinopse').value = info.sinopse||'';
+    document.getElementById('nl-descricao-site').value = info.descricaoSite||'';
+    document.getElementById('nl-observacao').value = info.observacao||'';
     document.getElementById('nl-link-texto-finalizado').value = links.textoFinalizado||'';
     document.getElementById('nl-link-arquivos-abertos').value = links.arquivosAbertos||'';
     document.getElementById('nl-link-arquivos-fechados').value = links.arquivosFechados||'';
@@ -3185,6 +3243,7 @@ function save(key, val) {
     const l=livros.find(x=>x.id===id); 
     if(l) { 
       const wasFeito = l.etapas[i].feito;
+      if (!wasFeito && etapaLivroAceitaLinkArte(l.etapas[i]) && !requestLivroEtapaArteLink(l, i)) return;
       l.etapas[i].feito=!l.etapas[i].feito; 
       save('gc-livros',livros); renderLivros(); renderConteudos(); buildTarefas(); buildColabTarefas(); buildPrioridades();
       if (!wasFeito && l.etapas[i].feito) {
@@ -3197,6 +3256,45 @@ function save(key, val) {
   function deleteEtapa(id,i) { const l=livros.find(x=>x.id===id); if(l) { l.etapas.splice(i,1); save('gc-livros',livros); renderLivros(); renderConteudos(); } }
   function setEtapaExecutar(id,i,executar) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].executar=executar; save('gc-livros',livros); renderLivros(); renderConteudos(); buildTarefas(); buildColabTarefas(); } }
   function setEtapaResp(id,i,resp) { const l=livros.find(x=>x.id===id); if(l?.etapas?.[i]) { l.etapas[i].resp=resp; save('gc-livros',livros); renderConteudos(); buildTarefas(); buildColabTarefas(); } }
+
+  function etapaLivroAceitaLinkArte(etapa) {
+    return normalizarNomeEtapaLivro(etapa?.nome) === 'criar arte para o site';
+  }
+
+  function requestLivroEtapaArteLink(livro, idx) {
+    const etapa = livro?.etapas?.[idx];
+    if (!etapaLivroAceitaLinkArte(etapa)) return true;
+    if (!window.confirm('Deseja adicionar um link para a arte?')) return true;
+    const value = window.prompt('Link — Criar arte para o site:', String(etapa.link || ''));
+    if (value === null) return false;
+    const link = validContentStageLink(value);
+    if (!link) {
+      alert('Informe um link válido, começando com http:// ou https://.');
+      return false;
+    }
+    etapa.link = link;
+    return true;
+  }
+
+  function editLivroEtapaArteLink(livroId, idx) {
+    const livro = livros.find(item => Number(item.id) === Number(livroId));
+    const etapa = livro?.etapas?.[idx];
+    if (!etapaLivroAceitaLinkArte(etapa)) return;
+    const value = window.prompt('Link — Criar arte para o site (deixe vazio para remover):', String(etapa.link || ''));
+    if (value === null) return;
+    const trimmed = value.trim();
+    if (trimmed && !validContentStageLink(trimmed)) {
+      alert('Informe um link válido, começando com http:// ou https://.');
+      return;
+    }
+    if (trimmed) etapa.link = validContentStageLink(trimmed);
+    else delete etapa.link;
+    save('gc-livros', livros);
+    renderLivros();
+    renderConteudos();
+    buildTarefas();
+    buildColabTarefas();
+  }
   
   /* ── MENTEES ── */
   let currentMenteeId = null;
@@ -3516,7 +3614,7 @@ function save(key, val) {
     {key:'postado',nome:'Para postar'},
   ];
   const SITE_ETAPAS_DEFS = [
-    {key:'fazer_arte',nome:'Para fazer arte'},
+    {key:'fazer_arte',nome:'Para fazer arte',optionalLink:true},
     {key:'aprovado_site',nome:'Aprovado'},
     {key:'subir_loja_integrada',nome:'Subir na Loja Integrada'},
   ];
@@ -3909,7 +4007,7 @@ function save(key, val) {
     const etapa = getConteudoEtapaDefs(c).find(item => item.key === key);
     if (!etapa?.requiresLink && !etapa?.optionalLink) return true;
     if (etapa?.requiresLink && conteudoProjectDriveFolder(c)) return true;
-    if (etapa.optionalLink && !window.confirm('Esta etapa terá um link do card?')) return true;
+    if (etapa.optionalLink && !window.confirm(key === 'fazer_arte' ? 'Deseja adicionar um link para a arte?' : 'Esta etapa terá um link do card?')) return true;
     const current = contentStageLink(c, key);
     const label = `Link — ${etapa.nome}`;
     const value = window.prompt(`${label}:`, current);
@@ -4158,6 +4256,7 @@ function save(key, val) {
       const diff = Math.round((new Date(e.prazo + 'T00:00:00') - today) / 86400000);
       return diff < 0 ? 'var(--danger)' : diff === 0 ? 'var(--gisella)' : diff <= 7 ? 'var(--warn)' : 'var(--text-soft)';
     })() : 'var(--text-soft)';
+    const arteLink = etapaLivroAceitaLinkArte(e) ? validContentStageLink(e.link) : '';
     return `<div class="conteudo-card" style="${e.feito ? 'opacity:.58;' : ''}">
       <div style="display:flex;align-items:center;gap:9px;padding:11px 14px;flex-wrap:wrap;">
         <input type="checkbox" ${e.feito ? 'checked' : ''} onchange="toggleEtapa(${l.id},${i})" onclick="event.stopPropagation()">
@@ -4170,6 +4269,8 @@ function save(key, val) {
           ${livroEtapaPessoaOptions(e.resp)}
         </select>
         <input type="date" value="${e.prazo || ''}" onchange="updateEtapaPrazoInline(${l.id},${i},this.value)" onclick="event.stopPropagation()" style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;background:var(--bg);color:${prazoColor};">
+        ${etapaLivroAceitaLinkArte(e) ? `<button onclick="event.stopPropagation();editLivroEtapaArteLink(${l.id},${i})" style="background:none;border:none;color:${arteLink?'var(--gisella)':'var(--text-soft)'};cursor:pointer;font-size:14px;padding:1px 4px;opacity:${arteLink?'1':'.55'};" title="${arteLink?'Editar link da arte':'Adicionar link da arte'}">🔗</button>` : ''}
+        ${arteLink ? `<a href="${arteLink.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="font-size:11px;color:var(--gisella);text-decoration:none;" title="Abrir link da arte">abrir</a>` : ''}
         <button onclick="event.stopPropagation();openEtapasPrazos(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:1px 4px;" title="Abrir etapas do livro">📅</button>
         ${taskSpecificNoteButton({_livroId:l.id, _etapaIdx:i, notaTarefa:e.nota || ''})}
       </div>
@@ -4314,7 +4415,7 @@ function save(key, val) {
     document.getElementById('mc-datapost').value='';
     document.getElementById('mc-hora').value='';
     document.getElementById('mc-observacao').value='';
-    ['gravado','editar-video','editar-arte','editar-video-arte'].forEach(key => {
+    ['gravado','editar-video','editar-arte','editar-video-arte','fazer-arte'].forEach(key => {
       document.getElementById(`mc-link-${key}`).value = '';
     });
     updateMcConteudoStageLinks();
@@ -4360,6 +4461,7 @@ function save(key, val) {
     document.getElementById('mc-link-editar-video').value=contentStageExplicitLink(c, 'editar_video');
     document.getElementById('mc-link-editar-arte').value=contentStageExplicitLink(c, 'editar_arte');
     document.getElementById('mc-link-editar-video-arte').value=contentStageExplicitLink(c, 'editar_video_arte');
+    document.getElementById('mc-link-fazer-arte').value=contentStageExplicitLink(c, 'fazer_arte');
     updateMcConteudoStageLinks();
     openModal('modal-conteudo');
   }
@@ -4418,6 +4520,12 @@ function save(key, val) {
         if (link) conteudoSalvo.etapasStatus[key].link = link;
         else delete conteudoSalvo.etapasStatus[key].link;
       });
+    }
+    if (conteudoSalvo && conteudoEhSite(conteudoSalvo)) {
+      const linkArteSite = document.getElementById('mc-link-fazer-arte').value.trim();
+      if (!conteudoSalvo.etapasStatus.fazer_arte) conteudoSalvo.etapasStatus.fazer_arte = {};
+      if (linkArteSite) conteudoSalvo.etapasStatus.fazer_arte.link = linkArteSite;
+      else delete conteudoSalvo.etapasStatus.fazer_arte.link;
     }
     save('gc-conteudos',conteudos);
     refreshConteudoViews();
@@ -7908,6 +8016,7 @@ function save(key, val) {
       apply('gc-conteudos',   v => { conteudos  = v; });
       apply('gc-projetos',    v => { projetos   = v; });
       apply('gc-recurring-tasks', v => { recurringTasks = v; });
+      apply('gc-ajustes',     v => { ajustes = Array.isArray(v) ? v : []; });
       apply('gc-kanban',      v => { kanbanData = v; });
       apply('gc-steira',      v => { steiraData = v; });
       apply('gc-colab-ordem', v => { colabOrdem = v; });
@@ -7963,6 +8072,7 @@ function save(key, val) {
     renderMenteeList();
     renderMarco0List();
     renderConteudos();
+    renderAjustes();
     applyAutomaticTaskOwners();
     ensureGisellaRecorrentes();
     buildTarefas();
@@ -8012,6 +8122,7 @@ function save(key, val) {
         ['gc-projetos',  v => { projetos = v; renderProjetos(); buildTarefas(); buildColabTarefas(); }],
         ['gc-conteudos', v => { conteudos = v; refreshConteudoViews(); }],
         ['gc-recurring-tasks', v => { recurringTasks = v || []; ensureCustomRecurringTasks(window.gcalEventsCache || []); }],
+        ['gc-ajustes', v => { ajustes = Array.isArray(v) ? v : []; renderAjustes(); }],
         ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
         ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
         ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
@@ -8131,7 +8242,7 @@ function save(key, val) {
   
           // Other keys: fill in only if missing locally
           ['gc-conteudos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira',
-           'gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks'].forEach(key => {
+           'gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks','gc-ajustes'].forEach(key => {
             if (!localStorage.getItem(key) && cloudData[key]?.value) {
               localStorage.setItem(key, JSON.stringify(cloudData[key].value));
               changed = true;
@@ -8141,10 +8252,11 @@ function save(key, val) {
           if (changed) {
             conteudos     = load('gc-conteudos', []);
             recurringTasks = load('gc-recurring-tasks', []);
+            ajustes        = load('gc-ajustes', []);
             mentees       = load('gc-mentees', MENTEES_DEFAULT);
             menteesMarco0 = load('gc-mentees-marco0', []);
             if (garantirEtapaArteSiteNosLivros()) save('gc-livros', livros);
-            renderLivros(); renderMenteeList(); renderConteudos();
+            renderLivros(); renderMenteeList(); renderConteudos(); renderAjustes();
             buildTarefas(); buildColabTarefas(); renderProjetos(); buildPrioridades();
             ['gisella','milena','luiggi'].forEach(c => renderFixedTasks(c));
           }
@@ -8183,6 +8295,7 @@ function save(key, val) {
     luiggi:  { name: 'Luiggi',  color: 'var(--editora)', bg: 'var(--editora-bg)', initial: 'L' },
     marilia: { name: 'Marília', color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'M' },
     bruna:   { name: 'Bruna',   color: 'var(--leia)',    bg: 'var(--leia-bg)',    initial: 'B' },
+    vera:    { name: 'Vera',    color: 'var(--gisella)', bg: 'var(--gisella-bg)', initial: 'V' },
   };
   // Permissões por usuário — 'all' = acesso total. Perfis restritos também
   // recebem o responsável obrigatório das tarefas que podem visualizar.
@@ -8192,6 +8305,7 @@ function save(key, val) {
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
     bruna:   { pages: ['tarefas', 'conteudo-menu', 'site'], company: 'editora', taskAssignee: 'Bruna' },
+    vera:    { pages: ['tarefas'], taskAssignee: 'Vera' },
   };
 
   function currentDashboardUser() {
@@ -8266,7 +8380,7 @@ function save(key, val) {
     if (user !== 'bruna') return;
     // A conta da Bruna usa tarefas, recorrências e conteúdos da Editora.
     // Os demais módulos continuam fora do cache e da navegação dela.
-    const blockedKeys = ['gc-livros','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa'];
+    const blockedKeys = ['gc-livros','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-links-empresa','gc-ajustes'];
     blockedKeys.forEach(key => {
       localStorage.removeItem(key);
       localStorage.removeItem('_fbts_' + key);
@@ -8357,7 +8471,7 @@ function save(key, val) {
       if (window.innerWidth > 768) closeMobileNav();
     });
     // Se for colaborador e ainda não tiver página salva, leva direto ao que é relevante para ele
-    if (['gisella','milena','luiggi','marilia','bruna'].includes(user)) {
+    if (['gisella','milena','luiggi','marilia','bruna','vera'].includes(user)) {
       const savedPg = localStorage.getItem('gc-current-page');
       if (!savedPg) {
         setTimeout(() => {
@@ -8393,7 +8507,7 @@ function save(key, val) {
               if (btn) btn.classList.add('active');
               localStorage.setItem('gc-current-page', 'tarefas');
               buildTarefas();
-              const nome = user === 'milena' ? 'Milena' : user === 'marilia' ? 'Marília' : user === 'bruna' ? 'Bruna' : 'Luiggi';
+              const nome = ({milena:'Milena', marilia:'Marília', bruna:'Bruna', vera:'Vera', luiggi:'Luiggi'})[user] || 'Luiggi';
               const colabBtn = Array.from(document.querySelectorAll('#filter-bar-tarefas-colab .filter-btn')).find(b => b.textContent.trim() === nome);
               if (colabBtn) setFilterColab('tarefas', nome, colabBtn);
             }

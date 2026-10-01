@@ -6,7 +6,7 @@
 <title>Central · Grupo Cassol</title>
 <link rel="stylesheet" href="style.css?v=3.2.13">
 <!-- Firebase (ES module) — exposes fbSave, fbGet, fbLoadAll, fbListen on window -->
-  <script type="module" src="firebase.js?v=3.2.14"></script>
+  <script type="module" src="firebase.js?v=3.2.15"></script>
 </head>
 <body>
 
@@ -108,6 +108,7 @@
     <button class="nav-item" onclick="showPage('tarefas',this)"><span style="font-size:13px;">✓</span> Tarefas</button>
     <button class="nav-item" onclick="showPage('conteudo-menu',this)"><span style="font-size:13px;">✍</span> Conteúdo</button>
     <button class="nav-item" onclick="showPage('site',this)"><span style="font-size:13px;">🌐</span> Site</button>
+    <button class="nav-item" onclick="showPage('ajustes',this)"><span style="font-size:13px;">🛠</span> Ajustes</button>
     <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
     <button class="nav-item" onclick="showPage('projetos',this)"><span style="font-size:13px;">◆</span> Projetos</button>
     <button class="nav-item" onclick="showPage('livros',this)"><span style="font-size:13px;">📖</span> Livros</button>
@@ -281,6 +282,20 @@
   </div>
 </div>
 
+<!-- AJUSTES -->
+<div class="page" id="page-ajustes">
+  <div class="page-header">
+    <div><div class="page-title">Ajustes</div><div class="page-subtitle">Checklist de ajustes que precisam ser feitos</div></div>
+  </div>
+  <div class="section">
+    <form onsubmit="event.preventDefault();addAjuste();" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+      <input class="form-input" id="ajuste-novo" type="text" placeholder="Descreva o ajuste..." style="flex:1;">
+      <button class="btn btn-primary" type="submit">+ Adicionar</button>
+    </form>
+    <div id="ajustes-lista"></div>
+  </div>
+</div>
+
 <!-- PROJETOS -->
 <div class="page" id="page-projetos">
   <div class="page-header">
@@ -318,6 +333,7 @@
     <button class="filter-btn" onclick="setFilterColab('tarefas','Luiggi',this)">Luiggi</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Marília',this)">Marília</button>
     <button class="filter-btn" onclick="setFilterColab('tarefas','Bruna',this)">Bruna</button>
+    <button class="filter-btn" onclick="setFilterColab('tarefas','Vera',this)">Vera</button>
   </div>
 
   <div class="section">
@@ -634,7 +650,7 @@
         <div class="form-group" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
           <div style="flex:1;"><label class="form-label">Responsável</label>
           <select class="form-select" id="qa-responsavel">
-            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option>
+            <option value="">— nenhum —</option><option value="Gisella">Gisella</option><option value="Milena">Milena</option><option value="Luiggi">Luiggi</option><option value="Vera">Vera</option>
           </select></div>
           <div style="padding-top:18px;">
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;">
@@ -853,7 +869,8 @@
         <div class="form-group"><label class="form-label">Faixa etária</label><input class="form-input" id="nl-faixa" type="text"></div>
         <div class="form-group"><label class="form-label">Nº de páginas</label><input class="form-input" id="nl-paginas" type="text"></div>
         <div class="form-group"><label class="form-label">Tiragem</label><input class="form-input" id="nl-tiragem" type="text"></div>
-        <div class="form-group"><label class="form-label">Valor</label><input class="form-input" id="nl-valor" type="text" inputmode="decimal" placeholder="Ex: R$ 49,90"></div>
+        <div class="form-group"><label class="form-label">Preço de custo</label><input class="form-input" id="nl-preco-custo" type="text" inputmode="decimal" placeholder="Ex: R$ 18,00"></div>
+        <div class="form-group"><label class="form-label">Preço de venda</label><input class="form-input" id="nl-valor" type="text" inputmode="decimal" placeholder="Ex: R$ 49,90"></div>
         <div class="form-group"><label class="form-label">ISBN</label><input class="form-input" id="nl-isbn" type="text"></div>
         <div class="form-group"><label class="form-label">Formato</label><input class="form-input" id="nl-formato" type="text"></div>
         <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="nl-colecao" type="text"></div>
@@ -863,6 +880,8 @@
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Data de lançamento *</label><input class="form-input" id="nl-lancamento" type="date" required></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Assuntos</label><textarea class="notes-area" id="nl-assuntos" style="min-height:70px;" placeholder="Temas e assuntos abordados no livro"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Sinopse</label><textarea class="notes-area" id="nl-sinopse" style="min-height:70px;"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Descrição para o site</label><textarea class="notes-area" id="nl-descricao-site" style="min-height:90px;" placeholder="Texto que será usado na página do livro no site"></textarea></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Observação</label><textarea class="notes-area" id="nl-observacao" style="min-height:80px;" placeholder="Anotações internas sobre o livro"></textarea></div>
       </div>
       <div class="btn-row"><button type="button" class="btn" onclick="closeModal('modal-livro')">Cancelar</button><button type="submit" class="btn btn-primary">Criar livro</button></div>
     </form>
@@ -1053,6 +1072,9 @@
             <div class="form-group"><label class="form-label">Link — Para editar vídeo com arte</label><input class="form-input" id="mc-link-editar-video-arte" type="url" placeholder="https://..."></div>
           </div>
         </div>
+        <div id="mc-site-arte-link-wrap" style="display:none;grid-column:1/-1;">
+          <div class="form-group"><label class="form-label">Link — Para fazer arte</label><input class="form-input" id="mc-link-fazer-arte" type="url" placeholder="https://..."></div>
+        </div>
         <div class="form-group" id="mc-copy-wrap" style="grid-column:1/-1;"><label class="form-label">Copy</label><textarea class="notes-area" id="mc-copy" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Legenda</label><textarea class="notes-area" id="mc-legenda" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Observação</label><textarea class="notes-area" id="mc-observacao" style="min-height:50px;"></textarea></div>
@@ -1198,6 +1220,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.52"></script>
+  <script src="app.js?v=3.2.53"></script>
 </body>
 </html>
