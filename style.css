@@ -251,9 +251,22 @@ tr:hover td { background: var(--bg); }
 .livro-progress { flex: 1; height: 4px; background: var(--bg); border-radius: 4px; overflow: hidden; min-width: 60px; }
 .livro-progress-fill { height: 100%; border-radius: 4px; background: var(--editora); transition: width 0.4s; }
 /* MODAL */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(28,20,16,0.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(28,20,16,0.4);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
 .modal-overlay.open { display: flex; }
-.modal { background: var(--surface); border-radius: 16px; padding: 1.5rem; width: 520px; max-width: 95vw; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+.modal { background: var(--surface); border-radius: 16px; padding: 1.5rem; width: 520px; max-width: 100%; border: 1px solid var(--border); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; margin: auto; }
 .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 1rem; }
 .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-soft); margin-top: -4px; }
 .livro-etapas-modal { position: relative; width: 820px; max-width: 96vw; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -293,6 +306,8 @@ tr:hover td { background: var(--bg); }
 .modal-tab-content { display: none; }
 .modal-tab-content.active { display: block; }
 @media (max-width: 768px) {
+
+  .modal-overlay { padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
 
   .livro-etapas-modal { width: 98vw !important; padding: 1rem; }
   .livro-etapas-lista { -webkit-overflow-scrolling: touch; }
@@ -339,7 +354,7 @@ tr:hover td { background: var(--bg); }
   .two-col { grid-template-columns: 1fr; }
   .cal-day { min-height: 44px; font-size: 11px; }
   .cal-day .cal-event { font-size: 9px; padding: 1px 3px; }
-  .modal { width: 95vw !important; max-height: 88vh; overflow-y: auto; }
+  .modal { width: 100% !important; max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); overflow-y: auto; }
   .page-header { padding: 0.75rem 0 1rem; }
   .page-title { font-size: 22px; }
   .section { margin-bottom: 1.5rem; }
