@@ -980,6 +980,38 @@
   }
   
   /* ── STORAGE ── */
+  const DASHBOARD_SESSION_TOKEN_KEY = 'gc-dashboard-session-token';
+  function dashboardSessionToken() {
+    const token = sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
+      || localStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
+      || '';
+    // Restaura a cópia rápida da sessão quando o iPad recria a aba/PWA.
+    if (token && !sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)) {
+      sessionStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
+    }
+    return token;
+  }
+  function persistDashboardSessionToken(token) {
+    sessionStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
+    localStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
+  }
+  function clearDashboardSessionToken() {
+    sessionStorage.removeItem(DASHBOARD_SESSION_TOKEN_KEY);
+    localStorage.removeItem(DASHBOARD_SESSION_TOKEN_KEY);
+  }
+  function dashboardSessionTokenIsUsable(token, expectedUser) {
+    try {
+      const encodedPayload = String(token || '').split('.')[0];
+      if (!encodedPayload) return false;
+      const normalized = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+      const payload = JSON.parse(atob(padded));
+      return Number(payload.exp || 0) > Date.now()
+        && String(payload.user || '').toLowerCase() === String(expectedUser || '').toLowerCase();
+    } catch (_) {
+      return false;
+    }
+  }
   function load(key, def) {
     try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
   }
@@ -1003,7 +1035,7 @@
     return ['luiggi','gisella','milena'].filter(recipient => normalized.some(name => name === recipient || name.includes(recipient)));
   }
   function scheduleChecklistCentralSync(key, changedItems, previousChangedItems = []) {
-    const token = sessionStorage.getItem('gc-dashboard-session-token');
+    const token = dashboardSessionToken();
     if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
     clearTimeout(checklistDirectSyncTimer);
     checklistDirectSyncTimer = setTimeout(async () => {
@@ -1031,7 +1063,7 @@
   }, 0);
 }
 async function syncChecklistAfterDashboardDeletion(key, previousItems) {
-  const token = sessionStorage.getItem('gc-dashboard-session-token');
+  const token = dashboardSessionToken();
   const recipients = checklistRecipientsForChanges(key, previousItems);
   if (!token || !recipients.length) return;
   await Promise.allSettled(recipients.map(recipient => fetch(CHECKLIST_SYNC_URL, {
@@ -1339,7 +1371,7 @@ function save(key, val) {
 
   function compartilharCalendarioConteudoMes() {
     const state = CAL_STATE['cal-conteudo'];
-    const sessionToken = sessionStorage.getItem('gc-dashboard-session-token');
+    const sessionToken = dashboardSessionToken();
     if (!state || !sessionToken) {
       alert('Abra novamente o Dashboard e tente gerar o link do mês.');
       return;
@@ -1365,7 +1397,7 @@ function save(key, val) {
   }
 
   async function confirmarCompartilhamentoCalendarioConteudo() {
-    const sessionToken = sessionStorage.getItem('gc-dashboard-session-token');
+    const sessionToken = dashboardSessionToken();
     const project = document.getElementById('share-calendar-project')?.value || '';
     if (!_publicCalendarShareMonth || !project || !sessionToken) return;
     const button = document.getElementById('share-calendar-confirm');
@@ -8414,7 +8446,7 @@ function save(key, val) {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.token) throw new Error(result.error || 'Não foi possível validar o acesso.');
-      sessionStorage.setItem('gc-dashboard-session-token', result.token);
+      persistDashboardSessionToken(result.token);
     } catch (error) {
       errEl.textContent = error.message || 'Não foi possível entrar agora.';
       return;
@@ -8433,11 +8465,11 @@ function save(key, val) {
   
   function checkSession() {
     const savedUser = localStorage.getItem('gc-session-user');
-    const savedDate = localStorage.getItem('gc-session-date');
-    const today = new Date().toDateString();
-    if (savedUser && savedDate === today && LOGIN_USERS[savedUser] && sessionStorage.getItem('gc-dashboard-session-token')) {
+    const token = dashboardSessionToken();
+    if (savedUser && LOGIN_USERS[savedUser] && dashboardSessionTokenIsUsable(token, savedUser)) {
       showApp(savedUser, localStorage.getItem('gc-session-name') || savedUser);
     } else {
+      clearDashboardSessionToken();
       document.getElementById('login-screen').style.display = 'flex';
     }
   }
@@ -8531,8 +8563,9 @@ function save(key, val) {
   }
   
   function doLogout() {
-    sessionStorage.removeItem('gc-dashboard-session-token');
+    clearDashboardSessionToken();
     localStorage.removeItem('gc-session-user');
+    localStorage.removeItem('gc-session-name');
     localStorage.removeItem('gc-session-date');
     location.reload();
   }

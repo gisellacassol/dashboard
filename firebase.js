@@ -19,6 +19,12 @@ window._fbReady = false;
 const DASHBOARD_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const BRUNA_DIRECT_FIREBASE_KEYS = new Set(['gc-notas-bruna']);
 const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-livros', 'gc-recurring-tasks']);
+const DASHBOARD_SESSION_TOKEN_KEY = 'gc-dashboard-session-token';
+function dashboardSessionToken() {
+  return sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
+    || localStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
+    || '';
+}
 function currentFirebaseUser() {
   return String(localStorage.getItem('gc-session-user') || '').toLowerCase();
 }
@@ -29,7 +35,7 @@ function usesRestrictedDashboardTransport(key) {
   return currentFirebaseUser() === 'bruna' && BRUNA_RESTRICTED_FIREBASE_KEYS.has(key);
 }
 async function callRestrictedDashboard(operation, key, value, knownTs) {
-  const sessionToken = sessionStorage.getItem('gc-dashboard-session-token') || '';
+  const sessionToken = dashboardSessionToken();
   const response = await fetch(DASHBOARD_SYNC_URL, {
     method: 'POST',
     headers: {
