@@ -267,6 +267,21 @@ tr:hover td { background: var(--bg); }
 }
 .modal-overlay.open { display: flex; }
 .modal { background: var(--surface); border-radius: 16px; padding: 1.5rem; width: 520px; max-width: 100%; border: 1px solid var(--border); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain; margin: auto; }
+/* Algumas extensões do Chrome usam a classe genérica `.modal` e tentam
+   transformar nossos painéis em barras fixas de 50px. Estes seletores
+   delimitados ao Dashboard impedem a interferência sem afetar a extensão. */
+.modal-overlay > .modal {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  z-index: auto !important;
+}
+.modal-overlay > .modal[style*="display:flex"],
+.modal-overlay > .livro-etapas-modal {
+  display: flex !important;
+}
 .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; margin-bottom: 1rem; }
 .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-soft); margin-top: -4px; }
 .livro-etapas-modal { position: relative; width: 820px; max-width: 96vw; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }

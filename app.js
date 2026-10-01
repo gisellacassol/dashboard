@@ -1959,7 +1959,18 @@ function save(key, val) {
     const link = document.getElementById('mm-docs-open');
     if (link) { link.href = val; link.style.display = val ? 'inline' : 'none'; }
   }
-  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function openModal(id) {
+    const overlay = document.getElementById(id);
+    if (!overlay) return;
+    overlay.scrollTop = 0;
+    overlay.scrollLeft = 0;
+    const panel = overlay.querySelector('.modal');
+    if (panel) {
+      panel.scrollTop = 0;
+      panel.scrollLeft = 0;
+    }
+    overlay.classList.add('open');
+  }
   
   // Modal não fecha ao clicar fora (mantém informações)
   document.querySelectorAll('.modal-overlay').forEach(m => {
