@@ -1303,7 +1303,8 @@ function save(key, val) {
     'Finalização das ilustrações',
     'Aprovação das ilustrações',
     'Criação da capa',
-    'ISBN + Código de barras + Ficha catalográfica',
+    'ISBN + Código de barras',
+    'Ficha catalográfica',
     'Diagramação final',
     'Arte finalização',
     'UV',
@@ -1312,6 +1313,7 @@ function save(key, val) {
     'Plano de divulgação e lançamento',
     'Receber boneco',
     'Revisar boneco',
+    'Enviar para revisão final',
     'Aplicar revisão final',
     'Ajuste fino',
     'Reenviar para gráfica',
@@ -1320,6 +1322,7 @@ function save(key, val) {
     'Fazer marca-página',
     'Enviar marca-página para gráfica',
     'Receber o estoque',
+    'Envio dos livros para o autor',
     'Receber o marca-página',
     'Cadastrar no sistema',
     'Criar arte para o site',
@@ -2782,6 +2785,7 @@ function save(key, val) {
   /* ── LIVROS ── */
   let addLivroEmpresa = 'editora';
   let editingLivroId = null;
+  let editingLivroNotesId = null;
   const CRONOGRAMA_EDITORIAL = [
     ['Briefing', 'Gisella', 'Gisella', -110],
     ['Escolha do ilustrador', 'Gisella', 'Gisella', -103],
@@ -2796,7 +2800,8 @@ function save(key, val) {
     ['Finalização das ilustrações', 'Ilustrador', 'Marília', -38],
     ['Aprovação das ilustrações', 'Gisella', 'Marília', null],
     ['Criação da capa', 'Marília', 'Marília', null],
-    ['ISBN + Código de barras + Ficha catalográfica', 'Marília', 'Marília', -36],
+    ['ISBN + Código de barras', 'Marília', 'Marília', -36],
+    ['Ficha catalográfica', 'Marília', 'Marília', -35],
     ['Diagramação final', 'Marília', 'Marília', -34],
     ['Arte finalização', 'Gisella', 'Gisella', null],
     ['UV', 'Gisella', 'Gisella', -33],
@@ -2805,6 +2810,7 @@ function save(key, val) {
     ['Plano de divulgação e lançamento', 'Milena', 'Milena', -30],
     ['Receber boneco', 'Todos', 'Marília', -29],
     ['Revisar boneco', 'Todos', 'Marília', -27],
+    ['Enviar para revisão final', 'Marília', 'Marília', -26],
     ['Aplicar revisão final', 'Marília', 'Marília', -25],
     ['Ajuste fino', 'Marília', 'Marília', -24],
     ['Reenviar para gráfica', 'Marília', 'Marília', -23],
@@ -2813,6 +2819,7 @@ function save(key, val) {
     ['Fazer marca-página', 'Milena', 'Milena', -18],
     ['Enviar marca-página para gráfica', 'Milena', 'Milena', -16],
     ['Receber o estoque', 'Vera', 'Marília', -5],
+    ['Envio dos livros para o autor', 'Marília', 'Marília', -4],
     ['Receber o marca-página', 'Vera', 'Milena', -5],
     ['Cadastrar no sistema', 'Vera', 'Vera', -5],
     ['Criar arte para o site', 'Bruna', 'Milena', -4],
@@ -2848,7 +2855,7 @@ function save(key, val) {
     });
   }
 
-  const LIVRO_ETAPAS_WORKFLOW_VERSION = 3;
+  const LIVRO_ETAPAS_WORKFLOW_VERSION = 4;
   function normalizarNomeEtapaLivro(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
@@ -2865,7 +2872,14 @@ function save(key, val) {
     'liberar no site': ['liberacao no site'],
   };
   function mesclarCronogramaEditorial(etapasAtuais, lancamentoDate) {
-    const atuais = Array.isArray(etapasAtuais) ? etapasAtuais : [];
+    // A etapa antiga agrupada vira duas sem perder check, prazo, link ou responsável.
+    const atuais = (Array.isArray(etapasAtuais) ? etapasAtuais : []).flatMap(etapa => {
+      if (normalizarNomeEtapaLivro(etapa?.nome) !== 'isbn codigo de barras ficha catalografica') return [etapa];
+      return [
+        {...etapa, nome:'ISBN + Código de barras'},
+        {...etapa, nome:'Ficha catalográfica'},
+      ];
+    });
     const usados = new Set();
     const lancamento = parseDashboardDate(lancamentoDate);
     const novas = CRONOGRAMA_EDITORIAL.map(([nome, executar, resp, offsetDays]) => {
@@ -3100,6 +3114,7 @@ function save(key, val) {
         </div>
         ${proxima ? `<span style="font-size:11px;color:var(--text-soft);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${proxima.nome}</span>` : '<span class="badge b-ok" style="font-size:10px;">concluído</span>'}
         <button onclick="event.stopPropagation();compartilharLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Copiar link público somente leitura">🔗</button>
+        <button onclick="event.stopPropagation();openLivroNotes(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:13px;padding:2px 6px;" title="Anotações do livro">📝</button>
         <button onclick="event.stopPropagation();openEtapasPrazos(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:11px;padding:2px 6px;" title="Definir prazos das etapas">📅</button>
         <button onclick="event.stopPropagation();openLivroFicha(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Editar ficha">✎</button>
         <button onclick="event.stopPropagation();duplicarLivro(${l.id})" style="background:none;border:none;color:var(--text-soft);cursor:pointer;font-size:12px;padding:2px 6px;" title="Duplicar">⧉</button>
@@ -3221,6 +3236,28 @@ function save(key, val) {
   }
   
   function toggleLivro(id) { const l = livros.find(x => x.id===id); if(l) { toggleDashboardItemExpanded('livros', id, !!l.expandido); renderLivros(); } }
+
+  function openLivroNotes(id) {
+    const livro = livros.find(item => Number(item.id) === Number(id));
+    if (!livro) return;
+    editingLivroNotesId = livro.id;
+    const title = document.getElementById('livro-notas-title');
+    const input = document.getElementById('livro-notas-text');
+    if (title) title.textContent = `Anotações · ${livro.titulo}`;
+    if (input) input.value = String(livro.notasProjeto || '');
+    openModal('modal-livro-notas');
+    setTimeout(() => input?.focus(), 50);
+  }
+
+  function saveLivroNotes() {
+    const livro = livros.find(item => Number(item.id) === Number(editingLivroNotesId));
+    if (!livro) return;
+    livro.notasProjeto = String(document.getElementById('livro-notas-text')?.value || '').trim();
+    save('gc-livros', livros);
+    editingLivroNotesId = null;
+    closeModal('modal-livro-notas');
+    renderLivros();
+  }
   
   function openLivroFicha(id) {
     const l = livros.find(x=>x.id===id);
@@ -3668,11 +3705,11 @@ function save(key, val) {
     reel: [
       {key:'copy',nome:'Copy criada'},
       {key:'gravado',nome:'Gravado',requiresLink:true},
+      {key:'arte',nome:'Para criar arte',optionalLink:true},
       {key:'edicao',nome:'Para editar',requiresLink:true,resp:'Luiggi'},
       {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'postado',nome:'Para postar',resp:'Milena'},
-      {key:'arte',nome:'Para criar arte',optionalLink:true},
     ],
     carrossel: [
       {key:'copy',nome:'Copy criada'},
@@ -3684,20 +3721,25 @@ function save(key, val) {
     card: null,
     story: null,
     emailmkt: [
+      {key:'arte',nome:'Para criar arte',resp:'Bruna',requiresLink:true},
       {key:'escrever',nome:'Para escrever'},
       {key:'subir_emanda',nome:'Para subir no Emanda'},
       {key:'agendado',nome:'Para agendar',resp:'Milena'},
       {key:'checar_envio',nome:'Para checar envio',resp:'Milena'},
-      {key:'arte',nome:'Para criar arte',optionalLink:true},
     ],
   };
   EDITORA_CONTEUDO_FLUXOS.card = EDITORA_CONTEUDO_FLUXOS.carrossel;
   EDITORA_CONTEUDO_FLUXOS.story = [
     {key:'copy',nome:'Copy criada'},
+    {key:'arte',nome:'Para criar arte',optionalLink:true},
     {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
+    {key:'postado',nome:'Para postar',resp:'Milena'},
+  ];
+  const GC_CARD_FLUXO = [
+    {key:'arte',nome:'Para fazer a arte',optionalLink:true},
+    {key:'aprovado',nome:'Para aprovar',resp:'Gisella'},
     {key:'agendado',nome:'Para agendar',resp:'Milena'},
     {key:'postado',nome:'Para postar',resp:'Milena'},
-    {key:'arte',nome:'Para criar arte',optionalLink:true},
   ];
   const PRE_LANCAMENTO_REEL_FLUXO = [
     {key:'copy',nome:'Copy criada'},
@@ -3708,7 +3750,6 @@ function save(key, val) {
     {key:'aprovado',nome:'Para aprovar',resp:'Milena'},
     {key:'agendado',nome:'Para agendar',resp:'Milena'},
     {key:'postado',nome:'Para postar',resp:'Milena'},
-    {key:'arte',nome:'Para criar arte',optionalLink:true},
   ];
 
   function conteudoEhPreLancamentoReel(c) {
@@ -3722,9 +3763,10 @@ function save(key, val) {
   function getConteudoEtapaDefs(c) {
     if (conteudoEhSite(c)) return SITE_ETAPAS_DEFS;
     if (conteudoEhPreLancamentoReel(c)) return PRE_LANCAMENTO_REEL_FLUXO;
+    if (String(c?.empresa || '').split(',').includes('gisella') && c?.tipo === 'card') return GC_CARD_FLUXO;
+    if ((c?.rede || '') === 'emanda' || c?.tipo === 'emailmkt') return EDITORA_CONTEUDO_FLUXOS.emailmkt;
     const fluxoEditora = conteudoEhDaEditora(c) ? EDITORA_CONTEUDO_FLUXOS[c?.tipo] : null;
     if (fluxoEditora) return fluxoEditora;
-    if ((c?.rede || '') === 'emanda') return EMANDA_ETAPAS_DEFS;
     return CONTEUDO_ETAPAS_DEFS;
   }
 
@@ -3768,10 +3810,15 @@ function save(key, val) {
         aprovado: 2,
         agendado: 1,
         postado: 0,
-        arte: 0,
       };
       return Object.fromEntries(PRE_LANCAMENTO_REEL_FLUXO.map(etapa => [etapa.key, {
         prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, diasAntes[etapa.key] ?? 0) : '',
+        resp: etapa.resp || '',
+      }]));
+    }
+    if (String(empresa).split(',').includes('gisella') && tipo === 'card') {
+      return Object.fromEntries(GC_CARD_FLUXO.map((etapa, index) => [etapa.key, {
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, GC_CARD_FLUXO.length - 1 - index) : '',
         resp: etapa.resp || '',
       }]));
     }
@@ -3782,8 +3829,14 @@ function save(key, val) {
         resp: etapa.resp || '',
       }]));
     }
+    if (rede === 'emanda' || tipo === 'emailmkt') {
+      const fluxoEmail = EDITORA_CONTEUDO_FLUXOS.emailmkt;
+      return Object.fromEntries(fluxoEmail.map((etapa, index) => [etapa.key, {
+        prazo: dataPostagem ? prazoAntesDaPostagem(dataPostagem, fluxoEmail.length - 1 - index) : '',
+        resp: etapa.resp || '',
+      }]));
+    }
     // O fluxo de e-mail tem etapas próprias e não usa Edição/Aprovação/Agendamento.
-    if (rede === 'emanda') return {};
 
     // Conteúdos da GC Estratégias já nascem com todo o fluxo organizado:
     // uma etapa por dia, terminando na data de postagem. A liberação para cada
@@ -3927,7 +3980,6 @@ function save(key, val) {
       if (estado.editar_video_arte?.feito) liberadas.add('aprovado');
       if (estado.aprovado?.feito) liberadas.add('agendado');
       if (estado.agendado?.feito) liberadas.add('postado');
-      if (estado.postado?.feito) liberadas.add('arte');
       return etapas.filter(etapa => etapa.feito || liberadas.has(etapa.key));
     }
     const nextPendingIndex = etapas.findIndex(etapa => !etapaConteudoConcluidaOuDispensada(etapa));
@@ -8348,7 +8400,7 @@ function save(key, val) {
     luiggi:  'all',
     marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
     bruna:   { pages: ['tarefas', 'conteudo-menu', 'site'], company: 'editora', taskAssignee: 'Bruna' },
-    vera:    { pages: ['tarefas'], taskAssignee: 'Vera' },
+    vera:    { pages: ['tarefas', 'site', 'projetos', 'livros'], taskAssignee: 'Vera' },
   };
 
   function currentDashboardUser() {

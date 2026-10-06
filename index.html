@@ -888,6 +888,20 @@
   </div>
 </div>
 
+<!-- MODAL ANOTAÇÕES DO LIVRO -->
+<div class="modal-overlay" id="modal-livro-notas">
+  <div class="modal" style="width:560px;">
+    <button class="modal-close" onclick="closeModal('modal-livro-notas')">×</button>
+    <div class="modal-title" id="livro-notas-title">Anotações do livro</div>
+    <p style="font-size:12px;color:var(--text-soft);margin-bottom:1rem;">Registre decisões, ideias e observações feitas ao longo do projeto e na reunião de alinhamento de conceito.</p>
+    <textarea class="notes-area" id="livro-notas-text" style="min-height:260px;" placeholder="Escreva as anotações deste livro..."></textarea>
+    <div class="btn-row">
+      <button type="button" class="btn" onclick="closeModal('modal-livro-notas')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="saveLivroNotes()">Salvar anotações</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CADASTRAR MENTORADA -->
 <div class="modal-overlay" id="modal-add-mentee">
   <div class="modal" style="width:460px;">
@@ -1220,6 +1234,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.55"></script>
+  <script src="app.js?v=3.2.56"></script>
 </body>
 </html>

@@ -46,10 +46,14 @@ function renderTechnicalSheet(book) {
   [
     ['Autor', info.autor], ['Ilustrador', info.ilustrador], ['Público-alvo', info.publico],
     ['Faixa etária', info.faixa], ['Nº de páginas', info.paginas], ['Tiragem', info.tiragem],
-    ['Valor', info.valor], ['ISBN', info.isbn], ['Formato', info.formato], ['Coleção', info.colecao],
+    ['Preço de custo', info.precoCusto], ['Preço de venda', info.precoVenda || info.valor],
+    ['ISBN', info.isbn], ['Formato', info.formato], ['Coleção', info.colecao],
     ['Editora responsável', info.editora], ['Ano', info.ano], ['Data de lançamento', formatDate(info.lancamento)],
   ].forEach(([label, value]) => { const field = technicalField(label, value); if (field) grid.append(field); });
-  [['Assuntos', info.assuntos], ['Sinopse', info.sinopse]].forEach(([label, value]) => { const field = technicalField(label, value, true); if (field) grid.append(field); });
+  [
+    ['Assuntos', info.assuntos], ['Sinopse', info.sinopse],
+    ['Descrição para o site', info.descricaoSite], ['Observações', info.observacao],
+  ].forEach(([label, value]) => { const field = technicalField(label, value, true); if (field) grid.append(field); });
   if (!grid.children.length) grid.append(textElement('div', 'message', 'A ficha técnica ainda não possui informações.'));
 }
 
