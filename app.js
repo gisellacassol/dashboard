@@ -1859,6 +1859,7 @@ function save(key, val) {
     if (id === 'colab-bruna') { renderNotas('bruna'); buildColabTarefas(); }
     if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
     if (id === 'site') { renderConteudos(); renderSiteProducts(); }
+    if (id === 'banco-livros') { renderBancoLivros(); }
     if (id === 'ajustes') { renderAjustes(); }
     if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
     if (id === 'links') { renderLinks(); }
@@ -2218,6 +2219,23 @@ function save(key, val) {
   
   let editingEventId = null;
   
+  function openFloatingAdd() {
+    const activePageId = document.querySelector('.page.active')?.id || '';
+    if (activePageId === 'page-site') {
+      openSiteProductModal();
+      return;
+    }
+    if (activePageId === 'page-banco-livros') {
+      openBancoLivroNovo();
+      return;
+    }
+    if (activePageId === 'page-livros') {
+      openAddLivroTodos();
+      return;
+    }
+    openQuickAdd();
+  }
+
   function openQuickAdd() {
     editingEventId = null;
     window._editingEtapa = null;
@@ -2913,6 +2931,7 @@ function save(key, val) {
     if (getCompanyRestriction()) return false;
     let alterou = false;
     livros.forEach(livro => {
+      if (livro.catalogOnly === true) return;
       if (livro.tipopub === 'reimpressao' || livro.etapasWorkflowVersion === LIVRO_ETAPAS_WORKFLOW_VERSION) return;
       livro.etapas = mesclarCronogramaEditorial(livro.etapas, livro.info?.lancamento || '');
       livro.etapasWorkflowVersion = LIVRO_ETAPAS_WORKFLOW_VERSION;
@@ -2924,15 +2943,22 @@ function save(key, val) {
     // O botão flutuante do celular pode ter aberto o modal genérico antes de
     // chegar aqui. O cadastro de livro usa somente sua ficha técnica própria.
     closeModal('modal-quickadd');
-    openAddLivro('editora');
+    openAddLivro('editora', { catalogOnly: false });
+  }
+
+  function openBancoLivroNovo() {
+    openAddLivro('editora', { catalogOnly: true });
   }
   
-  function openAddLivro(emp) {
+  let creatingCatalogOnlyBook = false;
+
+  function openAddLivro(emp, options = {}) {
     closeModal('modal-quickadd');
     addLivroEmpresa = emp;
     editingLivroId = null;
-    document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
-    document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
+    creatingCatalogOnlyBook = options.catalogOnly === true;
+    document.querySelector('#modal-livro .modal-title').textContent = creatingCatalogOnlyBook ? 'Registrar no banco de livros' : 'Novo livro · Ficha Técnica';
+    document.querySelector('#modal-livro .btn-primary').textContent = creatingCatalogOnlyBook ? 'Registrar livro' : 'Criar livro';
     ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-preco-custo','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-descricao-site','nl-observacao','nl-os','nl-ano','nl-lancamento','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => {
       const field = document.getElementById(id);
       if (field) field.value = '';
@@ -2959,9 +2985,9 @@ function save(key, val) {
     const autor = document.getElementById('nl-autor').value.trim();
     const ano = document.getElementById('nl-ano')?.value.trim() || '';
     const lancamentoDate = document.getElementById('nl-lancamento').value;
-    if (!autor) { document.getElementById('nl-autor').focus(); return; }
-    if (!ano) { document.getElementById('nl-ano').focus(); return; }
-    if (!lancamentoDate) { document.getElementById('nl-lancamento').focus(); return; }
+    if (!creatingCatalogOnlyBook && !autor) { document.getElementById('nl-autor').focus(); return; }
+    if (!creatingCatalogOnlyBook && !ano) { document.getElementById('nl-ano').focus(); return; }
+    if (!creatingCatalogOnlyBook && !lancamentoDate) { document.getElementById('nl-lancamento').focus(); return; }
     // Get selected empresas from checkboxes (or fall back to addLivroEmpresa)
     const checkboxes = ['editora','leia','gisella'].filter(e => {
       const cb = document.getElementById('nl-emp-'+e);
@@ -2976,6 +3002,7 @@ function save(key, val) {
     const tipoAutoriaMenteeId = tipoAutoriaVal ? parseInt(tipoAutoriaVal)||null : null;
     const livro = {
       id: editingLivroId || 0, titulo, empresa: empresaStr, expandido: true,
+      catalogOnly: creatingCatalogOnlyBook,
       tipopub, menteeId: menteeIdSel, tipoAutoriaMenteeId: tipoAutoriaMenteeId,
       etapasWorkflowVersion: tipopub === 'reimpressao' ? undefined : LIVRO_ETAPAS_WORKFLOW_VERSION,
       links: {
@@ -3006,7 +3033,7 @@ function save(key, val) {
         os: document.getElementById('nl-os')?.value.trim()||'',
         ano,
       },
-      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : criarCronogramaEditorial(lancamentoDate)
+      etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : (creatingCatalogOnlyBook ? [] : criarCronogramaEditorial(lancamentoDate))
     };
     const _wasEditing = !!editingLivroId;
     let _newLivroId = null;
@@ -3023,6 +3050,7 @@ function save(key, val) {
         livroExistente.info = livro.info;
         livroExistente.links = livro.links;
         livroExistente.tipopub = tipopub;
+        livroExistente.catalogOnly = creatingCatalogOnlyBook;
         if (tipopub !== 'reimpressao') livroExistente.etapasWorkflowVersion = LIVRO_ETAPAS_WORKFLOW_VERSION;
         livroExistente.tipoAutoriaMenteeId = tipoAutoriaMenteeId;
       }
@@ -3035,6 +3063,7 @@ function save(key, val) {
     }
     save('gc-livros', livros);
     renderLivros();
+    renderBancoLivros();
     buildPrioridades();
     closeModal('modal-livro');
     const _createdForSiteProduct = _newLivroId ? finishSiteProductBookCreation(livros.find(item => item.id === _newLivroId)) : false;
@@ -3042,6 +3071,7 @@ function save(key, val) {
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
+    creatingCatalogOnlyBook = false;
     ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-preco-custo','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-descricao-site','nl-observacao','nl-os','nl-ano','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('nl-lancamento').value = '';
     const lancRad = document.getElementById('nl-tipopub-lanc'); if(lancRad) lancRad.checked=true;
@@ -3165,15 +3195,16 @@ function save(key, val) {
   
   function renderLivros() {
     const _lf = getFilter('livros');
-    let livrosFiltrados = _lf==='all' ? livros : livros.filter(l=>(l.empresa||'').split(',').includes(_lf));
+    const livrosProducao = livros.filter(l => l.catalogOnly !== true);
+    let livrosFiltrados = _lf==='all' ? livrosProducao : livrosProducao.filter(l=>(l.empresa||'').split(',').includes(_lf));
   
     // Separar ativos (< 100%) e arquivados (100%)
     function isPct100(l) {
       if (!l.etapas || l.etapas.length === 0) return false;
       return l.etapas.every(e => e.feito);
     }
-    const ativos = livros.filter(l => !isPct100(l));
-    const arquivados100 = livros.filter(l => isPct100(l));
+    const ativos = livrosProducao.filter(l => !isPct100(l));
+    const arquivados100 = livrosProducao.filter(l => isPct100(l));
     const ativosFilt = livrosFiltrados.filter(l => !isPct100(l));
     const arqFilt = livrosFiltrados.filter(l => isPct100(l));
   
@@ -3210,7 +3241,7 @@ function save(key, val) {
     ['editora','leia','gisella'].forEach(emp => {
       const el = document.getElementById('livros-' + emp);
       if (!el) return;
-      const lista = livros.filter(l => (l.empresa||'').split(',').includes(emp));
+      const lista = livrosProducao.filter(l => (l.empresa||'').split(',').includes(emp));
       const ativos = lista.filter(l => !isPct100(l));
       const arq    = lista.filter(l => isPct100(l));
       if (ativos.length === 0 && arq.length === 0) {
@@ -3226,6 +3257,43 @@ function save(key, val) {
     });
   
     buildLivrosCalSemana();
+    renderBancoLivros();
+  }
+
+  function escapeBancoLivroHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  }
+
+  function renderBancoLivros() {
+    const container = document.getElementById('banco-livros-lista');
+    if (!container) return;
+    const query = String(document.getElementById('banco-livros-busca')?.value || '').trim().toLocaleLowerCase('pt-BR');
+    const lista = [...livros]
+      .filter(livro => {
+        if (!query) return true;
+        const info = livro.info || {};
+        return [livro.titulo, info.autor, info.isbn, info.colecao].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(query));
+      })
+      .sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR'));
+    const total = document.getElementById('banco-livros-total');
+    if (total) total.textContent = `${lista.length} ${lista.length === 1 ? 'livro' : 'livros'}`;
+    if (!lista.length) {
+      container.innerHTML = '<div style="padding:1.4rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum livro encontrado.</div>';
+      return;
+    }
+    container.innerHTML = lista.map(livro => {
+      const info = livro.info || {};
+      const situacao = livro.catalogOnly === true ? 'Somente no banco' : 'Em produção / sistema';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:8px;">
+        <span style="font-size:20px;">📖</span>
+        <button type="button" onclick="openLivroFicha(${Number(livro.id)})" style="flex:1;min-width:0;text-align:left;border:0;background:none;cursor:pointer;color:var(--text);font-family:inherit;padding:0;">
+          <strong style="display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeBancoLivroHtml(livro.titulo)}</strong>
+          <span style="display:block;font-size:11px;color:var(--text-soft);margin-top:3px;">${escapeBancoLivroHtml(info.autor || 'Autor não informado')}${info.isbn ? ` · ISBN ${escapeBancoLivroHtml(info.isbn)}` : ''}${info.ano ? ` · ${escapeBancoLivroHtml(info.ano)}` : ''}</span>
+        </button>
+        <span class="badge ${livro.catalogOnly === true ? 'b-gray' : 'b-info'}" style="font-size:10px;">${situacao}</span>
+        <button type="button" onclick="openLivroFicha(${Number(livro.id)})" title="Editar ficha" style="border:0;background:none;color:var(--text-soft);cursor:pointer;font-size:13px;">✎</button>
+      </div>`;
+    }).join('');
   }
   
   function toggleArqEmpresa(emp) {
@@ -3265,6 +3333,7 @@ function save(key, val) {
     const l = livros.find(x=>x.id===id);
     if (!l) return;
     editingLivroId = id;
+    creatingCatalogOnlyBook = l.catalogOnly === true;
     addLivroEmpresa = (l.empresa||'editora').split(',')[0];
     const emps = (l.empresa||'editora').split(',');
     ['editora','leia','gisella'].forEach(e => {
@@ -4933,7 +5002,7 @@ function save(key, val) {
     const title = input?.value.trim() || '';
     if (!title) { input?.focus(); return; }
     siteProductAwaitingNewBookTarget = forSet ? 'conjunto' : 'individual';
-    openAddLivro('editora');
+    openAddLivro('editora', { catalogOnly: true });
     const titleField = document.getElementById('nl-titulo');
     if (titleField) titleField.value = title;
   }
@@ -8685,9 +8754,9 @@ function save(key, val) {
     gisella: 'all',
     milena:  'all',
     luiggi:  'all',
-    marilia: { pages: ['tarefas', 'livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
+    marilia: { pages: ['tarefas', 'livros', 'banco-livros'], taskAssignee: 'Marília', assignableTaskAssignees: ['Marília','Gisella'] },
     bruna:   { pages: ['tarefas', 'conteudo-menu', 'site'], company: 'editora', taskAssignee: 'Bruna' },
-    vera:    { pages: ['tarefas', 'site', 'projetos', 'livros'], taskAssignee: 'Vera' },
+    vera:    { pages: ['tarefas', 'site', 'projetos', 'livros', 'banco-livros'], taskAssignee: 'Vera' },
   };
 
   function currentDashboardUser() {

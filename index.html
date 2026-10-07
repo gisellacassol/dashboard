@@ -112,6 +112,7 @@
     <button class="nav-item" onclick="showPage('eventos',this)"><span style="font-size:13px;">📅</span> Eventos</button>
     <button class="nav-item" onclick="showPage('projetos',this)"><span style="font-size:13px;">◆</span> Projetos</button>
     <button class="nav-item" onclick="showPage('livros',this)"><span style="font-size:13px;">📖</span> Livros</button>
+    <button class="nav-item" onclick="showPage('banco-livros',this)"><span style="font-size:13px;">📚</span> Banco de livros</button>
   </div>
   <div class="nav-section">
     <div class="nav-label">Colaboradores</div>
@@ -377,6 +378,21 @@
   <div id="livros-arquivados-wrap" style="display:none;margin-top:8px;"><div id="livros-arquivados-list"></div></div>
 </div>
 
+<!-- BANCO DE LIVROS -->
+<div class="page" id="page-banco-livros">
+  <div class="page-header">
+    <div><div class="page-title">Banco de livros</div><div class="page-subtitle">Catálogo completo de livros da editora, em produção ou já publicados</div></div>
+    <button class="btn btn-primary" onclick="openBancoLivroNovo()">+ Registrar livro</button>
+  </div>
+  <div class="section">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <input class="form-input" id="banco-livros-busca" type="search" placeholder="Buscar por título, autor ou ISBN..." oninput="renderBancoLivros()" style="flex:1;min-width:220px;">
+      <span id="banco-livros-total" style="font-size:12px;color:var(--text-soft);"></span>
+    </div>
+    <div id="banco-livros-lista"></div>
+  </div>
+</div>
+
 <!-- COLABORADOR: GISELLA -->
 <div class="page" id="page-colab-gisella">
   <div class="page-header">
@@ -601,7 +617,7 @@
 <button onclick="openChatPanel()" title="Chat da equipe" id="chat-float-btn" style="position:fixed;bottom:13.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">💬<span id="chat-float-badge" class="chat-float-btn-badge"></span></button>
 <button onclick="openNotifPanel()" title="Notificações" id="notif-float-btn" style="position:fixed;bottom:9rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">🔔<span id="notif-float-badge" style="display:none;position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#e74c3c;border:2px solid var(--text);"></span></button>
 <button onclick="openNotaRapidaFlutuante()" title="Nova nota rápida" style="position:fixed;bottom:4.5rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:22px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;">✏️</button>
-<button onclick="openQuickAdd()" title="Adicionar" style="position:fixed;bottom:0rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">+</button>
+<button onclick="openFloatingAdd()" title="Adicionar" style="position:fixed;bottom:0rem;right:1rem;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--surface);border:none;font-size:26px;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(28,20,16,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">+</button>
 
 <!-- MODAL QUICK ADD -->
 <div id="undo-toast">
@@ -1299,6 +1315,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.57"></script>
+  <script src="app.js?v=3.2.58"></script>
 </body>
 </html>
