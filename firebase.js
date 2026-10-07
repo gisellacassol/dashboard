@@ -18,7 +18,7 @@ window._fbReady = false;
 
 const DASHBOARD_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
 const BRUNA_DIRECT_FIREBASE_KEYS = new Set(['gc-notas-bruna']);
-const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-livros', 'gc-recurring-tasks']);
+const BRUNA_RESTRICTED_FIREBASE_KEYS = new Set(['gc-events', 'gc-conteudos', 'gc-livros', 'gc-recurring-tasks', 'gc-site-products']);
 const DASHBOARD_SESSION_TOKEN_KEY = 'gc-dashboard-session-token';
 function dashboardSessionToken() {
   return sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
@@ -132,7 +132,7 @@ window.fbGet = async function(key) {
 window.fbLoadAll = async function() {
   const KEYS = [
     'gc-events','gc-livros','gc-conteudos','gc-projetos',
-    'gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira',
+    'gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-site-products',
     'gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa',
     'gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi',
     'gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi',

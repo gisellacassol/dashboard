@@ -6,7 +6,7 @@
 <title>Central · Grupo Cassol</title>
 <link rel="stylesheet" href="style.css?v=3.2.15">
 <!-- Firebase (ES module) — exposes fbSave, fbGet, fbLoadAll, fbListen on window -->
-  <script type="module" src="firebase.js?v=3.2.16"></script>
+  <script type="module" src="firebase.js?v=3.2.17"></script>
 </head>
 <body>
 
@@ -270,7 +270,7 @@
   <div class="section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="section-title" style="margin-bottom:0;">Tarefas do site</div>
-      <button class="add-btn" style="margin:0;" onclick="openNewSiteItem()">+ nova tarefa do site</button>
+      <button class="add-btn" style="margin:0;" onclick="openSiteProductModal()">+ nova tarefa no site</button>
     </div>
     <div id="site-tbody"></div>
     <div style="margin-top:1rem;">
@@ -279,6 +279,11 @@
         <div id="archived-tbody-site"></div>
       </div>
     </div>
+  </div>
+  <div class="section">
+    <div class="section-title" style="margin-bottom:2px;">Produtos do site</div>
+    <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px;">Livros individuais e conjuntos vinculados ao banco de livros</div>
+    <div id="site-products-list"></div>
   </div>
 </div>
 
@@ -1204,6 +1209,66 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-site-product" onclick="if(event.target===this)closeModal('modal-site-product')">
+  <div class="modal" style="width:680px;max-width:calc(100vw - 24px);max-height:88vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeModal('modal-site-product')">×</button>
+    <div class="modal-title" id="site-product-modal-title">Novo produto do site</div>
+    <div style="font-size:12px;color:var(--text-soft);margin:5px 0 16px;">Escolha como o produto será vendido.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+      <button type="button" id="site-product-type-individual" class="filter-btn active" onclick="setSiteProductType('individual')" style="padding:12px;font-size:13px;">📖 Individual</button>
+      <button type="button" id="site-product-type-conjunto" class="filter-btn" onclick="setSiteProductType('conjunto')" style="padding:12px;font-size:13px;">📚 Conjunto</button>
+    </div>
+
+    <div id="site-product-individual-fields">
+      <div class="form-group">
+        <label class="form-label">Título do livro</label>
+        <input class="form-input" id="site-product-book-search" type="text" list="site-product-books-datalist" autocomplete="off" placeholder="Digite para localizar um livro" oninput="updateSiteProductBookSuggestion()">
+        <datalist id="site-product-books-datalist"></datalist>
+        <div id="site-product-book-match" style="font-size:11px;color:var(--text-soft);margin-top:5px;"></div>
+        <button type="button" id="site-product-create-book" class="btn" onclick="createBookFromSiteProduct()" style="display:none;margin-top:8px;">+ registrar novo livro</button>
+      </div>
+      <div id="site-product-book-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin:12px 0;font-size:12px;line-height:1.55;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Link da arte para o site</label><input class="form-input" id="site-product-art-link" type="url" placeholder="https://..."></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Disponibilidade / previsão de entrega</label><input class="form-input" id="site-product-availability" type="text" placeholder="Ex.: disponível em 10 dias ou 20/10/2026"></div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label class="form-label">Possui variação?</label>
+          <div style="display:flex;gap:14px;padding-top:7px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="radio" name="site-product-variation" value="nao" checked onchange="toggleSiteProductVariation()"> Não</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;"><input type="radio" name="site-product-variation" value="sim" onchange="toggleSiteProductVariation()"> Sim</label>
+          </div>
+        </div>
+        <div id="site-product-variation-fields" style="display:none;grid-column:1/-1;grid-template-columns:1fr 160px;gap:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+          <div class="form-group"><label class="form-label">Título da variação</label><input class="form-input" id="site-product-variation-title" type="text" placeholder="Ex.: Capa dura"></div>
+          <div class="form-group"><label class="form-label">Preço da variação</label><input class="form-input" id="site-product-variation-price" type="text" placeholder="R$ 0,00"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="site-product-conjunto-fields" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Livros incluídos</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input class="form-input" id="site-product-set-book-search" type="text" list="site-product-books-datalist" autocomplete="off" placeholder="Digite o título do livro" oninput="updateSiteProductSetSuggestion()">
+          <button type="button" class="btn" onclick="addBookToSiteProductSet()">Adicionar</button>
+        </div>
+        <div id="site-product-set-match" style="font-size:11px;color:var(--text-soft);margin-top:5px;"></div>
+        <button type="button" id="site-product-set-create-book" class="btn" onclick="createBookFromSiteProduct(true)" style="display:none;margin-top:8px;">+ registrar novo livro</button>
+      </div>
+      <div id="site-product-set-books" style="display:flex;flex-direction:column;gap:6px;margin:12px 0;"></div>
+      <div class="form-group"><label class="form-label">Nome do conjunto</label><input class="form-input" id="site-product-set-title" type="text" placeholder="Ex.: Coleção completa"></div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:12px;margin-top:12px;">
+        <div class="form-group"><label class="form-label">Preço</label><input class="form-input" id="site-product-set-price" type="text" placeholder="R$ 0,00"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><textarea class="notes-area" id="site-product-set-description" style="min-height:90px;" placeholder="Descrição do conjunto para o site"></textarea></div>
+      </div>
+    </div>
+
+    <div id="site-product-error" style="display:none;color:var(--danger);font-size:12px;margin-top:12px;"></div>
+    <div class="btn-row"><button class="btn" onclick="closeModal('modal-site-product')">Cancelar</button><button class="btn btn-primary" onclick="saveSiteProduct()">Salvar produto</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-steira">
   <div class="modal" style="width:540px;">
     <button class="modal-close" onclick="closeModal('modal-steira')">×</button>
@@ -1234,6 +1299,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.56"></script>
+  <script src="app.js?v=3.2.57"></script>
 </body>
 </html>

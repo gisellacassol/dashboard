@@ -265,7 +265,7 @@
       return;
     }
   
-    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks','gc-ajustes'];
+    const KEYS = ['gc-events','gc-livros','gc-conteudos','gc-projetos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-site-products','gc-colab-ordem','gc-links','gc-gisella-checks','gc-links-empresa','gc-fixed-gisella','gc-fixed-milena','gc-fixed-luiggi','gc-fixed-checks-gisella','gc-fixed-checks-milena','gc-fixed-checks-luiggi','gc-notas-gisella','gc-notas-milena','gc-notas-luiggi','gc-notas-marilia','gc-notas-bruna','gc-recurring-tasks','gc-ajustes'];
   
     // Verificar se há dados no localStorage
     const hasData = KEYS.some(k => localStorage.getItem(k));
@@ -1287,6 +1287,7 @@ function save(key, val) {
   }
   let conteudos = load('gc-conteudos', []);
   let steiraData = load('gc-steira', {});
+  let siteProducts = load('gc-site-products', []);
   let kanbanData = load('gc-kanban', {});
   
   const ETAPAS_DEFAULT = [
@@ -1857,7 +1858,7 @@ function save(key, val) {
     if (id === 'colab-marilia') { renderNotas('marilia'); buildColabTarefas(); }
     if (id === 'colab-bruna') { renderNotas('bruna'); buildColabTarefas(); }
     if (id === 'conteudo-menu') { buildConteudoCalSemana(); }
-    if (id === 'site') { renderConteudos(); }
+    if (id === 'site') { renderConteudos(); renderSiteProducts(); }
     if (id === 'ajustes') { renderAjustes(); }
     if (id === 'eventos') { buildCalendar('cal-eventos', getFilter('eventos')); buildEventosList(); }
     if (id === 'links') { renderLinks(); }
@@ -3036,7 +3037,8 @@ function save(key, val) {
     renderLivros();
     buildPrioridades();
     closeModal('modal-livro');
-    if (_newLivroId) setTimeout(() => openEtapasPrazos(_newLivroId), 800);
+    const _createdForSiteProduct = _newLivroId ? finishSiteProductBookCreation(livros.find(item => item.id === _newLivroId)) : false;
+    if (_newLivroId && !_createdForSiteProduct) setTimeout(() => openEtapasPrazos(_newLivroId), 800);
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
@@ -4752,7 +4754,287 @@ function save(key, val) {
     save('gc-conteudos', conteudos);
     renderMcdEtapas(c);
   }
-  
+
+  /* ── PRODUTOS DO SITE ── */
+  let editingSiteProductId = null;
+  let currentSiteProductType = 'individual';
+  let selectedSiteProductBookId = null;
+  let siteProductSetBookIds = [];
+  let siteProductAwaitingNewBookTarget = '';
+
+  function normalizeSiteProductText(value) {
+    return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  }
+
+  function escapeSiteProductHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  }
+
+  function siteProductBookById(id) {
+    return livros.find(livro => String(livro.id) === String(id)) || null;
+  }
+
+  function availableSiteProductBooks() {
+    return [...(livros || [])].sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''), 'pt-BR'));
+  }
+
+  function populateSiteProductBookOptions() {
+    const datalist = document.getElementById('site-product-books-datalist');
+    if (!datalist) return;
+    datalist.innerHTML = availableSiteProductBooks().map(livro => `<option value="${escapeSiteProductHtml(livro.titulo)}"></option>`).join('');
+  }
+
+  function siteProductMatchingBooks(query) {
+    const normalized = normalizeSiteProductText(query);
+    if (!normalized) return [];
+    return availableSiteProductBooks().filter(livro => normalizeSiteProductText(livro.titulo).includes(normalized)).slice(0, 6);
+  }
+
+  function renderSiteProductMatches(query, containerId, setMode) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const matches = siteProductMatchingBooks(query);
+    const exact = matches.find(livro => normalizeSiteProductText(livro.titulo) === normalizeSiteProductText(query));
+    container.innerHTML = matches.length
+      ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">${matches.map(livro => `<button type="button" class="filter-btn" style="font-size:11px;padding:3px 8px;" onclick="selectSiteProductBook('${String(livro.id)}',${setMode ? 'true' : 'false'})">${escapeSiteProductHtml(livro.titulo)}</button>`).join('')}</div>`
+      : (query.trim() ? 'Nenhum livro encontrado no banco.' : 'Comece a digitar para ver os livros cadastrados.');
+    return {matches, exact};
+  }
+
+  function updateSiteProductBookSuggestion() {
+    const input = document.getElementById('site-product-book-search');
+    const result = renderSiteProductMatches(input?.value || '', 'site-product-book-match', false);
+    const exact = result.exact || null;
+    selectedSiteProductBookId = exact ? exact.id : null;
+    const createButton = document.getElementById('site-product-create-book');
+    if (createButton) createButton.style.display = input?.value.trim() && !exact ? '' : 'none';
+    renderSiteProductBookPreview(exact);
+  }
+
+  function updateSiteProductSetSuggestion() {
+    const input = document.getElementById('site-product-set-book-search');
+    const result = renderSiteProductMatches(input?.value || '', 'site-product-set-match', true);
+    const createButton = document.getElementById('site-product-set-create-book');
+    if (createButton) createButton.style.display = input?.value.trim() && !result.exact ? '' : 'none';
+  }
+
+  function selectSiteProductBook(id, setMode) {
+    const livro = siteProductBookById(id);
+    if (!livro) return;
+    if (setMode) {
+      if (!siteProductSetBookIds.some(value => String(value) === String(livro.id))) siteProductSetBookIds.push(livro.id);
+      const input = document.getElementById('site-product-set-book-search');
+      if (input) input.value = '';
+      const match = document.getElementById('site-product-set-match');
+      if (match) match.textContent = 'Livro adicionado ao conjunto.';
+      renderSiteProductSetBooks();
+      return;
+    }
+    selectedSiteProductBookId = livro.id;
+    const input = document.getElementById('site-product-book-search');
+    if (input) input.value = livro.titulo || '';
+    const match = document.getElementById('site-product-book-match');
+    if (match) match.textContent = 'Livro vinculado ao banco de livros.';
+    const createButton = document.getElementById('site-product-create-book');
+    if (createButton) createButton.style.display = 'none';
+    renderSiteProductBookPreview(livro);
+  }
+
+  function addBookToSiteProductSet() {
+    const input = document.getElementById('site-product-set-book-search');
+    const query = input?.value || '';
+    const exact = availableSiteProductBooks().find(livro => normalizeSiteProductText(livro.titulo) === normalizeSiteProductText(query));
+    if (!exact) {
+      updateSiteProductSetSuggestion();
+      input?.focus();
+      return;
+    }
+    selectSiteProductBook(exact.id, true);
+  }
+
+  function removeBookFromSiteProductSet(id) {
+    siteProductSetBookIds = siteProductSetBookIds.filter(value => String(value) !== String(id));
+    renderSiteProductSetBooks();
+  }
+
+  function renderSiteProductSetBooks() {
+    const container = document.getElementById('site-product-set-books');
+    if (!container) return;
+    const selected = siteProductSetBookIds.map(siteProductBookById).filter(Boolean);
+    container.innerHTML = selected.length ? selected.map(livro => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);">
+        <span>📖</span><span style="flex:1;font-size:13px;font-weight:500;">${escapeSiteProductHtml(livro.titulo)}</span>
+        <button type="button" onclick="removeBookFromSiteProductSet('${String(livro.id)}')" style="border:0;background:none;color:var(--danger);cursor:pointer;font-size:15px;">×</button>
+      </div>`).join('') : '<div style="font-size:12px;color:var(--text-soft);padding:8px 0;">Nenhum livro incluído ainda.</div>';
+  }
+
+  function renderSiteProductBookPreview(livro) {
+    const preview = document.getElementById('site-product-book-preview');
+    if (!preview) return;
+    if (!livro) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
+    const info = livro.info || {};
+    preview.style.display = '';
+    preview.innerHTML = `<strong>${escapeSiteProductHtml(livro.titulo)}</strong><br>
+      Autor: ${escapeSiteProductHtml(info.autor || '—')} · ISBN: ${escapeSiteProductHtml(info.isbn || '—')}<br>
+      Preço cadastrado: ${escapeSiteProductHtml(info.precoVenda || info.valor || '—')}<br>
+      <span style="color:var(--text-soft);">${escapeSiteProductHtml(info.descricaoSite || info.sinopse || 'Sem descrição para o site.')}</span>`;
+  }
+
+  function setSiteProductType(type) {
+    currentSiteProductType = type === 'conjunto' ? 'conjunto' : 'individual';
+    document.getElementById('site-product-type-individual')?.classList.toggle('active', currentSiteProductType === 'individual');
+    document.getElementById('site-product-type-conjunto')?.classList.toggle('active', currentSiteProductType === 'conjunto');
+    const individual = document.getElementById('site-product-individual-fields');
+    const conjunto = document.getElementById('site-product-conjunto-fields');
+    if (individual) individual.style.display = currentSiteProductType === 'individual' ? '' : 'none';
+    if (conjunto) conjunto.style.display = currentSiteProductType === 'conjunto' ? '' : 'none';
+  }
+
+  function toggleSiteProductVariation() {
+    const hasVariation = document.querySelector('input[name="site-product-variation"]:checked')?.value === 'sim';
+    const fields = document.getElementById('site-product-variation-fields');
+    if (fields) fields.style.display = hasVariation ? 'grid' : 'none';
+  }
+
+  function openSiteProductModal(id = null) {
+    editingSiteProductId = id;
+    const product = siteProducts.find(item => String(item.id) === String(id)) || null;
+    currentSiteProductType = product?.type === 'conjunto' ? 'conjunto' : 'individual';
+    selectedSiteProductBookId = product?.bookId || null;
+    siteProductSetBookIds = Array.isArray(product?.bookIds) ? [...product.bookIds] : [];
+    populateSiteProductBookOptions();
+    document.getElementById('site-product-modal-title').textContent = product ? 'Editar produto do site' : 'Novo produto do site';
+    const livro = siteProductBookById(selectedSiteProductBookId);
+    document.getElementById('site-product-book-search').value = livro?.titulo || '';
+    document.getElementById('site-product-art-link').value = product?.artLink || '';
+    document.getElementById('site-product-availability').value = product?.availability || '';
+    document.getElementById('site-product-set-book-search').value = '';
+    document.getElementById('site-product-set-title').value = product?.title || '';
+    document.getElementById('site-product-set-price').value = product?.price || '';
+    document.getElementById('site-product-set-description').value = product?.description || '';
+    document.getElementById('site-product-variation-title').value = product?.variation?.title || '';
+    document.getElementById('site-product-variation-price').value = product?.variation?.price || '';
+    const variationValue = product?.variation ? 'sim' : 'nao';
+    const variationRadio = document.querySelector(`input[name="site-product-variation"][value="${variationValue}"]`);
+    if (variationRadio) variationRadio.checked = true;
+    const error = document.getElementById('site-product-error');
+    if (error) { error.style.display = 'none'; error.textContent = ''; }
+    setSiteProductType(currentSiteProductType);
+    toggleSiteProductVariation();
+    renderSiteProductBookPreview(livro);
+    renderSiteProductSetBooks();
+    updateSiteProductBookSuggestion();
+    updateSiteProductSetSuggestion();
+    openModal('modal-site-product');
+  }
+
+  function createBookFromSiteProduct(forSet = false) {
+    const input = document.getElementById(forSet ? 'site-product-set-book-search' : 'site-product-book-search');
+    const title = input?.value.trim() || '';
+    if (!title) { input?.focus(); return; }
+    siteProductAwaitingNewBookTarget = forSet ? 'conjunto' : 'individual';
+    openAddLivro('editora');
+    const titleField = document.getElementById('nl-titulo');
+    if (titleField) titleField.value = title;
+  }
+
+  function finishSiteProductBookCreation(livro) {
+    if (!livro || !siteProductAwaitingNewBookTarget) return false;
+    if (siteProductAwaitingNewBookTarget === 'conjunto') {
+      if (!siteProductSetBookIds.some(id => String(id) === String(livro.id))) siteProductSetBookIds.push(livro.id);
+      const input = document.getElementById('site-product-set-book-search');
+      if (input) input.value = '';
+      renderSiteProductSetBooks();
+    } else {
+      selectedSiteProductBookId = livro.id;
+      const input = document.getElementById('site-product-book-search');
+      if (input) input.value = livro.titulo || '';
+      renderSiteProductBookPreview(livro);
+    }
+    siteProductAwaitingNewBookTarget = '';
+    populateSiteProductBookOptions();
+    return true;
+  }
+
+  function showSiteProductError(message) {
+    const error = document.getElementById('site-product-error');
+    if (!error) return;
+    error.textContent = message;
+    error.style.display = '';
+  }
+
+  function saveSiteProduct() {
+    let product;
+    if (currentSiteProductType === 'individual') {
+      const livro = siteProductBookById(selectedSiteProductBookId);
+      if (!livro) return showSiteProductError('Selecione um livro existente ou registre um novo livro.');
+      const hasVariation = document.querySelector('input[name="site-product-variation"]:checked')?.value === 'sim';
+      const variation = hasVariation ? {
+        title: document.getElementById('site-product-variation-title').value.trim(),
+        price: document.getElementById('site-product-variation-price').value.trim(),
+      } : null;
+      if (hasVariation && (!variation.title || !variation.price)) return showSiteProductError('Preencha o título e o preço da variação.');
+      product = {
+        id: editingSiteProductId || Date.now(), type: 'individual', empresa: 'editora', bookId: livro.id,
+        artLink: document.getElementById('site-product-art-link').value.trim(),
+        availability: document.getElementById('site-product-availability').value.trim(), variation,
+      };
+    } else {
+      if (!siteProductSetBookIds.length) return showSiteProductError('Adicione pelo menos um livro ao conjunto.');
+      const title = document.getElementById('site-product-set-title').value.trim();
+      const price = document.getElementById('site-product-set-price').value.trim();
+      const description = document.getElementById('site-product-set-description').value.trim();
+      if (!title || !price || !description) return showSiteProductError('Preencha o nome, o preço e a descrição do conjunto.');
+      product = { id: editingSiteProductId || Date.now(), type: 'conjunto', empresa: 'editora', bookIds: [...siteProductSetBookIds], title, price, description };
+    }
+    const index = siteProducts.findIndex(item => String(item.id) === String(product.id));
+    if (index >= 0) siteProducts[index] = product; else siteProducts.push(product);
+    save('gc-site-products', siteProducts);
+    renderSiteProducts();
+    closeModal('modal-site-product');
+  }
+
+  function deleteSiteProduct(id) {
+    const product = siteProducts.find(item => String(item.id) === String(id));
+    if (!product || !window.confirm(`Excluir o produto "${siteProductDisplayName(product)}"?`)) return;
+    siteProducts = siteProducts.filter(item => String(item.id) !== String(id));
+    save('gc-site-products', siteProducts);
+    renderSiteProducts();
+  }
+
+  function siteProductDisplayName(product) {
+    if (product?.type === 'conjunto') return product.title || 'Conjunto';
+    return siteProductBookById(product?.bookId)?.titulo || 'Livro não encontrado';
+  }
+
+  function renderSiteProducts() {
+    const container = document.getElementById('site-products-list');
+    if (!container) return;
+    if (!siteProducts.length) {
+      container.innerHTML = '<div style="padding:1.2rem;text-align:center;color:var(--text-soft);font-size:13px;">Nenhum produto do site cadastrado.</div>';
+      return;
+    }
+    container.innerHTML = siteProducts.map(product => {
+      const individual = product.type !== 'conjunto';
+      const livro = individual ? siteProductBookById(product.bookId) : null;
+      const info = livro?.info || {};
+      const included = individual ? [] : (product.bookIds || []).map(siteProductBookById).filter(Boolean);
+      const price = individual ? (info.precoVenda || info.valor || '—') : (product.price || '—');
+      const description = individual ? (info.descricaoSite || info.sinopse || '') : (product.description || '');
+      return `<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;background:var(--surface);display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:20px;">${individual ? '📖' : '📚'}</div>
+        <div style="flex:1;min-width:0;cursor:pointer;" onclick="openSiteProductModal('${String(product.id)}')">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;"><strong style="font-size:13px;">${escapeSiteProductHtml(siteProductDisplayName(product))}</strong><span class="badge b-gray">${individual ? 'Individual' : 'Conjunto'}</span><span style="font-size:12px;color:var(--gisella);font-weight:600;">${escapeSiteProductHtml(price)}</span></div>
+          ${included.length ? `<div style="font-size:11px;color:var(--text-soft);margin-top:4px;">Inclui: ${included.map(item => escapeSiteProductHtml(item.titulo)).join(', ')}</div>` : ''}
+          ${description ? `<div style="font-size:11px;color:var(--text-soft);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeSiteProductHtml(description)}</div>` : ''}
+          ${individual && product.availability ? `<div style="font-size:11px;margin-top:4px;">Disponibilidade: ${escapeSiteProductHtml(product.availability)}</div>` : ''}
+          ${individual && product.variation ? `<div style="font-size:11px;margin-top:3px;">Variação: ${escapeSiteProductHtml(product.variation.title)} · ${escapeSiteProductHtml(product.variation.price)}</div>` : ''}
+        </div>
+        <button type="button" onclick="event.stopPropagation();deleteSiteProduct('${String(product.id)}')" title="Excluir produto" style="border:0;background:none;color:var(--text-soft);cursor:pointer;font-size:16px;">×</button>
+      </div>`;
+    }).join('');
+  }
+
   /* ── STEIRA ── */
   let currentSteiraName = null;
   let _steiraListDragSrc = null;
@@ -4806,6 +5088,7 @@ function save(key, val) {
     _steiraListDragSrc = null;
     save('gc-steira', steiraData);
     renderSteiraList();
+    renderSiteProducts();
   }
   
   function openSteiraById(id) {
@@ -8114,6 +8397,7 @@ function save(key, val) {
       apply('gc-ajustes',     v => { ajustes = Array.isArray(v) ? v : []; });
       apply('gc-kanban',      v => { kanbanData = v; });
       apply('gc-steira',      v => { steiraData = v; });
+      apply('gc-site-products', v => { siteProducts = Array.isArray(v) ? v : []; });
       apply('gc-colab-ordem', v => { colabOrdem = v; });
       apply('gc-links',       v => { links      = v; });
       apply('gc-links-empresa', v => { linksEmpresa = v; });
@@ -8182,6 +8466,7 @@ function save(key, val) {
     buildHomeCards();
     ['gisella','milena','luiggi','marilia','bruna'].forEach(renderNotas);
     renderSteiraList();
+    renderSiteProducts();
   
     // Initialize chat + notifications
     loadChatMessages().then(() => {});
@@ -8218,6 +8503,7 @@ function save(key, val) {
         ['gc-conteudos', v => { conteudos = v; refreshConteudoViews(); }],
         ['gc-recurring-tasks', v => { recurringTasks = v || []; ensureCustomRecurringTasks(window.gcalEventsCache || []); }],
         ['gc-ajustes', v => { ajustes = Array.isArray(v) ? v : []; renderAjustes(); }],
+        ['gc-site-products', v => { siteProducts = Array.isArray(v) ? v : []; renderSiteProducts(); }],
         ['gc-mentees',       v => { mentees       = v; renderMenteeList();  }],
         ['gc-mentees-marco0', v => { menteesMarco0 = v; renderMarco0List();  }],
         ['gc-notas-gisella', v => { localStorage.setItem('gc-notas-gisella', JSON.stringify(v)); renderNotas('gisella'); }],
@@ -8336,7 +8622,7 @@ function save(key, val) {
           });
   
           // Other keys: fill in only if missing locally
-          ['gc-conteudos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira',
+          ['gc-conteudos','gc-mentees','gc-mentees-marco0','gc-kanban','gc-steira','gc-site-products',
            'gc-colab-ordem','gc-links','gc-links-empresa','gc-recurring-tasks','gc-ajustes'].forEach(key => {
             if (!localStorage.getItem(key) && cloudData[key]?.value) {
               localStorage.setItem(key, JSON.stringify(cloudData[key].value));
@@ -8346,12 +8632,13 @@ function save(key, val) {
   
           if (changed) {
             conteudos     = load('gc-conteudos', []);
+            siteProducts  = load('gc-site-products', []);
             recurringTasks = load('gc-recurring-tasks', []);
             ajustes        = load('gc-ajustes', []);
             mentees       = load('gc-mentees', MENTEES_DEFAULT);
             menteesMarco0 = load('gc-mentees-marco0', []);
             if (garantirEtapaArteSiteNosLivros()) save('gc-livros', livros);
-            renderLivros(); renderMenteeList(); renderConteudos(); renderAjustes();
+            renderLivros(); renderMenteeList(); renderConteudos(); renderAjustes(); renderSiteProducts();
             buildTarefas(); buildColabTarefas(); renderProjetos(); buildPrioridades();
             ['gisella','milena','luiggi'].forEach(c => renderFixedTasks(c));
           }
