@@ -1285,6 +1285,15 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-site-product-book-info" onclick="if(event.target===this)closeModal('modal-site-product-book-info')">
+  <div class="modal" style="width:560px;max-width:calc(100vw - 24px);max-height:82vh;overflow-y:auto;">
+    <button class="modal-close" onclick="closeModal('modal-site-product-book-info')">×</button>
+    <div class="modal-title" id="site-product-book-info-title">Ficha técnica</div>
+    <div id="site-product-book-info-body" style="margin-top:14px;"></div>
+    <div class="btn-row"><button class="btn" onclick="closeModal('modal-site-product-book-info')">Fechar</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-steira">
   <div class="modal" style="width:540px;">
     <button class="modal-close" onclick="closeModal('modal-steira')">×</button>
@@ -1315,6 +1324,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.58"></script>
+  <script src="app.js?v=3.2.59"></script>
 </body>
 </html>

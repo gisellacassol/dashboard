@@ -3728,7 +3728,7 @@ function save(key, val) {
   
   /* ── CONTEUDO ── */
   let currentConteudoId = null;
-  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},editar_video:{l:'Para editar vídeo',c:'s-edicao'},editar_arte:{l:'Para editar arte',c:'s-edicao'},editar_video_arte:{l:'Para editar vídeo com arte',c:'s-edicao'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'},fazer_arte:{l:'Para fazer arte',c:'s-edicao'},aprovado_site:{l:'Aprovado',c:'s-aprovado'},subir_loja_integrada:{l:'Subir na Loja Integrada',c:'s-postado'}};
+  const ST_MAP = {copy:{l:'Copy criada',c:'s-copy'},gravado:{l:'Gravado',c:'s-gravado'},editar_video:{l:'Para editar vídeo',c:'s-edicao'},editar_arte:{l:'Para editar arte',c:'s-edicao'},editar_video_arte:{l:'Para editar vídeo com arte',c:'s-edicao'},arte:{l:'Para criar arte',c:'s-edicao'},edicao:{l:'Para editar',c:'s-edicao'},aprovado:{l:'Para aprovar',c:'s-aprovado'},agendado:{l:'Para agendar',c:'s-agendado'},postado:{l:'Para postar',c:'s-postado'},escrever:{l:'Para escrever',c:'s-copy'},subir_emanda:{l:'Para subir no Emanda',c:'s-agendado'},checar_envio:{l:'Para checar envio',c:'s-postado'},confirmar_valor:{l:'Confirmar valor',c:'s-copy'},criar_descricao:{l:'Criar descrição',c:'s-copy'},criar_arte_site:{l:'Criar arte para o site',c:'s-edicao'},cadastrar_produto:{l:'Cadastrar produto no sistema',c:'s-agendado'},liberar_site:{l:'Liberar no site',c:'s-postado'},checar_infos_site:{l:'Checar infos no site',c:'s-postado'}};
   const REDE_L = {instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',substack:'Substack',emanda:'Emanda',site:'Site'};
   const TIPO_L = {reel:'Reel',foto:'Foto',dump:'Dump',card:'Card',carrossel:'Carrossel',story:'Story',emailmkt:'Email mkt',video:'Vídeo',site:'Site'};
   const EMP_B = {editora:'b-editora',leia:'b-leia',gisella:'b-gisella'};
@@ -3765,9 +3765,12 @@ function save(key, val) {
     {key:'postado',nome:'Para postar'},
   ];
   const SITE_ETAPAS_DEFS = [
-    {key:'fazer_arte',nome:'Para fazer arte',optionalLink:true},
-    {key:'aprovado_site',nome:'Aprovado'},
-    {key:'subir_loja_integrada',nome:'Subir na Loja Integrada'},
+    {key:'confirmar_valor',nome:'Confirmar valor'},
+    {key:'criar_descricao',nome:'Criar descrição'},
+    {key:'criar_arte_site',nome:'Criar arte para o site',optionalLink:true},
+    {key:'cadastrar_produto',nome:'Cadastrar produto no sistema'},
+    {key:'liberar_site',nome:'Liberar no site'},
+    {key:'checar_infos_site',nome:'Checar infos no site'},
   ];
   const EMANDA_ETAPAS_DEFS = [
     ['tema','Definir o tema do e-mail'],['gancho','Criar o gancho principal'],['estrutura','Planejar a estrutura do e-mail'],['escrever','Escrever o email'],['banners','Providenciar os banners'],['ctas','Definir CTAs'],['links','Organizar links de destino'],['criar','Criar o email mkt'],['teste','Enviar um teste'],['testar','Testar os botões e links'],['disparar','Disparar para a base'],
@@ -4933,6 +4936,7 @@ function save(key, val) {
     container.innerHTML = selected.length ? selected.map(livro => `
       <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);">
         <span>📖</span><span style="flex:1;font-size:13px;font-weight:500;">${escapeSiteProductHtml(livro.titulo)}</span>
+        <button type="button" onclick="openSiteProductBookInfo('${String(livro.id)}')" title="Ver ficha técnica" style="border:1px solid var(--border);background:var(--surface);color:var(--text-soft);border-radius:6px;cursor:pointer;font-size:11px;padding:3px 7px;">ⓘ Ficha</button>
         <button type="button" onclick="removeBookFromSiteProductSet('${String(livro.id)}')" style="border:0;background:none;color:var(--danger);cursor:pointer;font-size:15px;">×</button>
       </div>`).join('') : '<div style="font-size:12px;color:var(--text-soft);padding:8px 0;">Nenhum livro incluído ainda.</div>';
   }
@@ -4941,12 +4945,35 @@ function save(key, val) {
     const preview = document.getElementById('site-product-book-preview');
     if (!preview) return;
     if (!livro) { preview.style.display = 'none'; preview.innerHTML = ''; return; }
-    const info = livro.info || {};
     preview.style.display = '';
-    preview.innerHTML = `<strong>${escapeSiteProductHtml(livro.titulo)}</strong><br>
-      Autor: ${escapeSiteProductHtml(info.autor || '—')} · ISBN: ${escapeSiteProductHtml(info.isbn || '—')}<br>
-      Preço cadastrado: ${escapeSiteProductHtml(info.precoVenda || info.valor || '—')}<br>
-      <span style="color:var(--text-soft);">${escapeSiteProductHtml(info.descricaoSite || info.sinopse || 'Sem descrição para o site.')}</span>`;
+    preview.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">📖</span>
+      <strong style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeSiteProductHtml(livro.titulo)}</strong>
+      <button type="button" onclick="openSiteProductBookInfo('${String(livro.id)}')" style="border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:7px;cursor:pointer;font-size:11px;padding:5px 9px;">ⓘ Ficha técnica</button>
+    </div>`;
+  }
+
+  function openSiteProductBookInfo(id) {
+    const livro = siteProductBookById(id);
+    if (!livro) return;
+    const info = livro.info || {};
+    const links = livro.links || {};
+    const fields = [
+      ['Autor', info.autor], ['Ilustrador', info.ilustrador], ['ISBN', info.isbn], ['Ano', info.ano],
+      ['Formato', info.formato], ['Páginas', info.paginas], ['Coleção', info.colecao], ['Editora', info.editora],
+      ['Preço de custo', info.precoCusto], ['Preço de venda', info.precoVenda || info.valor], ['Lançamento', info.lancamento],
+      ['Público', info.publico], ['Faixa etária', info.faixa], ['Assuntos', info.assuntos],
+    ].filter(([, value]) => String(value || '').trim());
+    const title = document.getElementById('site-product-book-info-title');
+    const body = document.getElementById('site-product-book-info-body');
+    if (title) title.textContent = `Ficha técnica · ${livro.titulo || ''}`;
+    if (body) body.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;">${fields.map(([label,value]) => `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px;"><div style="font-size:10px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.05em;">${escapeSiteProductHtml(label)}</div><div style="font-size:12px;margin-top:3px;word-break:break-word;">${escapeSiteProductHtml(value)}</div></div>`).join('')}</div>
+      ${info.sinopse ? `<div style="margin-top:12px;"><div class="form-label">Sinopse</div><div style="font-size:12px;line-height:1.55;white-space:pre-wrap;">${escapeSiteProductHtml(info.sinopse)}</div></div>` : ''}
+      ${info.descricaoSite ? `<div style="margin-top:12px;"><div class="form-label">Descrição para o site</div><div style="font-size:12px;line-height:1.55;white-space:pre-wrap;">${escapeSiteProductHtml(info.descricaoSite)}</div></div>` : ''}
+      ${links.paginaSite ? `<div style="margin-top:12px;"><a href="${escapeSiteProductHtml(links.paginaSite)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--gisella);">Abrir página do livro ↗</a></div>` : ''}
+      ${!fields.length && !info.sinopse && !info.descricaoSite ? '<div style="font-size:12px;color:var(--text-soft);">Este livro ainda não possui informações técnicas preenchidas.</div>' : ''}`;
+    openModal('modal-site-product-book-info');
   }
 
   function setSiteProductType(type) {
@@ -5032,7 +5059,47 @@ function save(key, val) {
     error.style.display = '';
   }
 
+  function syncSiteProductTask(product, previousProduct) {
+    const previousContentId = previousProduct?.contentId || product.contentId || null;
+    let content = conteudos.find(item => String(item.id) === String(previousContentId)) || null;
+    if (!content) {
+      content = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        nome: siteProductDisplayName(product),
+        empresa: 'editora',
+        rede: 'site',
+        tipo: 'site',
+        produtoSiteId: product.id,
+        etapasStatus: {},
+        status: SITE_ETAPAS_DEFS[0].key,
+        done: false,
+        archived: false,
+        expandido: true,
+      };
+      conteudos.push(content);
+    }
+    content.nome = siteProductDisplayName(product);
+    content.empresa = 'editora';
+    content.rede = 'site';
+    content.tipo = 'site';
+    content.produtoSiteId = product.id;
+    content.siteProductType = product.type;
+    content.siteProductBookId = product.bookId || null;
+    content.siteProductBookIds = Array.isArray(product.bookIds) ? [...product.bookIds] : [];
+    if (!content.etapasStatus) content.etapasStatus = {};
+    SITE_ETAPAS_DEFS.forEach(stage => {
+      if (!content.etapasStatus[stage.key]) content.etapasStatus[stage.key] = { feito:false, resp:'', prazo:'' };
+    });
+    const artLink = String(product.artLink || '').trim();
+    if (artLink) content.etapasStatus.criar_arte_site.link = artLink;
+    atualizarConclusaoConteudo(content);
+    product.contentId = content.id;
+    save('gc-conteudos', conteudos);
+    refreshConteudoViews();
+  }
+
   function saveSiteProduct() {
+    const previousProduct = siteProducts.find(item => String(item.id) === String(editingSiteProductId)) || null;
     let product;
     if (currentSiteProductType === 'individual') {
       const livro = siteProductBookById(selectedSiteProductBookId);
@@ -5056,6 +5123,8 @@ function save(key, val) {
       if (!title || !price || !description) return showSiteProductError('Preencha o nome, o preço e a descrição do conjunto.');
       product = { id: editingSiteProductId || Date.now(), type: 'conjunto', empresa: 'editora', bookIds: [...siteProductSetBookIds], title, price, description };
     }
+    if (previousProduct?.contentId) product.contentId = previousProduct.contentId;
+    syncSiteProductTask(product, previousProduct);
     const index = siteProducts.findIndex(item => String(item.id) === String(product.id));
     if (index >= 0) siteProducts[index] = product; else siteProducts.push(product);
     save('gc-site-products', siteProducts);
@@ -5066,6 +5135,11 @@ function save(key, val) {
   function deleteSiteProduct(id) {
     const product = siteProducts.find(item => String(item.id) === String(id));
     if (!product || !window.confirm(`Excluir o produto "${siteProductDisplayName(product)}"?`)) return;
+    if (product.contentId) {
+      conteudos = conteudos.filter(item => String(item.id) !== String(product.contentId));
+      save('gc-conteudos', conteudos);
+      refreshConteudoViews();
+    }
     siteProducts = siteProducts.filter(item => String(item.id) !== String(id));
     save('gc-site-products', siteProducts);
     renderSiteProducts();
