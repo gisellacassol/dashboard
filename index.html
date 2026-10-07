@@ -856,6 +856,13 @@
     <div class="modal-title">Novo livro · Ficha Técnica</div>
     <p style="font-size:12px;color:var(--text-soft);margin-bottom:1rem;">Preencha o que souber — pode completar depois.</p>
     <form onsubmit="event.preventDefault();submitAddLivro();">
+      <div id="nl-registration-mode-wrap" style="display:none;margin-bottom:18px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+        <div class="form-label" style="margin-bottom:8px;">Como deseja cadastrar este livro?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <label id="nl-mode-bank-label" style="display:flex;gap:8px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);"><input type="radio" name="nl-registration-mode" value="bank" checked onchange="updateLivroRegistrationMode()"><span><strong style="font-size:12px;">Somente no banco</strong><small style="display:block;color:var(--text-soft);margin-top:3px;">Sem tarefas ou etapas</small></span></label>
+          <label id="nl-mode-production-label" style="display:flex;gap:8px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface);"><input type="radio" name="nl-registration-mode" value="production" onchange="updateLivroRegistrationMode()"><span><strong style="font-size:12px;">Livro em produção</strong><small style="display:block;color:var(--text-soft);margin-top:3px;">Cria o fluxo editorial</small></span></label>
+        </div>
+      </div>
       <div style="font-size:11px;font-weight:700;color:var(--text-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Links do livro</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
         <div class="form-group"><label class="form-label">Texto finalizado</label><input class="form-input" id="nl-link-texto-finalizado" type="url" placeholder="https://..."></div>
@@ -897,8 +904,8 @@
         <div class="form-group"><label class="form-label">Coleção</label><input class="form-input" id="nl-colecao" type="text"></div>
         <div class="form-group"><label class="form-label">Editora responsável</label><input class="form-input" id="nl-editora" type="text"></div>
         <div class="form-group"><label class="form-label">OS</label><input class="form-input" id="nl-os" type="text" placeholder="Número da OS"></div>
-        <div class="form-group"><label class="form-label">Ano *</label><input class="form-input" id="nl-ano" type="number" min="1900" max="2200" placeholder="Ex: 2026" required></div>
-        <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Data de lançamento *</label><input class="form-input" id="nl-lancamento" type="date" required></div>
+        <div class="form-group"><label class="form-label" id="nl-ano-label">Ano</label><input class="form-input" id="nl-ano" type="number" min="1900" max="2200" placeholder="Ex: 2026"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label class="form-label" id="nl-lancamento-label">Data de lançamento</label><input class="form-input" id="nl-lancamento" type="date"></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Assuntos</label><textarea class="notes-area" id="nl-assuntos" style="min-height:70px;" placeholder="Temas e assuntos abordados no livro"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Sinopse</label><textarea class="notes-area" id="nl-sinopse" style="min-height:70px;"></textarea></div>
         <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Descrição para o site</label><textarea class="notes-area" id="nl-descricao-site" style="min-height:90px;" placeholder="Texto que será usado na página do livro no site"></textarea></div>
@@ -1324,6 +1331,6 @@
 </div>
 
 
-  <script src="app.js?v=3.2.60"></script>
+  <script src="app.js?v=3.2.61"></script>
 </body>
 </html>

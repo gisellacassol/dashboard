@@ -2947,7 +2947,7 @@ function save(key, val) {
   }
 
   function openBancoLivroNovo() {
-    openAddLivro('editora', { catalogOnly: true });
+    openAddLivro('editora', { catalogOnly: true, chooseMode: true });
   }
   
   let creatingCatalogOnlyBook = false;
@@ -2957,6 +2957,11 @@ function save(key, val) {
     addLivroEmpresa = emp;
     editingLivroId = null;
     creatingCatalogOnlyBook = options.catalogOnly === true;
+    const modeWrap = document.getElementById('nl-registration-mode-wrap');
+    if (modeWrap) modeWrap.style.display = options.chooseMode === true ? '' : 'none';
+    const modeRadio = document.querySelector(`input[name="nl-registration-mode"][value="${creatingCatalogOnlyBook ? 'bank' : 'production'}"]`);
+    if (modeRadio) modeRadio.checked = true;
+    updateLivroRegistrationMode();
     document.querySelector('#modal-livro .modal-title').textContent = creatingCatalogOnlyBook ? 'Registrar no banco de livros' : 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = creatingCatalogOnlyBook ? 'Registrar livro' : 'Criar livro';
     ['nl-titulo','nl-autor','nl-ilustrador','nl-publico','nl-faixa','nl-paginas','nl-tiragem','nl-preco-custo','nl-valor','nl-isbn','nl-formato','nl-colecao','nl-editora','nl-assuntos','nl-sinopse','nl-descricao-site','nl-observacao','nl-os','nl-ano','nl-lancamento','nl-link-texto-finalizado','nl-link-arquivos-abertos','nl-link-arquivos-fechados','nl-link-pagina-site'].forEach(id => {
@@ -2977,6 +2982,23 @@ function save(key, val) {
     openModal('modal-livro');
     setTimeout(() => document.getElementById('nl-titulo').focus(), 50);
   }
+
+  function updateLivroRegistrationMode() {
+    const selected = document.querySelector('input[name="nl-registration-mode"]:checked')?.value;
+    if (selected) creatingCatalogOnlyBook = selected !== 'production';
+    const year = document.getElementById('nl-ano');
+    const launch = document.getElementById('nl-lancamento');
+    if (year) year.required = !creatingCatalogOnlyBook;
+    if (launch) launch.required = !creatingCatalogOnlyBook;
+    const yearLabel = document.getElementById('nl-ano-label');
+    const launchLabel = document.getElementById('nl-lancamento-label');
+    if (yearLabel) yearLabel.textContent = creatingCatalogOnlyBook ? 'Ano' : 'Ano *';
+    if (launchLabel) launchLabel.textContent = creatingCatalogOnlyBook ? 'Data de lançamento' : 'Data de lançamento *';
+    if (!editingLivroId) {
+      document.querySelector('#modal-livro .modal-title').textContent = creatingCatalogOnlyBook ? 'Registrar no banco de livros' : 'Novo livro · Ficha Técnica';
+      document.querySelector('#modal-livro .btn-primary').textContent = creatingCatalogOnlyBook ? 'Registrar livro' : 'Criar livro em produção';
+    }
+  }
   
   
   function submitAddLivro() {
@@ -2985,7 +3007,7 @@ function save(key, val) {
     const autor = document.getElementById('nl-autor').value.trim();
     const ano = document.getElementById('nl-ano')?.value.trim() || '';
     const lancamentoDate = document.getElementById('nl-lancamento').value;
-    if (!creatingCatalogOnlyBook && !autor) { document.getElementById('nl-autor').focus(); return; }
+    if (!autor) { document.getElementById('nl-autor').focus(); return; }
     if (!creatingCatalogOnlyBook && !ano) { document.getElementById('nl-ano').focus(); return; }
     if (!creatingCatalogOnlyBook && !lancamentoDate) { document.getElementById('nl-lancamento').focus(); return; }
     // Get selected empresas from checkboxes (or fall back to addLivroEmpresa)
@@ -3036,13 +3058,19 @@ function save(key, val) {
       etapas: editingLivroId ? (livros.find(x=>x.id===editingLivroId)||{etapas:[]}).etapas : (creatingCatalogOnlyBook ? [] : criarCronogramaEditorial(lancamentoDate))
     };
     const _wasEditing = !!editingLivroId;
+    const _newLivroWasCatalogOnly = creatingCatalogOnlyBook;
+    let _convertedToProduction = false;
     let _newLivroId = null;
     if (editingLivroId) {
       const i = livros.findIndex(x=>x.id===editingLivroId);
       if (i>-1) {
         const livroExistente = livros[i];
+        const eraSomenteBanco = livroExistente.catalogOnly === true;
         const lancamentoAnterior = livroExistente.info?.lancamento || '';
-        if (lancamentoAnterior !== lancamentoDate) {
+        if (eraSomenteBanco && !creatingCatalogOnlyBook) {
+          livroExistente.etapas = criarCronogramaEditorial(lancamentoDate);
+          _convertedToProduction = true;
+        } else if (!creatingCatalogOnlyBook && lancamentoAnterior !== lancamentoDate) {
           livroExistente.etapas = mesclarCronogramaEditorial(livroExistente.etapas, lancamentoDate);
         }
         livroExistente.titulo = livro.titulo;
@@ -3067,7 +3095,8 @@ function save(key, val) {
     buildPrioridades();
     closeModal('modal-livro');
     const _createdForSiteProduct = _newLivroId ? finishSiteProductBookCreation(livros.find(item => item.id === _newLivroId)) : false;
-    if (_newLivroId && !_createdForSiteProduct) setTimeout(() => openEtapasPrazos(_newLivroId), 800);
+    if (_newLivroId && !_createdForSiteProduct && !_newLivroWasCatalogOnly) setTimeout(() => openEtapasPrazos(_newLivroId), 800);
+    if (_convertedToProduction) setTimeout(() => openEtapasPrazos(livro.id), 800);
     // Reset modal
     document.querySelector('#modal-livro .modal-title').textContent = 'Novo livro · Ficha Técnica';
     document.querySelector('#modal-livro .btn-primary').textContent = 'Criar livro';
@@ -3334,6 +3363,11 @@ function save(key, val) {
     if (!l) return;
     editingLivroId = id;
     creatingCatalogOnlyBook = l.catalogOnly === true;
+    const modeWrap = document.getElementById('nl-registration-mode-wrap');
+    if (modeWrap) modeWrap.style.display = creatingCatalogOnlyBook ? '' : 'none';
+    const modeRadio = document.querySelector(`input[name="nl-registration-mode"][value="${creatingCatalogOnlyBook ? 'bank' : 'production'}"]`);
+    if (modeRadio) modeRadio.checked = true;
+    updateLivroRegistrationMode();
     addLivroEmpresa = (l.empresa||'editora').split(',')[0];
     const emps = (l.empresa||'editora').split(',');
     ['editora','leia','gisella'].forEach(e => {
