@@ -4833,6 +4833,7 @@ function save(key, val) {
   let selectedSiteProductBookId = null;
   let siteProductSetBookIds = [];
   let siteProductAwaitingNewBookTarget = '';
+  let siteProductVariations = [];
 
   function normalizeSiteProductText(value) {
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
@@ -4879,15 +4880,15 @@ function save(key, val) {
     const exact = result.exact || null;
     selectedSiteProductBookId = exact ? exact.id : null;
     const createButton = document.getElementById('site-product-create-book');
-    if (createButton) createButton.style.display = input?.value.trim() && !exact ? '' : 'none';
+    if (createButton) createButton.style.display = '';
     renderSiteProductBookPreview(exact);
   }
 
   function updateSiteProductSetSuggestion() {
     const input = document.getElementById('site-product-set-book-search');
-    const result = renderSiteProductMatches(input?.value || '', 'site-product-set-match', true);
+    renderSiteProductMatches(input?.value || '', 'site-product-set-match', true);
     const createButton = document.getElementById('site-product-set-create-book');
-    if (createButton) createButton.style.display = input?.value.trim() && !result.exact ? '' : 'none';
+    if (createButton) createButton.style.display = '';
   }
 
   function selectSiteProductBook(id, setMode) {
@@ -4908,7 +4909,7 @@ function save(key, val) {
     const match = document.getElementById('site-product-book-match');
     if (match) match.textContent = 'Livro vinculado ao banco de livros.';
     const createButton = document.getElementById('site-product-create-book');
-    if (createButton) createButton.style.display = 'none';
+    if (createButton) createButton.style.display = '';
     renderSiteProductBookPreview(livro);
   }
 
@@ -4989,7 +4990,37 @@ function save(key, val) {
   function toggleSiteProductVariation() {
     const hasVariation = document.querySelector('input[name="site-product-variation"]:checked')?.value === 'sim';
     const fields = document.getElementById('site-product-variation-fields');
-    if (fields) fields.style.display = hasVariation ? 'grid' : 'none';
+    if (hasVariation && !siteProductVariations.length) siteProductVariations = [{ title:'', price:'' }];
+    if (fields) fields.style.display = hasVariation ? 'block' : 'none';
+    renderSiteProductVariations();
+  }
+
+  function renderSiteProductVariations() {
+    const container = document.getElementById('site-product-variations-list');
+    if (!container) return;
+    container.innerHTML = siteProductVariations.map((variation, index) => `
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 150px 32px;gap:8px;align-items:end;">
+        <div class="form-group"><label class="form-label">Título da variação ${index + 1}</label><input class="form-input" type="text" value="${escapeSiteProductHtml(variation.title)}" placeholder="Ex.: Capa dura" oninput="updateSiteProductVariation(${index},'title',this.value)"></div>
+        <div class="form-group"><label class="form-label">Preço</label><input class="form-input" type="text" value="${escapeSiteProductHtml(variation.price)}" placeholder="R$ 0,00" oninput="updateSiteProductVariation(${index},'price',this.value)"></div>
+        <button type="button" onclick="removeSiteProductVariation(${index})" title="Remover variação" style="height:38px;border:1px solid var(--border);background:var(--surface);color:var(--danger);border-radius:8px;cursor:pointer;font-size:16px;">×</button>
+      </div>`).join('');
+  }
+
+  function updateSiteProductVariation(index, field, value) {
+    if (!siteProductVariations[index] || !['title','price'].includes(field)) return;
+    siteProductVariations[index][field] = value;
+  }
+
+  function addSiteProductVariation() {
+    siteProductVariations.push({ title:'', price:'' });
+    renderSiteProductVariations();
+    setTimeout(() => document.querySelector('#site-product-variations-list > div:last-child input')?.focus(), 0);
+  }
+
+  function removeSiteProductVariation(index) {
+    siteProductVariations.splice(index, 1);
+    if (!siteProductVariations.length) siteProductVariations.push({ title:'', price:'' });
+    renderSiteProductVariations();
   }
 
   function openSiteProductModal(id = null) {
@@ -5008,9 +5039,10 @@ function save(key, val) {
     document.getElementById('site-product-set-title').value = product?.title || '';
     document.getElementById('site-product-set-price').value = product?.price || '';
     document.getElementById('site-product-set-description').value = product?.description || '';
-    document.getElementById('site-product-variation-title').value = product?.variation?.title || '';
-    document.getElementById('site-product-variation-price').value = product?.variation?.price || '';
-    const variationValue = product?.variation ? 'sim' : 'nao';
+    siteProductVariations = Array.isArray(product?.variations)
+      ? product.variations.map(variation => ({ title:String(variation?.title || ''), price:String(variation?.price || '') }))
+      : (product?.variation ? [{ title:String(product.variation.title || ''), price:String(product.variation.price || '') }] : []);
+    const variationValue = siteProductVariations.length ? 'sim' : 'nao';
     const variationRadio = document.querySelector(`input[name="site-product-variation"][value="${variationValue}"]`);
     if (variationRadio) variationRadio.checked = true;
     const error = document.getElementById('site-product-error');
@@ -5027,11 +5059,18 @@ function save(key, val) {
   function createBookFromSiteProduct(forSet = false) {
     const input = document.getElementById(forSet ? 'site-product-set-book-search' : 'site-product-book-search');
     const title = input?.value.trim() || '';
-    if (!title) { input?.focus(); return; }
     siteProductAwaitingNewBookTarget = forSet ? 'conjunto' : 'individual';
+    closeModal('modal-site-product');
     openAddLivro('editora', { catalogOnly: true });
     const titleField = document.getElementById('nl-titulo');
     if (titleField) titleField.value = title;
+  }
+
+  function closeLivroModal() {
+    closeModal('modal-livro');
+    if (!siteProductAwaitingNewBookTarget) return;
+    siteProductAwaitingNewBookTarget = '';
+    openModal('modal-site-product');
   }
 
   function finishSiteProductBookCreation(livro) {
@@ -5049,6 +5088,7 @@ function save(key, val) {
     }
     siteProductAwaitingNewBookTarget = '';
     populateSiteProductBookOptions();
+    openModal('modal-site-product');
     return true;
   }
 
@@ -5105,15 +5145,15 @@ function save(key, val) {
       const livro = siteProductBookById(selectedSiteProductBookId);
       if (!livro) return showSiteProductError('Selecione um livro existente ou registre um novo livro.');
       const hasVariation = document.querySelector('input[name="site-product-variation"]:checked')?.value === 'sim';
-      const variation = hasVariation ? {
-        title: document.getElementById('site-product-variation-title').value.trim(),
-        price: document.getElementById('site-product-variation-price').value.trim(),
-      } : null;
-      if (hasVariation && (!variation.title || !variation.price)) return showSiteProductError('Preencha o título e o preço da variação.');
+      const variations = hasVariation
+        ? siteProductVariations.map(variation => ({ title:String(variation.title || '').trim(), price:String(variation.price || '').trim() }))
+        : [];
+      if (hasVariation && (!variations.length || variations.some(variation => !variation.title || !variation.price))) return showSiteProductError('Preencha o título e o preço de todas as variações.');
       product = {
         id: editingSiteProductId || Date.now(), type: 'individual', empresa: 'editora', bookId: livro.id,
         artLink: document.getElementById('site-product-art-link').value.trim(),
-        availability: document.getElementById('site-product-availability').value.trim(), variation,
+        availability: document.getElementById('site-product-availability').value.trim(), variations,
+        variation: variations[0] || null,
       };
     } else {
       if (!siteProductSetBookIds.length) return showSiteProductError('Adicione pelo menos um livro ao conjunto.');
@@ -5171,7 +5211,7 @@ function save(key, val) {
           ${included.length ? `<div style="font-size:11px;color:var(--text-soft);margin-top:4px;">Inclui: ${included.map(item => escapeSiteProductHtml(item.titulo)).join(', ')}</div>` : ''}
           ${description ? `<div style="font-size:11px;color:var(--text-soft);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeSiteProductHtml(description)}</div>` : ''}
           ${individual && product.availability ? `<div style="font-size:11px;margin-top:4px;">Disponibilidade: ${escapeSiteProductHtml(product.availability)}</div>` : ''}
-          ${individual && product.variation ? `<div style="font-size:11px;margin-top:3px;">Variação: ${escapeSiteProductHtml(product.variation.title)} · ${escapeSiteProductHtml(product.variation.price)}</div>` : ''}
+          ${individual && (product.variations?.length || product.variation) ? `<div style="font-size:11px;margin-top:3px;">Variações: ${(product.variations?.length ? product.variations : [product.variation]).map(variation => `${escapeSiteProductHtml(variation.title)} · ${escapeSiteProductHtml(variation.price)}`).join(' | ')}</div>` : ''}
         </div>
         <button type="button" onclick="event.stopPropagation();deleteSiteProduct('${String(product.id)}')" title="Excluir produto" style="border:0;background:none;color:var(--text-soft);cursor:pointer;font-size:16px;">×</button>
       </div>`;
