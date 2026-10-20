@@ -980,109 +980,11 @@
   }
   
   /* ── STORAGE ── */
-  const DASHBOARD_SESSION_TOKEN_KEY = 'gc-dashboard-session-token';
-  function dashboardSessionToken() {
-    const token = sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
-      || localStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)
-      || '';
-    // Restaura a cópia rápida da sessão quando o iPad recria a aba/PWA.
-    if (token && !sessionStorage.getItem(DASHBOARD_SESSION_TOKEN_KEY)) {
-      sessionStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
-    }
-    return token;
-  }
-  function persistDashboardSessionToken(token) {
-    sessionStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
-    localStorage.setItem(DASHBOARD_SESSION_TOKEN_KEY, token);
-  }
-  function clearDashboardSessionToken() {
-    sessionStorage.removeItem(DASHBOARD_SESSION_TOKEN_KEY);
-    localStorage.removeItem(DASHBOARD_SESSION_TOKEN_KEY);
-  }
-  function dashboardSessionTokenIsUsable(token, expectedUser) {
-    try {
-      const encodedPayload = String(token || '').split('.')[0];
-      if (!encodedPayload) return false;
-      const normalized = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
-      const payload = JSON.parse(atob(padded));
-      return Number(payload.exp || 0) > Date.now()
-        && String(payload.user || '').toLowerCase() === String(expectedUser || '').toLowerCase();
-    } catch (_) {
-      return false;
-    }
-  }
   function load(key, def) {
     try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
   }
   const _lastLocalSave = {};
-  const CHECKLIST_TASK_SYNC_ENABLED = false;
-  const CHECKLIST_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
-  const CHECKLIST_SYNCED_DOCUMENTS = new Set(['gc-events','gc-conteudos','gc-livros','gc-projetos']);
-  let checklistDirectSyncTimer = null;
-  function checklistRecipientsForChanges(key, items) {
-    const names = [];
-    const add = value => { if (value) names.push(String(value)); };
-    items.forEach(item => {
-      if (key === 'gc-events') add(item?.responsavel);
-      if (key === 'gc-conteudos') Object.values(item?.etapasStatus || {}).forEach(stage => add(stage?.resp));
-      if (key === 'gc-livros') {
-        add(item?.responsavel);
-        (item?.etapas || []).forEach(stage => add(stage?.resp));
-      }
-      if (key === 'gc-projetos') (item?.tarefas || []).forEach(task => add(task?.resp));
-    });
-    const normalized = names.map(name => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase());
-    return ['luiggi','gisella','milena'].filter(recipient => normalized.some(name => name === recipient || name.includes(recipient)));
-  }
-  function scheduleChecklistCentralSync(key, changedItems, previousChangedItems = []) {
-    if (!CHECKLIST_TASK_SYNC_ENABLED) return;
-    const token = dashboardSessionToken();
-    if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
-    clearTimeout(checklistDirectSyncTimer);
-    checklistDirectSyncTimer = setTimeout(async () => {
-      try {
-        // Inclui responsáveis antigos e novos. Assim, uma transferência não
-        // deixa a tarefa presa no Checklist da pessoa anterior.
-        const recipients = [...new Set([
-          ...checklistRecipientsForChanges(key, previousChangedItems),
-          ...checklistRecipientsForChanges(key, changedItems),
-        ])];
-        if (!recipients.length) return;
-        const results = await Promise.allSettled(recipients.map(async recipient => {
-          const response = await fetch(CHECKLIST_SYNC_URL, {
-            method:'POST',
-            headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
-            body:JSON.stringify({operation:'dashboard_session_pull',source_document:key,document_value:changedItems,recipients:[recipient]}),
-          });
-          if (!response.ok) throw new Error(`${recipient}: HTTP ${response.status}`);
-        }));
-        const failed = results.find(result => result.status === 'rejected');
-        if (failed) throw failed.reason;
-      } catch (error) {
-        console.warn('Sincronização central indisponível; o mecanismo de segurança tentará novamente.', error);
-      }
-  }, 0);
-}
-async function syncChecklistAfterDashboardDeletion(key, previousItems) {
-  if (!CHECKLIST_TASK_SYNC_ENABLED) return;
-  const token = dashboardSessionToken();
-  const recipients = checklistRecipientsForChanges(key, previousItems);
-  if (!token || !recipients.length) return;
-  await Promise.allSettled(recipients.map(recipient => fetch(CHECKLIST_SYNC_URL, {
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-cassol-dashboard-session':token},
-    body:JSON.stringify({operation:'dashboard_session_pull',recipients:[recipient]}),
-  })));
-}
 function save(key, val) {
-  const previousValue = load(key, []);
-  const previousById = new Map((Array.isArray(previousValue) ? previousValue : []).map(item => [String(item?.id ?? ''), JSON.stringify(item)]));
-  const changedItems = (Array.isArray(val) ? val : []).filter(item => previousById.get(String(item?.id ?? '')) !== JSON.stringify(item));
-  const nextIds = new Set((Array.isArray(val) ? val : []).map(item => String(item?.id ?? '')));
-  const removedItems = (Array.isArray(previousValue) ? previousValue : []).filter(item => !nextIds.has(String(item?.id ?? '')));
-  const changedIds = new Set(changedItems.map(item => String(item?.id ?? '')));
-  const previousChangedItems = (Array.isArray(previousValue) ? previousValue : []).filter(item => changedIds.has(String(item?.id ?? '')));
   localStorage.setItem(key, JSON.stringify(val));
   _lastLocalSave[key] = Date.now();
   // Cópia local da última lista não vazia: se uma lista vazia aparecer nesta
@@ -1090,14 +992,10 @@ function save(key, val) {
   if (key === 'gc-livros' && Array.isArray(val) && val.length > 0) {
     localStorage.setItem('gc-livros-last-nonempty', JSON.stringify(val));
   }
-  // O Checklist recebe a alteração imediatamente. A persistência no Firebase
-  // continua em paralelo como cópia compartilhada do Dashboard.
-  scheduleChecklistCentralSync(key, changedItems, previousChangedItems);
   let persistence = Promise.resolve(true);
   if (window.fbSave) persistence = window.fbSave(key, val)
     .then(savedAt => {
       if (!savedAt) console.warn('Firebase não confirmou a gravação:', key);
-      else if (removedItems.length) syncChecklistAfterDashboardDeletion(key, removedItems);
       return Boolean(savedAt);
     })
     .catch(e => { console.warn('fbSave err:', key, e); return false; });
@@ -1378,8 +1276,7 @@ function save(key, val) {
 
   function compartilharCalendarioConteudoMes() {
     const state = CAL_STATE['cal-conteudo'];
-    const sessionToken = dashboardSessionToken();
-    if (!state || !sessionToken) {
+    if (!state) {
       alert('Abra novamente o Dashboard e tente gerar o link do mês.');
       return;
     }
@@ -9037,23 +8934,9 @@ function save(key, val) {
       const firebaseAvailable = await waitForFirebaseDashboardAuth();
       if (!firebaseAvailable) throw new Error('O Firebase não terminou de carregar. Atualize a página e tente novamente.');
       await window.firebaseDashboardLogin(matchedUser, pass);
-      clearDashboardSessionToken();
     } catch (error) {
-      // Durante a transição, contas ainda não cadastradas podem usar o login
-      // antigo se o Supabase voltar a responder. Depois da validação de todas
-      // as contas, este fallback será removido.
-      try {
-        const response = await fetch(CHECKLIST_SYNC_URL, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({operation:'dashboard_login',username:matchedUser,password:pass}),
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.token) throw error;
-        persistDashboardSessionToken(result.token);
-      } catch (_) {
-        errEl.textContent = firebaseLoginMessage(error);
-        return;
-      }
+      errEl.textContent = firebaseLoginMessage(error);
+      return;
     }
     const today = new Date().toDateString();
     localStorage.setItem('gc-session-user', matchedUser);
@@ -9072,17 +8955,10 @@ function save(key, val) {
     if (firebaseProfile?.user && LOGIN_USERS[firebaseProfile.user]) {
       localStorage.setItem('gc-session-user', firebaseProfile.user);
       localStorage.setItem('gc-session-name', LOGIN_USERS[firebaseProfile.user].name);
-      clearDashboardSessionToken();
       showApp(firebaseProfile.user, LOGIN_USERS[firebaseProfile.user].name);
       return;
     }
-    const token = dashboardSessionToken();
-    if (savedUser && LOGIN_USERS[savedUser] && dashboardSessionTokenIsUsable(token, savedUser)) {
-      showApp(savedUser, localStorage.getItem('gc-session-name') || savedUser);
-    } else {
-      clearDashboardSessionToken();
-      document.getElementById('login-screen').style.display = 'flex';
-    }
+    document.getElementById('login-screen').style.display = 'flex';
   }
   
   function showApp(user, displayName) {
@@ -9175,7 +9051,6 @@ function save(key, val) {
   
   async function doLogout() {
     if (window.firebaseDashboardLogout) await window.firebaseDashboardLogout().catch(() => {});
-    clearDashboardSessionToken();
     localStorage.removeItem('gc-session-user');
     localStorage.removeItem('gc-session-name');
     localStorage.removeItem('gc-session-date');
