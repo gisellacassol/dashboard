@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function email() {
+      return signedIn() ? request.auth.token.email : '';
+    }
+
+    function fullUser() {
+      return email() == 'gisella@dashboard.grupocassol.local'
+        || email() == 'milena@dashboard.grupocassol.local'
+        || email() == 'luiggi@dashboard.grupocassol.local';
+    }
+
+    function marilia() {
+      return email() == 'marilia2@dashboard.grupocassol.local';
+    }
+
+    function vera() {
+      return email() == 'vera@dashboard.grupocassol.local';
+    }
+
+    function bruna() {
+      return email() == 'bruna@dashboard.grupocassol.local';
+    }
+
+    match /dados/{documentId} {
+      allow read, write: if fullUser()
+        || (marilia() && documentId in [
+          'gc-events',
+          'gc-livros',
+          'gc-notas-marilia'
+        ])
+        || (vera() && documentId in [
+          'gc-events',
+          'gc-livros',
+          'gc-site-products',
+          'gc-projetos',
+          'gc-recurring-tasks'
+        ])
+        || (bruna() && documentId == 'gc-notas-bruna');
+    }
+
+    match /dados_restritos/{documentId} {
+      allow read, write: if (fullUser() || bruna())
+        && documentId.matches('bruna__.*');
+    }
+
+    match /public_books/{token} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update, delete: if fullUser();
+    }
+
+    match /public_calendars/{token} {
+      allow get: if true;
+      allow list: if fullUser();
+      allow create, update, delete: if fullUser();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

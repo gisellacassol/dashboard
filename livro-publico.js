@@ -1,4 +1,5 @@
-const PUBLIC_BOOK_ENDPOINT = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
+const PUBLIC_BOOK_ENDPOINT = 'https://firestore.googleapis.com/v1/projects/grupo-cassol-2/databases/(default)/documents/public_books';
+const FIREBASE_API_KEY = 'AIzaSyCuifhZ4I3_doR6N_2xdqMe3zUDMgjeeR0';
 
 function formatDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return '';
@@ -112,15 +113,15 @@ async function loadBook() {
     return;
   }
   try {
-    const response = await fetch(PUBLIC_BOOK_ENDPOINT, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ operation:'public_book_view', token }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.book) throw new Error(result.error || 'Livro não encontrado.');
-    document.title = `${result.book.titulo || 'Livro'} · Grupo Cassol`;
-    renderBook(result.book);
+    const url = new URL(`${PUBLIC_BOOK_ENDPOINT}/${token}`);
+    url.searchParams.set('key', FIREBASE_API_KEY);
+    const response = await fetch(url);
+    const firestoreDocument = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(response.status === 404 ? 'Livro não encontrado.' : 'Não foi possível consultar o livro.');
+    const book = JSON.parse(firestoreDocument?.fields?.value?.stringValue || '{}');
+    if (!book.titulo) throw new Error('Livro não encontrado.');
+    document.title = `${book.titulo || 'Livro'} · Grupo Cassol`;
+    renderBook(book);
   } catch (error) {
     renderError(error.message || 'Não foi possível carregar este livro agora.');
   }

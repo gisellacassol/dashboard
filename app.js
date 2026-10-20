@@ -1016,6 +1016,7 @@
     try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
   }
   const _lastLocalSave = {};
+  const CHECKLIST_TASK_SYNC_ENABLED = false;
   const CHECKLIST_SYNC_URL = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
   const CHECKLIST_SYNCED_DOCUMENTS = new Set(['gc-events','gc-conteudos','gc-livros','gc-projetos']);
   let checklistDirectSyncTimer = null;
@@ -1035,6 +1036,7 @@
     return ['luiggi','gisella','milena'].filter(recipient => normalized.some(name => name === recipient || name.includes(recipient)));
   }
   function scheduleChecklistCentralSync(key, changedItems, previousChangedItems = []) {
+    if (!CHECKLIST_TASK_SYNC_ENABLED) return;
     const token = dashboardSessionToken();
     if (!token || !CHECKLIST_SYNCED_DOCUMENTS.has(key) || !changedItems.length) return;
     clearTimeout(checklistDirectSyncTimer);
@@ -1063,6 +1065,7 @@
   }, 0);
 }
 async function syncChecklistAfterDashboardDeletion(key, previousItems) {
+  if (!CHECKLIST_TASK_SYNC_ENABLED) return;
   const token = dashboardSessionToken();
   const recipients = checklistRecipientsForChanges(key, previousItems);
   if (!token || !recipients.length) return;
@@ -1401,20 +1404,15 @@ function save(key, val) {
   }
 
   async function confirmarCompartilhamentoCalendarioConteudo() {
-    const sessionToken = dashboardSessionToken();
     const project = document.getElementById('share-calendar-project')?.value || '';
-    if (!_publicCalendarShareMonth || !project || !sessionToken) return;
+    if (!_publicCalendarShareMonth || !project) return;
     const button = document.getElementById('share-calendar-confirm');
     button.disabled = true;
     button.textContent = 'Gerando…';
     try {
-      const response = await fetch(CHECKLIST_SYNC_URL, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json', 'x-cassol-dashboard-session':sessionToken},
-        body: JSON.stringify({ operation:'create_public_content_calendar_link', month:_publicCalendarShareMonth, project }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.token) throw new Error(result.error || 'Não foi possível gerar o link.');
+      if (!window.firebaseCreatePublicCalendarLink) throw new Error('O Firebase ainda está carregando. Tente novamente em alguns segundos.');
+      const result = await window.firebaseCreatePublicCalendarLink(_publicCalendarShareMonth, project);
+      if (!result.token) throw new Error('Não foi possível gerar o link.');
       const url = new URL('calendario-conteudos.html', window.location.href);
       url.searchParams.set('token', result.token);
       try {
@@ -3210,6 +3208,13 @@ function save(key, val) {
     }
     if (precisaSalvar && !await save('gc-livros', livros)) {
       window.alert('Não foi possível criar o link agora. Atualize a página e tente novamente.');
+      return;
+    }
+    try {
+      if (!window.firebasePublishPublicBook) throw new Error('O Firebase ainda está carregando.');
+      await window.firebasePublishPublicBook(livro);
+    } catch (error) {
+      window.alert(error.message || 'Não foi possível preparar o link público agora.');
       return;
     }
     const url = new URL('livro.html', window.location.href);
@@ -8996,6 +9001,24 @@ function save(key, val) {
     mentees = [];
     menteesMarco0 = [];
   }
+
+  async function waitForFirebaseDashboardAuth(timeout = 4500) {
+    if (window.firebaseDashboardSession && window.firebaseDashboardLogin) return true;
+    await Promise.race([
+      new Promise(resolve => window.addEventListener('firebase-ready', resolve, { once: true })),
+      new Promise(resolve => setTimeout(resolve, timeout)),
+    ]);
+    return Boolean(window.firebaseDashboardSession && window.firebaseDashboardLogin);
+  }
+
+  function firebaseLoginMessage(error) {
+    const code = String(error?.code || '');
+    if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) return 'Nome ou senha incorretos.';
+    if (code.includes('too-many-requests')) return 'Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.';
+    if (code.includes('network-request-failed')) return 'Não foi possível alcançar o Firebase. Confira a conexão e tente novamente.';
+    return error?.message || 'Não foi possível entrar agora.';
+  }
+
   async function doLogin() {
     const name = (document.getElementById('login-name').value || '').trim();
     const pass = document.getElementById('login-pass').value;
@@ -9005,33 +9028,54 @@ function save(key, val) {
     // Mapear nome para usuário conhecido (case insensitive)
     const nameLower = name.toLowerCase();
     const matchedUser = Object.keys(LOGIN_USERS).find(u => u === nameLower || LOGIN_USERS[u].name.toLowerCase() === nameLower) || nameLower;
+    if (!LOGIN_USERS[matchedUser]) {
+      errEl.textContent = 'Nome ou senha incorretos.';
+      return;
+    }
     try {
       errEl.textContent = 'Entrando…';
-      const response = await fetch(CHECKLIST_SYNC_URL, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({operation:'dashboard_login',username:matchedUser,password:pass}),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.token) throw new Error(result.error || 'Não foi possível validar o acesso.');
-      persistDashboardSessionToken(result.token);
+      const firebaseAvailable = await waitForFirebaseDashboardAuth();
+      if (!firebaseAvailable) throw new Error('O Firebase não terminou de carregar. Atualize a página e tente novamente.');
+      await window.firebaseDashboardLogin(matchedUser, pass);
+      clearDashboardSessionToken();
     } catch (error) {
-      errEl.textContent = error.message || 'Não foi possível entrar agora.';
-      return;
+      // Durante a transição, contas ainda não cadastradas podem usar o login
+      // antigo se o Supabase voltar a responder. Depois da validação de todas
+      // as contas, este fallback será removido.
+      try {
+        const response = await fetch(CHECKLIST_SYNC_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({operation:'dashboard_login',username:matchedUser,password:pass}),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.token) throw error;
+        persistDashboardSessionToken(result.token);
+      } catch (_) {
+        errEl.textContent = firebaseLoginMessage(error);
+        return;
+      }
     }
     const today = new Date().toDateString();
     localStorage.setItem('gc-session-user', matchedUser);
     localStorage.setItem('gc-session-name', name);
     localStorage.setItem('gc-session-date', today);
     errEl.textContent = '';
-    if (matchedUser === 'bruna') {
-      window.location.reload();
-      return;
-    }
-    showApp(matchedUser, name);
+    // Reinicia com a identidade recém-autenticada antes de registrar listeners.
+    // Isso evita herdar filtros e listeners restritos da conta anterior.
+    window.location.reload();
   }
   
-  function checkSession() {
+  async function checkSession() {
     const savedUser = localStorage.getItem('gc-session-user');
+    await waitForFirebaseDashboardAuth();
+    const firebaseProfile = window.firebaseDashboardSession ? await window.firebaseDashboardSession().catch(() => null) : null;
+    if (firebaseProfile?.user && LOGIN_USERS[firebaseProfile.user]) {
+      localStorage.setItem('gc-session-user', firebaseProfile.user);
+      localStorage.setItem('gc-session-name', LOGIN_USERS[firebaseProfile.user].name);
+      clearDashboardSessionToken();
+      showApp(firebaseProfile.user, LOGIN_USERS[firebaseProfile.user].name);
+      return;
+    }
     const token = dashboardSessionToken();
     if (savedUser && LOGIN_USERS[savedUser] && dashboardSessionTokenIsUsable(token, savedUser)) {
       showApp(savedUser, localStorage.getItem('gc-session-name') || savedUser);
@@ -9129,7 +9173,8 @@ function save(key, val) {
     }
   }
   
-  function doLogout() {
+  async function doLogout() {
+    if (window.firebaseDashboardLogout) await window.firebaseDashboardLogout().catch(() => {});
     clearDashboardSessionToken();
     localStorage.removeItem('gc-session-user');
     localStorage.removeItem('gc-session-name');

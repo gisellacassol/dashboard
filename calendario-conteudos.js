@@ -1,4 +1,5 @@
-const PUBLIC_CALENDAR_ENDPOINT = 'https://piwsavppaabjygaolldb.supabase.co/functions/v1/sync-cassol-dashboard';
+const PUBLIC_CALENDAR_ENDPOINT = 'https://firestore.googleapis.com/v1/projects/grupo-cassol-2/databases/(default)/documents/public_calendars';
+const FIREBASE_API_KEY = 'AIzaSyCuifhZ4I3_doR6N_2xdqMe3zUDMgjeeR0';
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const WEEKDAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
@@ -30,5 +31,5 @@ function renderCalendar(month,contents) {
   calendar.append(grid);
 }
 function renderError(message){document.getElementById('calendar').replaceChildren(text('div','message',message));}
-async function loadCalendar(){const token=new URLSearchParams(location.search).get('token')||'';if(!/^\d{4}-\d{2}\.[a-z0-9-]{1,80}\.[a-f0-9]{64}$/.test(token)){renderError('Este link é inválido ou está incompleto.');return;}try{const response=await fetch(PUBLIC_CALENDAR_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operation:'public_content_calendar_view',token})});const result=await response.json().catch(()=>({}));if(!response.ok||!result.month||!Array.isArray(result.contents))throw new Error(result.error||'Calendário não encontrado.');renderCalendar(result.month,result.contents);}catch(error){renderError(error.message||'Não foi possível carregar o calendário agora.');}}
+async function loadCalendar(){const token=new URLSearchParams(location.search).get('token')||'';if(!/^[a-f0-9]{64}$/.test(token)){renderError('Este link é inválido, antigo ou está incompleto. Solicite um novo link do calendário.');return;}try{const url=new URL(`${PUBLIC_CALENDAR_ENDPOINT}/${token}`);url.searchParams.set('key',FIREBASE_API_KEY);const response=await fetch(url);const document=await response.json().catch(()=>({}));if(!response.ok)throw new Error(response.status===404?'Calendário não encontrado.':'Não foi possível consultar o calendário.');const result=JSON.parse(document?.fields?.value?.stringValue||'{}');if(!result.month||!Array.isArray(result.contents))throw new Error('Calendário não encontrado.');renderCalendar(result.month,result.contents);}catch(error){renderError(error.message||'Não foi possível carregar o calendário agora.');}}
 document.getElementById('detail-close').addEventListener('click',closeDetail);document.getElementById('detail-overlay').addEventListener('click',event=>{if(event.target===event.currentTarget)closeDetail();});document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDetail();});loadCalendar();
