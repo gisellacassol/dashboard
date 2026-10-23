@@ -76,18 +76,23 @@
     const c = conteudos.find(x => x.id === id);
     if (!c) return;
     // A cópia começa com um novo fluxo: nunca herda checks/etapas concluídas.
+    const novoId = Date.now();
+    const projetoConteudo = c.projetoConteudo || 'nenhum';
     const novo = {
       ...c,
-      id: Date.now(),
+      id: novoId,
       nome: c.nome + ' (cópia)',
+      projetoConteudo,
       done: false,
       status: primeiraEtapaConteudo(c)?.key || 'copy',
-      etapasStatus: prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa, c.projetoConteudo),
+      etapasStatus: prazosIniciaisDoConteudo(c.rede, c.tipo, c.dataPost, c.empresa, projetoConteudo),
       etapas: Array.isArray(c.etapas) ? c.etapas.map(etapa => ({ ...etapa, feito: false })) : c.etapas,
     };
     conteudos.push(novo);
     save('gc-conteudos', conteudos);
     renderConteudos();
+    // Mantém o comportamento das demais duplicações: abre a cópia para revisão.
+    setTimeout(() => openConteudo(novoId), 50);
   }
   
   function duplicarProjeto(id) {
@@ -4527,6 +4532,22 @@ function save(key, val) {
     openModal('modal-conteudo');
     setTimeout(()=>document.getElementById('mc-nome').focus(),50);
   }
+
+  function setConteudoProjetoModalValue(value) {
+    const select = document.getElementById('mc-projeto');
+    if (!select) return;
+    const normalizedValue = value || 'nenhum';
+    const legacyOptions = [...select.options].filter(option => option.dataset.legacyProject === '1');
+    legacyOptions.forEach(option => option.remove());
+    if (![...select.options].some(option => option.value === normalizedValue)) {
+      const option = document.createElement('option');
+      option.value = normalizedValue;
+      option.textContent = `Projeto atual: ${conteudoProjectLabel(normalizedValue)}`;
+      option.dataset.legacyProject = '1';
+      select.appendChild(option);
+    }
+    select.value = normalizedValue;
+  }
   
   function openNewConteudoEmpresa() { openNewConteudo(); }
 
@@ -4547,7 +4568,7 @@ function save(key, val) {
     currentConteudoId = id;
     document.getElementById('mc-title').textContent = c.nome;
     document.getElementById('mc-nome').value=c.nome;
-    document.getElementById('mc-projeto').value=c.projetoConteudo||'';
+    setConteudoProjetoModalValue(c.projetoConteudo);
     setEmpresasChecked('mc-emp-', c.empresa || 'editora');
     document.getElementById('mc-responsavel').value=c.responsavel||'';
     document.getElementById('mc-rede').value=c.rede||'instagram';
@@ -4588,7 +4609,7 @@ function save(key, val) {
     }
     const data = {nome, projetoConteudo, empresa:empresasSelecionadas.join(','), responsavel:document.getElementById('mc-responsavel').value, rede:document.getElementById('mc-rede').value, tipo:document.getElementById('mc-tipo').value, status:document.getElementById('mc-status').value, dataProd:document.getElementById('mc-dataprod').value, dataPost:document.getElementById('mc-datapost').value, hora:document.getElementById('mc-hora').value, link:document.getElementById('mc-link').value, cardLink:document.getElementById('mc-card-link').value.trim(), copy:document.getElementById('mc-copy').value, legenda:document.getElementById('mc-legenda').value, observacao:document.getElementById('mc-observacao').value};
     let conteudoSalvo = null;
-    if (currentConteudoId) {
+    if (currentConteudoId !== null && currentConteudoId !== undefined) {
       const i=conteudos.findIndex(x=>x.id===currentConteudoId);
       if(i>-1) {
         const dataAnterior = conteudos[i].dataPost || '';
